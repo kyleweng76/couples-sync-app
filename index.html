@@ -283,6 +283,27 @@ nav .nav-item.active::after {
   border-radius: 999px;
   background-color: var(--active-tab-color, #2cc998);
 }
+/* ===== Phase 1: 極簡新增行程模式 ===== */
+
+/* 隱藏所有進階行程區塊 */
+#section-vacation,
+#section-travel,
+#section-appointment,
+#section-gathering {
+  display: none !important;
+}
+
+/* 隱藏所有類型/狀態/重複相關 UI */
+[data-category],
+.category-selector,
+.status-selector,
+.recurring-options {
+  display: none !important;
+}
+.color-picker,
+#global-color-picker {
+  display: none !important;
+}
 
     </style>
 </head>
@@ -798,7 +819,8 @@ window.togglePartner = function() {
         window.closeConfirmModal = function() { const m = document.getElementById('confirm-modal'); m.classList.remove('visible'); setTimeout(() => m.classList.add('hidden'), 200); };
         window.executeDelete = function() { if(editingEventId) { db.collection('events').doc(editingEventId).delete().then(() => { window.closeConfirmModal(); window.closeAddModal(); window.showToast('行程已刪除'); }).catch(e => { console.error(e); window.showToast('刪除失敗'); }); } };
 window.openAddModal = function() {
-  editingEventId = null;
+  currentCategory = 'default'; // ⭐ 強制極簡模式
+    editingEventId = null;
 
   document.getElementById('input-title').value = '';
   document.getElementById('input-location').value = '';
