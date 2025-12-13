@@ -304,6 +304,17 @@ nav .nav-item.active::after {
 #global-color-picker {
   display: none !important;
 }
+/* ===== Minimal Add Event Mode ===== */
+
+/* 隱藏行程分類 chips */
+#add-modal #category-chips {
+  display: none !important;
+}
+
+/* 隱藏顏色選擇列（Emerald Green 那一行） */
+#add-modal .tt-input-row[onclick*="openColorConfig"] {
+  display: none !important;
+}
 
     </style>
 </head>
