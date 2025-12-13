@@ -271,17 +271,17 @@ nav .nav-item {
   position: relative;
 }
 
-/* 底線指示器 */
+/* 使用 CSS 變數控制顏色 */
 nav .nav-item.active::after {
   content: "";
   position: absolute;
-  bottom: 2px;          /* 與底部保持一點距離 */
+  bottom: 2px;
   left: 50%;
   transform: translateX(-50%);
   width: 20px;
   height: 3px;
   border-radius: 999px;
-  background-color: #2cc998;
+  background-color: var(--active-tab-color, #2cc998);
 }
 
     </style>
@@ -649,27 +649,8 @@ nav .nav-item.active::after {
             <div class="calendar-grid mb-2">
                 <div class="cal-day-header text-red-400">日</div><div class="cal-day-header">一</div><div class="cal-day-header">二</div><div class="cal-day-header">三</div><div class="cal-day-header">四</div><div class="cal-day-header">五</div><div class="cal-day-header text-red-400">六</div>
             </div>
-            <div class="calendar-header flex items-center justify-between mb-2">
-  <button
-    onclick="window.changeCalMonth(-1)"
-    class="p-2 text-gray-400 hover:text-gray-700"
-  >
-    ‹
-  </button>
 
-  <span id="cal-month-title" class="font-bold text-sm"></span>
-
-  <button
-    onclick="window.changeCalMonth(1)"
-    class="p-2 text-gray-400 hover:text-gray-700"
-  >
-    ›
-  </button>
-</div>
-
-<div id="calendar-days" class="calendar-grid min-h-[240px]"></div>
-
-            <div id="calendar-days" class="calendar-grid min-h-[240px]"></div>
+            <div id="calendar-days" class="calendar-grid"></div>
             <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center text-sm font-medium">
                 <button onclick="window.selectToday()" class="text-ttgreen hover:bg-green-50 px-3 py-1.5 rounded-lg transition">今天</button>
                 <button onclick="window.closeCalendar()" class="text-gray-400 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition">取消</button>
@@ -758,7 +739,17 @@ function bindSnapshot(ref, cb, label = 'snapshot') {
         window.setStatus = function(s) { document.getElementById('input-status').value = s; document.querySelectorAll('.status-btn').forEach(b=>{ if(b.dataset.status===s) b.classList.add('active'); else b.classList.remove('active'); }); };
         window.showToast = function(msg) { const t = document.getElementById('toast-container'); const m = document.getElementById('toast-message'); m.textContent = msg; t.classList.add('visible'); setTimeout(() => t.classList.remove('visible'), 2000); };
         window.updateParticipantsPreview = function() { const container = document.getElementById('participants-preview'); const isP = document.getElementById('check-partner').checked; let html = ''; html += `<div class="avatar-sm z-20" style="background-color:${roleColors[currentUserRole]}">${currentUserRole==='haohao'?'皓':'毛'}</div>`; if(isP) { const p = currentUserRole==='haohao'?'maomao':'haohao'; html += `<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[p]}">${p==='haohao'?'皓':'毛'}</div>`; } container.innerHTML = html; };
-        window.setRole = function(role) { localStorage.setItem('user_role', role); currentUserRole = role; window.updateRoleUI(); };
+  window.setRole = function(role) {
+  localStorage.setItem('user_role', role);
+  currentUserRole = role;
+  window.updateRoleUI();
+
+  // ⭐ Active Tab 指示線顏色跟角色同步
+  document.documentElement.style.setProperty(
+    '--active-tab-color',
+    roleColors[role]
+  );
+};
         window.updateMyStatus = function() { if(!db) return; const moods = ['normal', 'charging', 'sleepy', 'love', 'busy']; const randomMood = moods[Math.floor(Math.random() * moods.length)]; const d = {}; d[currentUserRole] = randomMood; db.collection('status').doc('current').set(d, { merge: true }); };
         window.toggleGlobalColorPicker = function(show) { const el = document.getElementById('global-color-picker'); const grid = document.getElementById('global-color-grid'); if(show) { grid.innerHTML = ''; timeTreeColors.forEach(color => { const row = document.createElement('div'); row.className = "flex items-center p-2 rounded hover:bg-gray-50 cursor-pointer transition"; row.onclick = () => window.selectGlobalColor(color); row.innerHTML = `<div class="w-5 h-5 rounded-full mr-3 shadow-sm" style="background-color: ${color.hex}"></div><span class="text-sm text-gray-700">${color.name}</span>`; grid.appendChild(row); }); el.classList.remove('hidden'); setTimeout(() => el.classList.add('visible'), 10); } else { el.classList.remove('visible'); setTimeout(() => el.classList.add('hidden'), 200); colorPickerTarget = null; } };
 
@@ -1045,6 +1036,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof lucide !== 'undefined') {
       lucide.createIcons();
     }
+
+    // ⭐ 初始化 Active Tab 指示線顏色
+    document.documentElement.style.setProperty(
+      '--active-tab-color',
+      roleColors[currentUserRole]
+    );
+
     if (db) {
       initApp(db);
     }
