@@ -806,6 +806,19 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.error('SW failed', err));
   });
 }
+
+/* ===== PWA Resume Guard (iOS) ===== */
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    safeRun(() => {
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+      if (currentViewMode === 'month') {
+        window.renderBigCalendar();
+      }
+    }, 'resume');
+  }
+});
+
 </script>
 
 </body>
