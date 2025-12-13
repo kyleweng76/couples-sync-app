@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="manifest" href="manifest.json">
     <title>我們的小時光</title>
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
@@ -534,7 +535,34 @@
     </nav>
 
     <script>
+       /* ===== STABLE PATCH: SafeRun Helper ===== */
+window.safeRun = function (fn, label = 'unknown') {
+  try {
+    return fn();
+  } catch (err) {
+    console.error(`[SafeRun:${label}]`, err);
+    if (window.showToast) {
+      window.showToast('發生錯誤，但 App 仍可使用');
+    }
+    return null;
+  }
+};
         // --- 1. VARIABLES ---
+        /* ===== STABLE PATCH: Firestore Listener Guard ===== */
+const snapshotRegistry = {};
+
+function bindSnapshot(ref, cb, label = 'snapshot') {
+  if (snapshotRegistry[label]) return; // 已綁過
+
+  const unsub = ref.onSnapshot(
+    snap => window.safeRun(() => cb(snap), label),
+    err => console.error(`[Firestore:${label}]`, err)
+  );
+
+  snapshotRegistry[label] = unsub;
+}
+
+
         const firebaseConfig = { apiKey: "AIzaSyDLrPr4X6r3e2V_vqFaCICgKVwLmiykxpc", authDomain: "kyle-mao.firebaseapp.com", projectId: "kyle-mao", storageBucket: "kyle-mao.firebasestorage.app", messagingSenderId: "290564848532", appId: "1:290564848532:web:006c4e9df4b1330895ad81" };
         let db; try { if(typeof firebase!=='undefined'){if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);db=firebase.firestore();}}catch(e){}
 
@@ -613,7 +641,6 @@
         window.renderTodos = function(todos) { const jointList=document.getElementById('todo-list-joint'), haohaoList=document.getElementById('todo-list-haohao'), maomaoList=document.getElementById('todo-list-maomao'), dashboardList=document.getElementById('dashboard-todo-list'); if(!jointList) return; jointList.innerHTML=''; haohaoList.innerHTML=''; maomaoList.innerHTML=''; dashboardList.innerHTML=''; let pendingCount=0; todos.forEach(t => { let colorHex = roleColors.haohao; let container = haohaoList; if (t.isJoint) { colorHex = roleColors.joint; container = jointList; } else if (t.creator === 'maomao') { colorHex = roleColors.maomao; container = maomaoList; } let checkStyle = t.done ? `background-color: #d1d5db; border-color: #d1d5db;` : `border-color: ${colorHex};`; let titleClass = t.done ? "text-gray-400 line-through" : "text-gray-800"; if (t.done) { } else { pendingCount++; } let calInfo = t.dueDate ? `<span class="text-[10px] ${t.done?'text-gray-300':'text-gray-400'} ml-2 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${t.dueDate}</span>` : ''; const html = `<div class="todo-item flex items-center p-3 bg-white rounded-xl border border-gray-100 shadow-sm"><div class="flex-none p-2 cursor-pointer" onclick="window.toggleTodo('${t.id}', ${!t.done}); event.stopPropagation();"><div class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors text-white" style="${checkStyle}">${t.done?'<i data-lucide="check" class="w-3 h-3"></i>':''}</div></div><div class="flex-1 px-2 cursor-pointer overflow-hidden" onclick="window.openEditTodoModal('${t.id}')"><span class="${titleClass} font-medium truncate block">${t.title}</span>${calInfo}</div><button onclick="window.deleteTodo('${t.id}'); event.stopPropagation();" class="flex-none p-2 text-gray-300 hover:text-red-400"><i data-lucide="x" class="w-4 h-4"></i></button></div>`; container.innerHTML += html; }); if (pendingCount === 0) dashboardList.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">沒有未完成的待辦事項 🎉</p>`; else { const pendings = todos.filter(t => !t.done).slice(0, 3); pendings.forEach(t => { let dotColor = t.isJoint ? roleColors.joint : (t.creator==='haohao' ? roleColors.haohao : roleColors.maomao); dashboardList.innerHTML += `<div class="flex items-center gap-2 text-sm bg-gray-50 p-2 rounded-lg border border-gray-100"><div class="w-2 h-2 rounded-full" style="background-color: ${dotColor}"></div><span class="truncate text-gray-700">${t.title}</span></div>`; }); if (todos.filter(t => !t.done).length > 3) dashboardList.innerHTML += `<div class="text-center text-xs text-gray-400 mt-1">還有 ${todos.filter(t => !t.done).length - 3} 個項目...</div>`; } if(typeof lucide !== 'undefined') lucide.createIcons(); };
         window.openCalendar = function(t) { calTargetInput=t; let v = ''; if (t === 'recur') v = document.getElementById('input-recur-until').value; else if (t === 'todo') v = document.getElementById('input-date-todo').value; else v = document.getElementById(`input-date-${t}`).value; calCurrentDate=v?new Date(v):new Date(); if(isNaN(calCurrentDate.getTime())) calCurrentDate = new Date(); window.renderCalendarModal(); const m=document.getElementById('calendar-picker-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); };
         window.closeCalendar = function() { const m=document.getElementById('calendar-picker-modal'); m.classList.remove('visible'); setTimeout(()=>m.classList.add('hidden'),200); };
-        window.changeCalMonth = function(d) { bigCalDate.setMonth(bigCalDate.getMonth()+d); window.renderBigCalendar(); };
         window.selectCalDate = function(y,m,d) { const s=`${y}-${(m+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`; if(calTargetInput==='recur') { document.getElementById('input-recur-until').value=s; window.updateDateDisplay('recur',s); } else if(calTargetInput==='todo') { document.getElementById('input-date-todo').value=s; window.updateDateDisplay('todo',s); window.checkTodoCalendarOption(); } else { document.getElementById(`input-date-${calTargetInput}`).value=s; window.updateDateDisplay(calTargetInput,s); } window.closeCalendar(); if(calTargetInput==='start') window.autoUpdateEnd(); else if(calTargetInput==='end') window.checkEndDateValidity(); };
         window.renderCalendarModal = function() { const y=calCurrentDate.getFullYear(), m=calCurrentDate.getMonth(), t=new Date(); document.getElementById('cal-month-title').textContent=`${y}年${m+1}月`; const dim=new Date(y,m+1,0).getDate(), sd=new Date(y,m,1).getDay(); let h=''; for(let i=0;i<sd;i++) h+=`<div class="cal-day empty"></div>`; for(let d=1;d<=dim;d++) { const isT=(y===t.getFullYear() && m===t.getMonth() && d===t.getDate()); h+=`<div class="cal-day ${isT?'today':''}" onclick="window.selectCalDate(${y},${m},${d})">${d}</div>`; } document.getElementById('calendar-days').innerHTML=h; };
         window.selectToday = function() { window.selectCalDate(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()); };
@@ -625,6 +652,66 @@
         window.switchTab = function(tab) { document.querySelectorAll('.page-content').forEach(e=>e.classList.remove('active')); const t=document.getElementById(`page-${tab}`); if(t) t.classList.add('active'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); const map={'dashboard':0,'calendar':1,'todo':2,'settings':3}; const navs=document.querySelectorAll('.nav-item'); if(navs[map[tab]]) navs[map[tab]].classList.add('active'); if(typeof lucide !== 'undefined') lucide.createIcons(); }
         window.switchCalendarView = function(mode) { currentViewMode=mode; const l=document.getElementById('calendar-view-list'), m=document.getElementById('calendar-view-month'); const bl=document.getElementById('btn-view-list'), bm=document.getElementById('btn-view-month'); if(mode==='list') { l.classList.remove('hidden'); m.classList.add('hidden'); bl.className="px-4 py-1.5 text-xs font-bold rounded-md bg-white shadow-sm text-ttgreen transition-all"; bm.className="px-4 py-1.5 text-xs font-medium rounded-md text-gray-500 transition-all"; } else { l.classList.add('hidden'); m.classList.remove('hidden'); bm.className="px-4 py-1.5 text-xs font-bold rounded-md bg-white shadow-sm text-ttgreen transition-all"; bl.className="px-4 py-1.5 text-xs font-medium rounded-md text-gray-500 transition-all"; window.renderBigCalendar(); window.selectBigCalendarDate(new Date()); } }
         window.changeBigCalMonth = function(d) { bigCalDate.setMonth(bigCalDate.getMonth()+d); window.renderBigCalendar(); }
+        window.renderBigCalendar = function() {
+  if (currentViewMode !== 'month') return;
+
+  const year = bigCalDate.getFullYear();
+  const month = bigCalDate.getMonth();
+  const today = new Date();
+
+  document.getElementById('big-cal-title').textContent =
+    `${year}年${month+1}月`;
+
+  const dim = new Date(year, month+1, 0).getDate();
+  const sd  = new Date(year, month, 1).getDay();
+  const g   = document.getElementById('big-cal-grid');
+  if (!g) return;
+
+  let html = '';
+  for (let i = 0; i < sd; i++) {
+    html += `<div class="bg-gray-50 border-b border-r border-gray-100 min-h-[85px]"></div>`;
+  }
+
+  const items = window.getCalendarItems();
+  for (let d = 1; d <= dim; d++) {
+    const ds = new Date(year, month, d);
+    const de = new Date(year, month, d, 23,59,59);
+    const dayItems = items.filter(e => {
+      const t = new Date(e.timestamp);
+      return t >= ds && t <= de;
+    });
+
+    let bars = '';
+    dayItems.slice(0,3).forEach(e => {
+      if (e.isTodo) {
+        const s = e.done
+          ? 'bg-gray-300 line-through text-gray-500'
+          : 'bg-gray-400 text-white';
+        bars += `<div class="event-bar ${s}">✓ ${e.title}</div>`;
+      } else {
+        bars += `<div class="event-bar" style="background-color:${e.color || '#2cc998'}">${e.title}</div>`;
+      }
+    });
+    if (dayItems.length > 3) {
+      bars += `<div class="more-events">+${dayItems.length-3}</div>`;
+    }
+
+    const isToday =
+      year===today.getFullYear() &&
+      month===today.getMonth() &&
+      d===today.getDate();
+
+    html += `
+      <div class="big-cal-cell border-b border-r border-gray-100 ${isToday?'today':''}"
+           id="big-cal-day-${d}"
+           onclick="window.selectBigCalendarDate(${year},${month},${d})">
+        <div class="big-cal-day-num">${d}</div>
+        <div style="width:100%;margin-top:2px;">${bars}</div>
+      </div>`;
+  }
+
+  g.innerHTML = html;
+};
 
         window.renderBigCalendar = function() {
              const year=bigCalDate.getFullYear(), month=bigCalDate.getMonth(), today=new Date();
@@ -649,13 +736,99 @@
         }
         
         window.selectBigCalendarDate = function(y,m,d) { document.querySelectorAll('.big-cal-cell.selected').forEach(e=>e.classList.remove('selected')); if(m===bigCalDate.getMonth()) { const el=document.getElementById(`big-cal-day-${d}`); if(el) el.classList.add('selected'); } document.getElementById('selected-date-label').textContent = `${y}年${m+1}月${d}日`; const listEl = document.getElementById('month-event-list'); if(!listEl) return; const items = window.getCalendarItems(); const ds=new Date(y, m, d), de=new Date(y, m, d, 23,59,59); const dayEvents = items.filter(e => { const t = new Date(e.timestamp); return t>=ds && t<=de; }); if(dayEvents.length===0) listEl.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs">這天沒有安排行程 😴</div>`; else window.renderEventListItems(dayEvents, listEl); };
+function initApp(db) {
+  if (!db) {
+    console.error("Firebase not initialized");
+    return;
+  }
 
-        function initApp(db) { if(!db) { console.error("Firebase not initialized"); return; } try { document.getElementById('connection-status').className = "w-2 h-2 rounded-full bg-ttgreen shadow-[0_0_8px_#2cc998]"; db.collection('events').orderBy('timestamp', 'asc').onSnapshot((snapshot) => { const events = []; snapshot.forEach(doc => events.push({ id: doc.id, ...doc.data() })); allEventsCache = events; window.renderDashboardNextUp(window.getCalendarItems()); window.renderCalendarListView(); window.renderBigCalendar(); }); db.collection('status').doc('current').onSnapshot((doc) => { if (doc.exists) window.renderStatus(doc.data()); }); db.collection('todos').orderBy('createdAt', 'desc').onSnapshot((snapshot) => { const todos = []; snapshot.forEach(doc => todos.push({ id: doc.id, ...doc.data() })); allTodosCache = todos; window.renderTodos(todos); window.renderDashboardNextUp(window.getCalendarItems()); window.renderBigCalendar(); window.renderCalendarListView(); }); window.updateRoleUI(); window.updateSettingsColorUI(); window.setNowToInputs(); window.initInputListeners(); window.switchCalendarView('list'); window.switchTab('dashboard'); if (typeof lucide !== 'undefined') lucide.createIcons(); } catch (error) { console.error("Init Error:", error); } }
+  // connection indicator
+  const conn = document.getElementById('connection-status');
+  if (conn) {
+    conn.className = "w-2 h-2 rounded-full bg-ttgreen shadow-[0_0_8px_#2cc998]";
+  }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            if(typeof lucide !== 'undefined') lucide.createIcons();
-            if(db) initApp(db);
-        });
-    </script>
+  /* ===== STABLE PATCH: Events Snapshot ===== */
+  bindSnapshot(
+    db.collection('events').orderBy('timestamp', 'asc'),
+    (snapshot) => {
+      const events = [];
+      snapshot.forEach(doc =>
+        events.push({ id: doc.id, ...doc.data() })
+      );
+      allEventsCache = events;
+
+      safeRun(
+        () => window.renderDashboardNextUp(window.getCalendarItems()),
+        'dashboard-events'
+      );
+      safeRun(
+        () => window.renderCalendarListView(),
+        'calendar-list'
+      );
+
+      // Big Calendar 只在月曆模式才渲染
+      if (currentViewMode === 'month') {
+        safeRun(() => window.renderBigCalendar(), 'big-calendar');
+      }
+    },
+    'events'
+  );
+
+  /* ===== STABLE PATCH: Todos Snapshot ===== */
+  bindSnapshot(
+    db.collection('todos').orderBy('createdAt', 'desc'),
+    (snapshot) => {
+      const todos = [];
+      snapshot.forEach(doc =>
+        todos.push({ id: doc.id, ...doc.data() })
+      );
+      allTodosCache = todos;
+
+      safeRun(() => window.renderTodos(todos), 'todos');
+      safeRun(
+        () => window.renderDashboardNextUp(window.getCalendarItems()),
+        'dashboard-todos'
+      );
+    },
+    'todos'
+  );
+
+  /* ===== STABLE PATCH: Status Snapshot ===== */
+  bindSnapshot(
+    db.collection('status').doc('current'),
+    (doc) => {
+      if (doc.exists) {
+        safeRun(() => window.renderStatus?.(doc.data()), 'status');
+      }
+    },
+    'status'
+  );
+}
+
+
+
+ 
+/* ===== STABLE PATCH: App Bootstrap ===== */
+document.addEventListener('DOMContentLoaded', () => {
+  safeRun(() => {
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+    if (db) {
+      initApp(db);
+    }
+  }, 'bootstrap');
+});
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('SW registered', reg))
+      .catch(err => console.error('SW failed', err));
+  });
+}
+</script>
+
 </body>
 </html>
