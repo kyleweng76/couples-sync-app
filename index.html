@@ -231,18 +231,36 @@ nav .nav-item {
   border-radius: 12px;
 }
 
-/* 按下瞬間（iOS 感核心） */
-nav .nav-item:active {
-  transform: scale(0.92);
-  background-color: rgba(0, 0, 0, 0.04);
-}
 
-/* Active 狀態（目前頁）微微放大 */
-nav .nav-item.active {
-  transform: scale(1.05);
-}
 
 /* iOS Safari：避免長按出現藍色遮罩 */
+nav .nav-item {
+  -webkit-tap-highlight-color: transparent;
+}
+/* ===== iOS-like Bottom Tab (Icon Only Bounce) ===== */
+
+/* icon 本體 */
+nav .nav-item i {
+  transition: transform 0.12s ease-out;
+  will-change: transform;
+}
+
+/* 按下時：只有 icon 縮 */
+nav .nav-item:active i {
+  transform: scale(0.85);
+}
+
+/* 目前頁：icon 微放大 */
+nav .nav-item.active i {
+  transform: scale(1.1);
+}
+
+/* 文字完全不動（保險） */
+nav .nav-item span {
+  transform: none !important;
+}
+
+/* iOS Safari 防藍色高亮 */
 nav .nav-item {
   -webkit-tap-highlight-color: transparent;
 }
