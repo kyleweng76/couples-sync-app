@@ -642,7 +642,46 @@ function bindSnapshot(ref, cb, label = 'snapshot') {
         window.openCalendar = function(t) { calTargetInput=t; let v = ''; if (t === 'recur') v = document.getElementById('input-recur-until').value; else if (t === 'todo') v = document.getElementById('input-date-todo').value; else v = document.getElementById(`input-date-${t}`).value; calCurrentDate=v?new Date(v):new Date(); if(isNaN(calCurrentDate.getTime())) calCurrentDate = new Date(); window.renderCalendarModal(); const m=document.getElementById('calendar-picker-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); };
         window.closeCalendar = function() { const m=document.getElementById('calendar-picker-modal'); m.classList.remove('visible'); setTimeout(()=>m.classList.add('hidden'),200); };
         window.selectCalDate = function(y,m,d) { const s=`${y}-${(m+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`; if(calTargetInput==='recur') { document.getElementById('input-recur-until').value=s; window.updateDateDisplay('recur',s); } else if(calTargetInput==='todo') { document.getElementById('input-date-todo').value=s; window.updateDateDisplay('todo',s); window.checkTodoCalendarOption(); } else { document.getElementById(`input-date-${calTargetInput}`).value=s; window.updateDateDisplay(calTargetInput,s); } window.closeCalendar(); if(calTargetInput==='start') window.autoUpdateEnd(); else if(calTargetInput==='end') window.checkEndDateValidity(); };
-        window.renderCalendarModal = function() { const y=calCurrentDate.getFullYear(), m=calCurrentDate.getMonth(), t=new Date(); document.getElementById('cal-month-title').textContent=`${y}年${m+1}月`; const dim=new Date(y,m+1,0).getDate(), sd=new Date(y,m,1).getDay(); let h=''; for(let i=0;i<sd;i++) h+=`<div class="cal-day empty"></div>`; for(let d=1;d<=dim;d++) { const isT=(y===t.getFullYear() && m===t.getMonth() && d===t.getDate()); h+=`<div class="cal-day ${isT?'today':''}" onclick="window.selectCalDate(${y},${m},${d})">${d}</div>`; } document.getElementById('calendar-days').innerHTML=h; };
+window.renderCalendarModal = function() {
+  const y = calCurrentDate.getFullYear();
+  const m = calCurrentDate.getMonth();
+  const t = new Date();
+
+  document.getElementById('cal-month-title').textContent =
+    `${y}年${m+1}月`;
+
+  const dim = new Date(y, m+1, 0).getDate();
+  const sd  = new Date(y, m, 1).getDay();
+
+  let h = '';
+
+  // 月初空白
+  for (let i = 0; i < sd; i++) {
+    h += `<div class="cal-day empty"></div>`;
+  }
+
+  // 日期
+  for (let d = 1; d <= dim; d++) {
+    const isT = (
+      y === t.getFullYear() &&
+      m === t.getMonth() &&
+      d === t.getDate()
+    );
+    h += `<div class="cal-day ${isT?'today':''}"
+              onclick="window.selectCalDate(${y},${m},${d})">${d}</div>`;
+  }
+
+  // ⭐ 補齊尾巴（關鍵）
+  const totalCells = sd + dim;
+  const remainder = totalCells % 7;
+  if (remainder !== 0) {
+    for (let i = 0; i < 7 - remainder; i++) {
+      h += `<div class="cal-day empty"></div>`;
+    }
+  }
+
+  document.getElementById('calendar-days').innerHTML = h;
+};
         window.selectToday = function() { window.selectCalDate(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()); };
         window.initInputListeners = function() { document.addEventListener('click',e=>{ const p=document.getElementById('time-picker-dropdown'); if(p && !p.classList.contains('hidden') && !e.target.closest('.dt-wrapper-time') && !e.target.closest('.time-dropdown')) { p.classList.add('hidden'); } }); };
         window.openTimePicker = function(t) { const p=document.getElementById('time-picker-dropdown'), w=document.getElementById(`display-time-${t}`).parentElement; let h=''; for(let i=0;i<24;i++) for(let j=0;j<60;j+=30) { let s=`${i.toString().padStart(2,'0')}:${j.toString().padStart(2,'0')}`; h+=`<div class="time-option" onmousedown="window.setTime('${t}','${s}')">${s}</div>`; } p.innerHTML=h; p.style.top=(w.offsetTop+w.offsetHeight+5)+'px'; p.style.left=w.offsetLeft+'px'; p.style.width=w.offsetWidth+'px'; p.dataset.target=t; p.classList.remove('hidden'); };
