@@ -164,6 +164,59 @@
 #calendar-picker-modal #calendar-days {
   min-height: unset;
 }
+/* ===== iOS-like Calendar Picker ===== */
+
+/* 整個日期 grid 更緊湊 */
+#calendar-picker-modal .calendar-grid {
+  gap: 6px;
+}
+
+/* 日期格子：圓形、無外框 */
+#calendar-picker-modal .cal-day {
+  width: 36px;
+  height: 36px;
+  aspect-ratio: unset;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* Hover（像 iOS 輕觸） */
+#calendar-picker-modal .cal-day:hover {
+  background-color: #f2f2f7;
+}
+
+/* 今天（iOS 常用「字色提示」） */
+#calendar-picker-modal .cal-day.today {
+  color: #2cc998;
+  font-weight: 600;
+}
+
+/* 選中日期（iOS 核心） */
+#calendar-picker-modal .cal-day.selected {
+  background-color: #2cc998;
+  color: white;
+  font-weight: 600;
+}
+
+/* 空白格完全不可點 */
+#calendar-picker-modal .cal-day.empty {
+  pointer-events: none;
+  background: transparent;
+}
+
+/* 星期標題更像 iOS */
+#calendar-picker-modal .cal-day-header {
+  font-size: 11px;
+  font-weight: 500;
+  color: #8e8e93;
+}
+
+/* 整個 modal 高度縮短 */
+#calendar-picker-modal .relative {
+  padding-bottom: 12px;
+}
 
     </style>
 </head>
@@ -756,8 +809,13 @@ window.openAddModal = function() {
       m === t.getMonth() &&
       d === t.getDate()
     );
-    h += `<div class="cal-day ${isT?'today':''}"
-              onclick="window.selectCalDate(${y},${m},${d})">${d}</div>`;
+    const selected =
+  calTargetInput &&
+  document.getElementById(`input-date-${calTargetInput}`)?.value ===
+  `${y}-${(m+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
+
+h += `<div class="cal-day ${isT?'today':''} ${selected?'selected':''}"
+          onclick="window.selectCalDate(${y},${m},${d})">${d}</div>`;
   }
 
   // ⭐ 補齊尾巴（關鍵）
