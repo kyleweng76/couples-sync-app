@@ -217,6 +217,10 @@
 #calendar-picker-modal .relative {
   padding-bottom: 12px;
 }
+/* ===== iOS Bottom Nav Touch Fix ===== */
+nav .nav-item {
+  padding-bottom: 6px;
+}
 
     </style>
 </head>
@@ -612,7 +616,7 @@
     </div>
 
     <!-- Bottom Nav -->
-    <nav class="bg-white border-t border-gray-100 fixed bottom-0 w-full px-6 py-2 pb-safe z-20 shadow-[0_-5px_15px_rgba(0,0,0,0.02)]">
+        <nav class="bg-white border-t border-gray-100 fixed bottom-0 w-full px-6 pt-3 pb-6 pb-safe z-20 shadow-[0_-5px_15px_rgba(0,0,0,0.02)]">
         <div class="flex justify-between items-center max-w-md mx-auto">
             <button class="nav-item active flex flex-col items-center gap-1 text-gray-400 transition py-1" onclick="window.switchTab('dashboard')"><i data-lucide="layout-grid" class="w-6 h-6"></i><span class="text-[10px] font-medium">摘要</span></button>
             <button class="nav-item flex flex-col items-center gap-1 text-gray-400 transition py-1" onclick="window.switchTab('calendar')"><i data-lucide="calendar" class="w-6 h-6"></i><span class="text-[10px] font-medium">行事曆</span></button>
