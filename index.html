@@ -712,28 +712,6 @@ function bindSnapshot(ref, cb, label = 'snapshot') {
 
   g.innerHTML = html;
 };
-
-        window.renderBigCalendar = function() {
-             const year=bigCalDate.getFullYear(), month=bigCalDate.getMonth(), today=new Date();
-             document.getElementById('big-cal-title').textContent=`${year}年${month+1}月`;
-             const dim=new Date(year,month+1,0).getDate(), sd=new Date(year,month,1).getDay();
-             const g=document.getElementById('big-cal-grid'); if(!g) return;
-             let html=''; for(let i=0;i<sd;i++) html+=`<div class="bg-gray-50 border-b border-r border-gray-100 min-h-[85px]"></div>`;
-             const items = window.getCalendarItems();
-             for(let d=1;d<=dim;d++) {
-                 const ds=new Date(year,month,d), de=new Date(year,month,d,23,59,59);
-                 const dayItems = items.filter(e => { const es = new Date(e.timestamp); return es >= ds && es <= de; });
-                 let b=''; 
-                 dayItems.slice(0,3).forEach(e=>{ 
-                     if(e.isTodo) { const s = e.done ? 'bg-gray-300 line-through text-gray-500' : 'bg-gray-400 text-white'; b+=`<div class="event-bar ${s}">✓ ${e.title}</div>`; } 
-                     else { b+=`<div class="event-bar" style="background-color:${e.color||'#2cc998'}">${e.title||'行程'}</div>`; }
-                 });
-                 if(dayItems.length>3) b+=`<div class="more-events">+${dayItems.length-3}</div>`;
-                 const isT = (year===today.getFullYear() && month===today.getMonth() && d===today.getDate());
-                 html+=`<div class="big-cal-cell border-b border-r border-gray-100 ${isT?'today':''}" id="big-cal-day-${d}" onclick="window.selectBigCalendarDate(${year},${month},${d})"><div class="big-cal-day-num">${d}</div><div style="width:100%;margin-top:2px;">${b}</div></div>`;
-             }
-             g.innerHTML=html;
-        }
         
         window.selectBigCalendarDate = function(y,m,d) { document.querySelectorAll('.big-cal-cell.selected').forEach(e=>e.classList.remove('selected')); if(m===bigCalDate.getMonth()) { const el=document.getElementById(`big-cal-day-${d}`); if(el) el.classList.add('selected'); } document.getElementById('selected-date-label').textContent = `${y}年${m+1}月${d}日`; const listEl = document.getElementById('month-event-list'); if(!listEl) return; const items = window.getCalendarItems(); const ds=new Date(y, m, d), de=new Date(y, m, d, 23,59,59); const dayEvents = items.filter(e => { const t = new Date(e.timestamp); return t>=ds && t<=de; }); if(dayEvents.length===0) listEl.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs">這天沒有安排行程 😴</div>`; else window.renderEventListItems(dayEvents, listEl); };
 function initApp(db) {
