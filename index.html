@@ -264,6 +264,25 @@ nav .nav-item span {
 nav .nav-item {
   -webkit-tap-highlight-color: transparent;
 }
+/* ===== iOS-like Active Tab Indicator ===== */
+
+/* nav-item 變成定位容器 */
+nav .nav-item {
+  position: relative;
+}
+
+/* 底線指示器 */
+nav .nav-item.active::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;          /* 與底部保持一點距離 */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 3px;
+  border-radius: 999px;
+  background-color: #2cc998;
+}
 
     </style>
 </head>
