@@ -502,7 +502,6 @@ nav .nav-item.active::after {
     <!-- Toast Notification -->
     <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-[90] pointer-events-none transition-opacity duration-300 opacity-0">
         <div id="toast-message" class="bg-gray-800/90 text-white px-4 py-2 rounded-full text-sm shadow-lg backdrop-blur-sm">
-            提示訊息
         </div>
     </div>
 
@@ -510,13 +509,6 @@ nav .nav-item.active::after {
     <div id="add-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal">
         <div class="absolute inset-0 bg-black/20 backdrop-blur-[1px]" onclick="window.closeAddModal()"></div>
         <div class="relative bg-white w-full h-full md:h-auto md:w-[400px] md:rounded-2xl flex flex-col md:max-h-[90vh]">
-            <div class="px-6 pt-6 flex gap-2 overflow-x-auto no-scrollbar" id="category-chips">
-                <button onclick="window.setCategory('default')" class="cat-chip active" data-cat="default">一般</button>
-                <button onclick="window.setCategory('vacation')" class="cat-chip" data-cat="vacation">休假</button>
-                <button onclick="window.setCategory('travel')" class="cat-chip" data-cat="travel">旅行</button>
-                <button onclick="window.setCategory('appointment')" class="cat-chip" data-cat="appointment">預約</button>
-                <button onclick="window.setCategory('gathering')" class="cat-chip" data-cat="gathering">聚會</button>
-            </div>
             <div class="px-6 pb-2 pt-4">
                 <label class="text-xs font-bold text-ttred mb-1 block">標題</label>
                 <input type="text" id="input-title" placeholder="輸入標題" class="w-full text-xl font-bold text-gray-800 placeholder-red-300 border-b border-gray-200 pb-2 focus:outline-none focus:border-ttred transition-colors bg-transparent">
