@@ -283,39 +283,112 @@ nav .nav-item.active::after {
   border-radius: 999px;
   background-color: var(--active-tab-color, #2cc998);
 }
-/* ===== Phase 1: 極簡新增行程模式 ===== */
-
-/* 隱藏所有進階行程區塊 */
-#section-vacation,
-#section-travel,
-#section-appointment,
-#section-gathering {
-  display: none !important;
+/* ===== Apple-like Calendar Sheet ===== */
+#calendar-picker-modal {
+  align-items: flex-end; /* mobile: bottom sheet */
 }
 
-/* 隱藏所有類型/狀態/重複相關 UI */
-[data-category],
-.category-selector,
-.status-selector,
-.recurring-options {
-  display: none !important;
-}
-.color-picker,
-#global-color-picker {
-  display: none !important;
-}
-/* ===== Minimal Add Event Mode ===== */
-
-/* 隱藏行程分類 chips */
-#add-modal #category-chips {
-  display: none !important;
+/* backdrop */
+#calendar-picker-modal > .absolute {
+  background: rgba(0,0,0,.28);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
-/* 隱藏顏色選擇列（Emerald Green 那一行） */
-#add-modal .tt-input-row[onclick*="openColorConfig"] {
-  display: none !important;
+/* sheet */
+#calendar-picker-modal .relative {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 22px 22px 0 0;
+  padding: 16px;
+  box-shadow: 0 -12px 40px rgba(0,0,0,.18);
+  transform: translateY(20px);
+  transition: transform .22s ease, opacity .22s ease;
 }
 
+/* show animation */
+#calendar-picker-modal.visible .relative {
+  transform: translateY(0);
+}
+
+/* desktop: center modal */
+@media (min-width: 768px) {
+  #calendar-picker-modal {
+    align-items: center;
+  }
+  #calendar-picker-modal .relative {
+    border-radius: 22px;
+  }
+}
+
+/* header typography */
+#calendar-picker-modal #cal-month-title {
+  font-size: 17px;
+  letter-spacing: .2px;
+}
+
+/* header buttons: iOS circle */
+#calendar-picker-modal button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+#calendar-picker-modal .flex.gap-1 button {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #f2f2f7;
+}
+
+#calendar-picker-modal .flex.gap-1 button:active {
+  transform: scale(0.95);
+}
+
+/* weekday label */
+#calendar-picker-modal .cal-day-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: #8e8e93;
+}
+
+/* day cell: more iOS */
+#calendar-picker-modal .cal-day {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1c1c1e;
+}
+
+/* hover/press */
+#calendar-picker-modal .cal-day:hover {
+  background: #f2f2f7;
+}
+#calendar-picker-modal .cal-day:active {
+  transform: scale(0.96);
+}
+
+/* today: ring (iOS style) */
+#calendar-picker-modal .cal-day.today {
+  color: var(--active-tab-color, #2cc998);
+  font-weight: 700;
+  box-shadow: inset 0 0 0 2px rgba(44,201,152,.35);
+}
+
+/* selected: solid */
+#calendar-picker-modal .cal-day.selected {
+  background: var(--active-tab-color, #2cc998);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* empty */
+#calendar-picker-modal .cal-day.empty {
+  pointer-events: none;
+  background: transparent;
+}
     </style>
 </head>
 <body class="text-gray-700 h-screen flex flex-col overflow-hidden bg-white">
@@ -516,101 +589,106 @@ nav .nav-item.active::after {
         </div>
     </div>
 
-    <!-- Add/Edit Event Modal -->
-    <div id="add-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal">
-        <div class="absolute inset-0 bg-black/20 backdrop-blur-[1px]" onclick="window.closeAddModal()"></div>
-        <div class="relative bg-white w-full h-full md:h-auto md:w-[400px] md:rounded-2xl flex flex-col md:max-h-[90vh]">
-            <div class="px-6 pb-2 pt-4">
-                <label class="text-xs font-bold text-ttred mb-1 block">標題</label>
-                <input type="text" id="input-title" placeholder="輸入標題" class="w-full text-xl font-bold text-gray-800 placeholder-red-300 border-b border-gray-200 pb-2 focus:outline-none focus:border-ttred transition-colors bg-transparent">
-            </div>
-            <div class="flex-1 overflow-y-auto px-6 py-2 space-y-1" id="modal-scroll-area">
-                <div class="bg-white border border-gray-100 rounded-lg p-3 mb-4 flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm text-gray-600">參與者</span>
-                        <div class="flex -space-x-1" id="participants-preview"></div>
-                    </div>
-                    <label class="flex items-center gap-2 cursor-pointer select-none">
-                        <span class="text-xs text-gray-400" id="partner-toggle-text">與毛毛一起</span>
-                        <input type="checkbox" id="check-partner" class="custom-checkbox" onchange="window.togglePartner()">
-                    </label>
-                </div>
-                <div class="bg-gray-50 rounded-lg p-3 mb-4 transition-all duration-300">
-                    <div id="date-time-inputs">
-                        <input type="hidden" id="input-date-start"><input type="hidden" id="input-time-start">
-                        <input type="hidden" id="input-date-end"><input type="hidden" id="input-time-end">
-                        <div class="flex items-center justify-between mb-3 gap-2">
-                            <span class="text-sm text-gray-600 w-10">開始</span>
-                            <div class="flex flex-1 gap-2 items-center">
-                                <div class="dt-wrapper-date"><div id="display-date-start" class="dt-btn justify-start" onclick="window.openCalendar('start')">--/--/--</div></div>
-                                <div class="dt-wrapper-time relative"><input type="text" id="display-time-start" class="dt-btn justify-center w-full focus:bg-white outline-none" placeholder="--:--" maxlength="5" onfocus="window.openTimePicker('start')" oninput="window.handleTimeInput('start', this.value)" onblur="window.validateTimeInput('start', this)"></div>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="text-sm text-gray-600 w-10">結束</span>
-                            <div class="flex flex-1 gap-2 items-center">
-                                <div class="dt-wrapper-date"><div id="display-date-end" class="dt-btn justify-start" onclick="window.openCalendar('end')">--/--/--</div></div>
-                                <div class="dt-wrapper-time relative"><input type="text" id="display-time-end" class="dt-btn justify-center w-full focus:bg-white outline-none" placeholder="--:--" maxlength="5" onfocus="window.openTimePicker('end')" oninput="window.handleTimeInput('end', this.value)" onblur="window.validateTimeInput('end', this)"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <label class="flex items-center mt-3 pt-3 border-t border-gray-200 cursor-pointer select-none">
-                        <input type="checkbox" id="check-allday" class="custom-checkbox" onchange="window.toggleAllDay()">
-                        <span class="ml-2 text-sm text-gray-600">全天</span>
-                    </label>
-                    <div id="section-vacation" class="hidden mt-3 pt-3 border-t border-gray-200">
-                        <label class="flex items-center cursor-pointer mb-2">
-                            <input type="checkbox" id="check-recurring" class="custom-checkbox" onchange="window.toggleRecurring()">
-                            <span class="ml-2 text-sm text-gray-800 font-medium">重複行程</span>
-                        </label>
-                        <div id="recurring-options" class="hidden pl-6 space-y-2">
-                            <div class="flex gap-2 text-xs items-center">
-                                <select id="input-recur-freq" class="bg-white border border-gray-200 rounded px-2 py-1 h-8"><option value="weekly">每週</option><option value="monthly">每月</option><option value="yearly">每年</option></select>
-                                <span class="self-center text-gray-500 mx-2">直到</span>
-                                <div class="relative w-32"><div id="display-recur-until" class="dt-btn justify-start text-xs h-8" onclick="window.openCalendar('recur')">--/--/--</div><input type="hidden" id="input-recur-until"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-white px-2 py-1 mb-4">
-                    <label class="text-xs text-gray-400 font-bold mb-2 block px-1">行程狀態</label>
-                    <div class="flex gap-2">
-                        <button type="button" class="status-btn active" onclick="window.setStatus('confirmed')" data-status="confirmed">已確認</button>
-                        <button type="button" class="status-btn" onclick="window.setStatus('tbc')" data-status="tbc">TBC (待確認)</button>
-                        <button type="button" class="status-btn" onclick="window.setStatus('tbd')" data-status="tbd">TBD (待討論)</button>
-                    </div>
-                    <input type="hidden" id="input-status" value="confirmed">
-                </div>
-                
-                <div class="tt-input-row" onclick="window.openColorConfig('event')">
-                    <i data-lucide="tag" class="tt-icon"></i>
-                    <span class="text-sm text-gray-600 flex-1" id="selected-color-name">Emerald Green</span>
-                    <div id="selected-color-dot" class="w-3 h-3 rounded-full bg-[#2cc998]"></div>
-                </div>
+    <!-- Add Event Modal (Minimal Stable) -->
+<div id="add-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal">
+  <div class="absolute inset-0 bg-black/20 backdrop-blur-[1px]" onclick="window.closeAddModal()"></div>
 
-                <div id="section-travel" class="hidden bg-blue-50 rounded-lg p-3 mb-4 border border-blue-100">
-                     <div class="mb-3"><label class="text-xs text-blue-500 font-bold mb-1 block">交通方式</label><select id="input-transport-type" class="w-full bg-white border border-blue-200 rounded px-2 py-1.5 text-sm" onchange="window.toggleTravelFields()"><option value="hsr">台灣高鐵</option><option value="train">火車 (台鐵)</option><option value="plane">飛機航班</option><option value="car">自行開車</option><option value="taxi">計程車/Uber</option></select></div>
-                    <div class="grid grid-cols-2 gap-2 mb-3"><div><label class="text-xs text-gray-500 mb-1 block">班次/航班號</label><input type="text" id="input-transport-no" class="w-full bg-white border border-gray-200 rounded px-2 py-1 text-sm"></div><div id="travel-region-tw"><label class="text-xs text-gray-500 mb-1 block">縣市</label><select id="input-travel-city" class="w-full bg-white border border-gray-200 rounded px-2 py-1 text-sm"><option value="taipei">台北</option><option value="taichung">台中</option><option value="kaohsiung">高雄</option></select></div><div id="travel-region-intl" class="hidden"><label class="text-xs text-gray-500 mb-1 block">國家</label><input type="text" id="input-travel-country" class="w-full bg-white border border-gray-200 rounded px-2 py-1 text-sm"></div></div>
-                    <div class="flex gap-2 items-center mb-3"><input type="text" id="input-from" placeholder="出發地" class="flex-1 bg-white border border-gray-200 rounded px-2 py-1 text-sm"><i data-lucide="arrow-right" class="w-4 h-4 text-blue-300"></i><input type="text" id="input-to" placeholder="目的地" class="flex-1 bg-white border border-gray-200 rounded px-2 py-1 text-sm"></div>
-                    <div class="border-t border-blue-200 pt-2 mt-2"><label class="text-xs text-blue-500 font-bold mb-1 block">住宿資訊</label><input type="text" id="input-hotel" placeholder="飯店名稱" class="w-full bg-white border border-gray-200 rounded px-2 py-1 text-sm mb-2"><input type="text" id="input-hotel-contact" placeholder="聯絡資訊/訂房代號" class="w-full bg-white border border-gray-200 rounded px-2 py-1 text-xs"></div>
-                </div>
-                <div id="section-appointment" class="hidden bg-purple-50 rounded-lg p-3 mb-4 border border-purple-100">
-                    <label class="flex items-center cursor-pointer justify-between"><span class="text-sm text-purple-700 font-medium">預約狀態</span><div class="flex items-center gap-2"><span class="text-xs text-gray-500" id="appoint-status-text">未完成</span><input type="checkbox" id="check-booked" class="custom-checkbox" onchange="window.toggleBooked()"></div></label>
-                </div>
-                <div id="section-gathering" class="hidden bg-orange-50 rounded-lg p-3 mb-4 border border-orange-100">
-                    <div class="tt-input-row border-none p-0"><i data-lucide="users" class="tt-icon text-orange-400"></i><input type="text" id="input-people" placeholder="跟誰 (With Who?)" class="flex-1 text-sm bg-transparent focus:outline-none placeholder-orange-300"></div>
-                </div>
-                <div class="tt-input-row"><i data-lucide="map-pin" class="tt-icon"></i><input type="text" id="input-location" placeholder="地點" class="flex-1 text-sm bg-transparent focus:outline-none"></div>
-                <div class="tt-input-row border-none"><i data-lucide="align-left" class="tt-icon"></i><input type="text" id="input-note" placeholder="備註" class="flex-1 text-sm bg-transparent focus:outline-none"></div>
-            </div>
-            <div class="p-4 border-t border-gray-100 flex justify-between items-center bg-white pb-safe">
-                <button id="btn-delete" type="button" onclick="window.deleteCurrentEvent()" class="text-red-400 p-2 hover:bg-red-50 rounded-full transition hidden"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
-                <div class="flex-1"></div>
-                <button onclick="window.closeAddModal()" class="px-6 py-2 rounded-lg text-gray-500 text-sm font-medium hover:bg-gray-50 transition mr-2">取消</button>
-                <button onclick="window.saveEvent()" class="px-8 py-2 rounded-lg bg-ttgreen text-white text-sm font-bold shadow-md shadow-emerald-100 active:scale-95 transition">保存</button>
-            </div>
-        </div>
+  <div class="relative bg-white w-full h-full md:h-auto md:w-[380px] md:rounded-2xl flex flex-col">
+    <!-- Header (Apple-like) -->
+    <div class="px-4 pt-4 pb-2 flex items-center justify-between" data-add-header="1">
+      <button onclick="window.closeAddModal()" class="text-ttgreen text-sm font-medium px-2 py-1 rounded-lg active:bg-green-50">取消</button>
+      <div class="text-sm font-bold text-gray-800">新增行程</div>
+      <div class="w-10"></div>
     </div>
+
+    <!-- Title -->
+    <div class="px-6 pt-6 pb-2">
+      <label class="text-xs font-bold text-gray-400 mb-1 block">標題</label>
+      <input
+        type="text"
+        id="input-title"
+        placeholder="輸入行程標題"
+        class="w-full text-xl font-bold text-gray-800 border-b border-gray-200 pb-2 focus:outline-none focus:border-ttgreen bg-transparent"
+      />
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+
+      <!-- Date -->
+      <div class="bg-gray-50 rounded-xl p-4">
+        <label class="text-xs font-bold text-gray-400 mb-2 block">日期</label>
+        <input type="hidden" id="input-date-start">
+        <div
+          id="display-date-start"
+          class="dt-btn justify-start"
+          onclick="window.openCalendar('start')"
+        >
+          選擇日期
+        </div>
+      </div>
+
+      <!-- Partner -->
+      <div class="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between">
+        <span class="text-sm text-gray-700">與對方一起</span>
+        <input
+          type="checkbox"
+          id="check-partner"
+          class="custom-checkbox"
+          onchange="window.togglePartner()"
+        />
+      </div>
+
+      <!-- Status -->
+      <div class="bg-white rounded-xl p-4 border border-gray-200">
+        <label class="text-xs font-bold text-gray-400 mb-2 block">狀態</label>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            class="status-btn active"
+            data-status="confirmed"
+            onclick="window.setStatus('confirmed')"
+          >已確認</button>
+          <button
+            type="button"
+            class="status-btn"
+            data-status="tbc"
+            onclick="window.setStatus('tbc')"
+          >TBC</button>
+          <button
+            type="button"
+            class="status-btn"
+            data-status="tbd"
+            onclick="window.setStatus('tbd')"
+          >TBD</button>
+        </div>
+        <input type="hidden" id="input-status" value="confirmed">
+      </div>
+
+      <!-- Note -->
+      <div class="bg-white border border-gray-200 rounded-xl p-4">
+        <label class="text-xs font-bold text-gray-400 mb-1 block">備註</label>
+        <textarea
+          id="input-note"
+          rows="3"
+          placeholder="簡單備註一下就好"
+          class="w-full text-sm bg-transparent focus:outline-none resize-none"
+        ></textarea>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="p-4 border-t border-gray-100 flex justify-end gap-3 pb-safe">
+      <button
+        onclick="window.saveEvent()"
+        class="px-6 py-2 text-sm font-bold text-white bg-ttgreen rounded-lg shadow-md active:scale-95"
+      >保存</button>
+    </div>
+
+  </div>
+</div>
+
     
     <!-- Add Todo Modal -->
     <div id="add-todo-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal">
@@ -693,6 +771,17 @@ nav .nav-item.active::after {
     </nav>
 
     <script>
+window.lockBodyScroll = function(lock) {
+  document.body.style.overflow = lock ? 'hidden' : '';
+};
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const cal = document.getElementById('calendar-picker-modal');
+    if (cal && cal.classList.contains('visible')) window.closeCalendar();
+  }
+});
+
        /* ===== STABLE PATCH: SafeRun Helper ===== */
 window.safeRun = function (fn, label = 'unknown') {
   try {
@@ -730,6 +819,8 @@ function bindSnapshot(ref, cb, label = 'snapshot') {
         let editingEventId = null;
         let editingTodoId = null;
         let allEventsCache = [];
+        let isSavingEvent = false;
+        let __lastSaveAt = 0;
         let allTodosCache = [];
         let roleColors = { haohao: '#2cc998', maomao: '#e6688d', joint: '#f7b546' };
         let colorPickerTarget = null;
@@ -759,7 +850,6 @@ function bindSnapshot(ref, cb, label = 'snapshot') {
         window.setNowToInputs = function() { const now = new Date(); const dStr = now.toISOString().split('T')[0]; let h = now.getHours(), m = now.getMinutes(); if(m < 30) { m = 30; } else { m = 0; h += 1; } if(h > 23) h = 0; const tStr = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`; const startEl = document.getElementById('input-date-start'); if(startEl) { startEl.value = dStr; document.getElementById('input-time-start').value = tStr; window.updateDateDisplay('start', dStr); window.updateTimeDisplay('start', tStr); document.getElementById('input-date-end').value = dStr; document.getElementById('input-time-end').value = tStr; window.updateDateDisplay('end', dStr); window.updateTimeDisplay('end', tStr); } };
         window.updateRoleUI = function() { const btnHaohao = document.getElementById('role-haohao'); const btnMaomao = document.getElementById('role-maomao'); if(!btnHaohao) return; const activeClass = "flex-1 py-3 rounded-lg text-sm font-bold border border-ttgreen bg-green-50 text-ttgreen transition shadow-sm"; const inactiveClass = "flex-1 py-3 rounded-lg text-sm font-medium border border-gray-200 text-gray-400 bg-white transition"; if(currentUserRole === 'haohao') { btnHaohao.className = activeClass; btnMaomao.className = inactiveClass; } else { btnHaohao.className = inactiveClass; btnMaomao.className = activeClass; } const ptText = document.getElementById('partner-toggle-text'); if(ptText) ptText.textContent = (currentUserRole === 'haohao' ? '與毛毛一起' : '與皓皓一起'); };
         window.updateSettingsColorUI = function() { const h = document.getElementById('setting-color-haohao'); if(h) { h.style.backgroundColor = roleColors.haohao; document.getElementById('setting-color-maomao').style.backgroundColor = roleColors.maomao; document.getElementById('setting-color-joint').style.backgroundColor = roleColors.joint; } };
-        window.setCategory = function(cat) { currentCategory = cat; document.querySelectorAll('.cat-chip').forEach(b=>{ if(b.dataset.cat===cat) b.classList.add('active'); else b.classList.remove('active'); }); ['vacation','travel','appointment','gathering'].forEach(id=>document.getElementById(`section-${id}`).classList.add('hidden')); if(cat!=='default') document.getElementById(`section-${cat}`).classList.remove('hidden'); };
         window.setStatus = function(s) { document.getElementById('input-status').value = s; document.querySelectorAll('.status-btn').forEach(b=>{ if(b.dataset.status===s) b.classList.add('active'); else b.classList.remove('active'); }); };
         window.showToast = function(msg) { const t = document.getElementById('toast-container'); const m = document.getElementById('toast-message'); m.textContent = msg; t.classList.add('visible'); setTimeout(() => t.classList.remove('visible'), 2000); };
         window.updateParticipantsPreview = function() { const container = document.getElementById('participants-preview'); const isP = document.getElementById('check-partner').checked; let html = ''; html += `<div class="avatar-sm z-20" style="background-color:${roleColors[currentUserRole]}">${currentUserRole==='haohao'?'皓':'毛'}</div>`; if(isP) { const p = currentUserRole==='haohao'?'maomao':'haohao'; html += `<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[p]}">${p==='haohao'?'皓':'毛'}</div>`; } container.innerHTML = html; };
@@ -816,41 +906,167 @@ window.togglePartner = function() {
   }
 
 };
-        window.saveEvent = function() { if(!db) return; const title = document.getElementById('input-title').value; if(!title) { window.showToast('請填寫標題'); return; } const isAllDay = document.getElementById('check-allday').checked; const dateValStart = document.getElementById('input-date-start').value; let timeValStart = document.getElementById('input-time-start').value; if (isAllDay || !timeValStart) { timeValStart = "00:00"; } const timestampDate = new Date(`${dateValStart}T${timeValStart}`); if (isNaN(timestampDate.getTime())) { window.showToast("時間格式錯誤"); return; } const data = { title, location: document.getElementById('input-location').value || '', note: document.getElementById('input-note').value || '', color: currentSelectedColor, status: document.getElementById('input-status').value, category: currentCategory, creator: currentUserRole, isJoint: document.getElementById('check-partner').checked, allDay: isAllDay, startDate: document.getElementById('input-date-start').value, endDate: document.getElementById('input-date-end').value, startTime: isAllDay ? null : document.getElementById('input-time-start').value, endTime: isAllDay ? null : document.getElementById('input-time-end').value, timestamp: timestampDate.toISOString() }; if(currentCategory === 'vacation') { data.isRecurring = document.getElementById('check-recurring').checked; if(data.isRecurring) { data.recurFreq = document.getElementById('input-recur-freq').value; data.recurUntil = document.getElementById('input-recur-until').value; } } else if (currentCategory === 'travel') { data.transportType = document.getElementById('input-transport-type').value; data.transportNo = document.getElementById('input-transport-no').value; data.region = (data.transportType==='plane') ? document.getElementById('input-travel-country').value : document.getElementById('input-travel-city').value; data.fromLoc = document.getElementById('input-from').value; data.toLoc = document.getElementById('input-to').value; data.hotelName = document.getElementById('input-hotel').value; data.hotelContact = document.getElementById('input-hotel-contact').value; } else if (currentCategory === 'appointment') { data.isBooked = document.getElementById('check-booked').checked; } else if (currentCategory === 'gathering') { data.withWho = document.getElementById('input-people').value; } if(editingEventId) db.collection('events').doc(editingEventId).update(data).then(window.closeAddModal); else { data.createdAt = new Date().toISOString(); db.collection('events').add(data).then(window.closeAddModal); } };
+window.saveEvent = function () {
+  if (!db) return;
+
+  // anti double-tap
+  const now = Date.now();
+  if (now - __lastSaveAt < 800) return;
+  __lastSaveAt = now;
+
+  if (window.__savingEvent === true) return;
+  window.__savingEvent = true;
+
+  const saveBtn = document.querySelector('#add-modal button[onclick="window.saveEvent()"]');
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = '儲存中…';
+    saveBtn.classList.add('opacity-60');
+  }
+
+  const finish = () => {
+    window.__savingEvent = false;
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = '保存';
+      saveBtn.classList.remove('opacity-60');
+    }
+  };
+
+  try {
+    const title = document.getElementById('input-title')?.value?.trim();
+    if (!title) {
+      window.showToast('請填寫標題');
+      finish();
+      return;
+    }
+
+    const startDate = document.getElementById('input-date-start')?.value;
+    if (!startDate) {
+      window.showToast('請選擇日期');
+      finish();
+      return;
+    }
+
+    const timestamp = new Date(`${startDate}T00:00`).toISOString();
+
+    const data = {
+      title,
+      startDate,
+      timestamp,
+      allDay: true,
+      isJoint: document.getElementById('check-partner')?.checked || false,
+      status: document.getElementById('input-status')?.value || 'confirmed',
+      note: document.getElementById('input-note')?.value || '',
+      creator: currentUserRole,
+      color: currentSelectedColor,
+      createdAt: new Date().toISOString()
+    };
+
+    const req = editingEventId
+      ? db.collection('events').doc(editingEventId).update(data)
+      : db.collection('events').add(data);
+
+    req.then(() => {
+      window.showToast('行程已儲存');
+      window.closeAddModal();
+    }).catch(err => {
+      console.error(err);
+      window.showToast('儲存失敗');
+    }).finally(finish);
+
+  } catch (err) {
+    console.error(err);
+    window.showToast('儲存失敗');
+    finish();
+  }
+};
+
         window.deleteCurrentEvent = function() { if(!editingEventId){ window.showToast("無法識別 ID"); return; } window.confirmDelete(); };
         window.confirmDelete = function() { const m = document.getElementById('confirm-modal'); m.classList.remove('hidden'); setTimeout(() => m.classList.add('visible'), 10); };
         window.closeConfirmModal = function() { const m = document.getElementById('confirm-modal'); m.classList.remove('visible'); setTimeout(() => m.classList.add('hidden'), 200); };
         window.executeDelete = function() { if(editingEventId) { db.collection('events').doc(editingEventId).delete().then(() => { window.closeConfirmModal(); window.closeAddModal(); window.showToast('行程已刪除'); }).catch(e => { console.error(e); window.showToast('刪除失敗'); }); } };
-window.openAddModal = function() {
-  currentCategory = 'default'; // ⭐ 強制極簡模式
-    editingEventId = null;
+window.openAddModal = function () {
+  editingEventId = null;
 
+  // === 基本欄位（都存在）===
   document.getElementById('input-title').value = '';
-  document.getElementById('input-location').value = '';
   document.getElementById('input-note').value = '';
-  document.getElementById('btn-delete').classList.add('hidden');
+  document.getElementById('input-date-start').value = '';
+  document.getElementById('display-date-start').textContent = '選擇日期';
 
-  window.setCategory('default');
-  window.setNowToInputs();
+  // 一起 / 不一起
+  const partner = document.getElementById('check-partner');
+  partner.checked = false;
+
+  // 狀態預設 confirmed
   window.setStatus('confirmed');
 
-  document.getElementById('check-allday').checked = true;
-  window.toggleAllDay();
-
-  document.getElementById('check-partner').checked = false;
-  window.updateParticipantsPreview();
-
-  // ⭐⭐ 關鍵兩行 ⭐⭐
-  colorPickerTarget = 'event';
+  // 顏色邏輯（保留，但不碰 UI）
   currentSelectedColor = roleColors[currentUserRole];
-  window.syncSelectedColorUI(); // ← 只在這裡同步 UI
+  colorPickerTarget = 'event';
 
+  // 🔓 開 modal
   const m = document.getElementById('add-modal');
   m.classList.remove('hidden');
-  setTimeout(()=>m.classList.add('visible'),10);
-};        window.openEditModal = function(id) { editingEventId = id; const evt = allEventsCache.find(e=>e.id===id); if(!evt) return; document.getElementById('input-title').value = evt.title; document.getElementById('input-location').value = evt.location||''; document.getElementById('input-note').value = evt.note||''; document.getElementById('input-date-start').value = evt.startDate; const defTime = '09:00'; document.getElementById('input-time-start').value = evt.startTime || defTime; document.getElementById('input-date-end').value = evt.endDate; document.getElementById('input-time-end').value = evt.endTime || defTime; window.updateDateDisplay('start', evt.startDate); window.updateTimeDisplay('start', evt.startTime || defTime); window.updateDateDisplay('end', evt.endDate); window.updateTimeDisplay('end', evt.endTime || defTime); document.getElementById('check-allday').checked = evt.allDay; window.toggleAllDay(); document.getElementById('check-partner').checked = evt.isJoint || false; window.updateParticipantsPreview(); colorPickerTarget = 'event'; window.selectGlobalColor({hex: evt.color, name:'Current'}); currentSelectedColor = evt.color;window.syncSelectedColorUI();window.setCategory(evt.category||'default'); window.setStatus(evt.status||'confirmed'); if(evt.category==='vacation') { document.getElementById('check-recurring').checked = evt.isRecurring; window.toggleRecurring(); } if(evt.category==='travel') { document.getElementById('input-transport-type').value=evt.transportType; window.toggleTravelFields(); } if(evt.category==='appointment') { document.getElementById('check-booked').checked=evt.isBooked; window.toggleBooked(); } if(evt.category==='gathering') document.getElementById('input-people').value = evt.withWho||''; document.getElementById('btn-delete').classList.remove('hidden'); const m=document.getElementById('add-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); };
-        window.closeAddModal = function() { const m=document.getElementById('add-modal'); m.classList.remove('visible'); setTimeout(()=>m.classList.add('hidden'),200); };
-        window.openAddTodoModal = function() { editingTodoId = null; document.getElementById('todo-modal-title').textContent = '新增待辦事項'; document.getElementById('todo-modal-btn').textContent = '新增待辦'; document.getElementById('todo-input-title').value = ''; document.getElementById('input-date-todo').value = ''; document.getElementById('input-time-todo').value = ''; document.getElementById('display-date-todo').textContent = '--/--/--'; document.getElementById('display-time-todo').value = ''; document.getElementById('todo-check-joint').checked = false; document.getElementById('todo-check-calendar').checked = false; window.checkTodoCalendarOption(); const m = document.getElementById('add-todo-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); };
+  setTimeout(() => m.classList.add('visible'), 10);
+};
+window.openEditModal = function (id) {
+  const evt = allEventsCache.find(e => e.id === id);
+  if (!evt) {
+    window.showToast('找不到行程');
+    return;
+  }
+
+  editingEventId = id;
+
+  // === 標題 ===
+  document.getElementById('input-title').value = evt.title || '';
+
+  // === 日期 ===
+  if (evt.startDate) {
+    document.getElementById('input-date-start').value = evt.startDate;
+    window.updateDateDisplay('start', evt.startDate);
+  } else if (evt.timestamp) {
+    const d = new Date(evt.timestamp);
+    const ds = d.toISOString().split('T')[0];
+    document.getElementById('input-date-start').value = ds;
+    window.updateDateDisplay('start', ds);
+  }
+
+  // === 一起 / 不一起 ===
+  const partner = document.getElementById('check-partner');
+  partner.checked = !!evt.isJoint;
+
+  // === 狀態 ===
+  window.setStatus(evt.status || 'confirmed');
+
+  // === 備註 ===
+  document.getElementById('input-note').value = evt.note || '';
+
+  // === 顏色邏輯（只保留資料，不碰 UI）===
+  currentSelectedColor = evt.color || roleColors[evt.creator] || roleColors[currentUserRole];
+  colorPickerTarget = 'event';
+
+  // === 開 modal ===
+  const m = document.getElementById('add-modal');
+  m.classList.remove('hidden');
+  setTimeout(() => m.classList.add('visible'), 10);
+};
+ window.openAddTodoModal = function() { editingTodoId = null; document.getElementById('todo-modal-title').textContent = '新增待辦事項'; document.getElementById('todo-modal-btn').textContent = '新增待辦'; document.getElementById('todo-input-title').value = ''; document.getElementById('input-date-todo').value = ''; document.getElementById('input-time-todo').value = ''; document.getElementById('display-date-todo').textContent = '--/--/--'; document.getElementById('display-time-todo').value = ''; document.getElementById('todo-check-joint').checked = false; document.getElementById('todo-check-calendar').checked = false; window.checkTodoCalendarOption(); const m = document.getElementById('add-todo-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); };
+ window.closeAddModal = function() {
+  // 🔒 保險重置：避免儲存鎖卡住
+  window.__savingEvent = false;
+
+  const m = document.getElementById('add-modal');
+  if (!m) return;
+
+  m.classList.remove('visible');
+  setTimeout(() => m.classList.add('hidden'), 200);
+
+  // 解鎖頁面捲動（iOS/PWA 常見）
+  document.body.style.overflow = '';
+};
         window.openEditTodoModal = function(id) { editingTodoId = id; const todo = allTodosCache.find(t => t.id === id); if(!todo) return; document.getElementById('todo-modal-title').textContent = '編輯待辦事項'; document.getElementById('todo-modal-btn').textContent = '儲存修改'; document.getElementById('todo-input-title').value = todo.title; if(todo.dueDate) { document.getElementById('input-date-todo').value = todo.dueDate; window.updateDateDisplay('todo', todo.dueDate); } else { document.getElementById('input-date-todo').value = ''; window.updateDateDisplay('todo', ''); } if(todo.dueTime) { document.getElementById('input-time-todo').value = todo.dueTime; document.getElementById('display-time-todo').value = todo.dueTime; } else { document.getElementById('input-time-todo').value = ''; document.getElementById('display-time-todo').value = ''; } document.getElementById('todo-check-joint').checked = todo.isJoint; document.getElementById('todo-check-calendar').checked = todo.addToCalendar; window.checkTodoCalendarOption(); const m = document.getElementById('add-todo-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); };
         window.closeAddTodoModal = function() { const m = document.getElementById('add-todo-modal'); m.classList.remove('visible'); setTimeout(()=>m.classList.add('hidden'),200); };
         window.checkTodoCalendarOption = function() { const dateVal = document.getElementById('input-date-todo').value; const opt = document.getElementById('todo-calendar-option'); const check = document.getElementById('todo-check-calendar'); if (dateVal) { opt.classList.remove('opacity-50', 'pointer-events-none'); check.disabled = false; } else { opt.classList.add('opacity-50', 'pointer-events-none'); check.disabled = true; check.checked = false; } };
@@ -858,7 +1074,11 @@ window.openAddModal = function() {
         window.toggleTodo = function(id,s) { db.collection('todos').doc(id).update({done:s}); };
         window.deleteTodo = function(id) { if(confirm('刪除?')) db.collection('todos').doc(id).delete(); };
         window.renderTodos = function(todos) { const jointList=document.getElementById('todo-list-joint'), haohaoList=document.getElementById('todo-list-haohao'), maomaoList=document.getElementById('todo-list-maomao'), dashboardList=document.getElementById('dashboard-todo-list'); if(!jointList) return; jointList.innerHTML=''; haohaoList.innerHTML=''; maomaoList.innerHTML=''; dashboardList.innerHTML=''; let pendingCount=0; todos.forEach(t => { let colorHex = roleColors.haohao; let container = haohaoList; if (t.isJoint) { colorHex = roleColors.joint; container = jointList; } else if (t.creator === 'maomao') { colorHex = roleColors.maomao; container = maomaoList; } let checkStyle = t.done ? `background-color: #d1d5db; border-color: #d1d5db;` : `border-color: ${colorHex};`; let titleClass = t.done ? "text-gray-400 line-through" : "text-gray-800"; if (t.done) { } else { pendingCount++; } let calInfo = t.dueDate ? `<span class="text-[10px] ${t.done?'text-gray-300':'text-gray-400'} ml-2 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${t.dueDate}</span>` : ''; const html = `<div class="todo-item flex items-center p-3 bg-white rounded-xl border border-gray-100 shadow-sm"><div class="flex-none p-2 cursor-pointer" onclick="window.toggleTodo('${t.id}', ${!t.done}); event.stopPropagation();"><div class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors text-white" style="${checkStyle}">${t.done?'<i data-lucide="check" class="w-3 h-3"></i>':''}</div></div><div class="flex-1 px-2 cursor-pointer overflow-hidden" onclick="window.openEditTodoModal('${t.id}')"><span class="${titleClass} font-medium truncate block">${t.title}</span>${calInfo}</div><button onclick="window.deleteTodo('${t.id}'); event.stopPropagation();" class="flex-none p-2 text-gray-300 hover:text-red-400"><i data-lucide="x" class="w-4 h-4"></i></button></div>`; container.innerHTML += html; }); if (pendingCount === 0) dashboardList.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">沒有未完成的待辦事項 🎉</p>`; else { const pendings = todos.filter(t => !t.done).slice(0, 3); pendings.forEach(t => { let dotColor = t.isJoint ? roleColors.joint : (t.creator==='haohao' ? roleColors.haohao : roleColors.maomao); dashboardList.innerHTML += `<div class="flex items-center gap-2 text-sm bg-gray-50 p-2 rounded-lg border border-gray-100"><div class="w-2 h-2 rounded-full" style="background-color: ${dotColor}"></div><span class="truncate text-gray-700">${t.title}</span></div>`; }); if (todos.filter(t => !t.done).length > 3) dashboardList.innerHTML += `<div class="text-center text-xs text-gray-400 mt-1">還有 ${todos.filter(t => !t.done).length - 3} 個項目...</div>`; } if(typeof lucide !== 'undefined') lucide.createIcons(); };
-        window.openCalendar = function(t) { calTargetInput=t; let v = ''; if (t === 'recur') v = document.getElementById('input-recur-until').value; else if (t === 'todo') v = document.getElementById('input-date-todo').value; else v = document.getElementById(`input-date-${t}`).value; calCurrentDate=v?new Date(v):new Date(); if(isNaN(calCurrentDate.getTime())) calCurrentDate = new Date(); window.renderCalendarModal(); const m=document.getElementById('calendar-picker-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); };
+        window.openCalendar = function(t) { calTargetInput=t; let v = ''; if (t === 'recur') v = document.getElementById('input-recur-until').value; else if (t === 'todo') v = document.getElementById('input-date-todo').value; else v = document.getElementById(`input-date-${t}`).value; calCurrentDate=v?new Date(v):new Date(); if(isNaN(calCurrentDate.getTime())) calCurrentDate = new Date(); window.renderCalendarModal(); 
+        const m=document.getElementById('calendar-picker-modal');
+window.lockBodyScroll(true);
+m.classList.remove('hidden');
+setTimeout(()=>m.classList.add('visible'),10); };
         window.closeCalendar = function() { const m=document.getElementById('calendar-picker-modal'); m.classList.remove('visible'); setTimeout(()=>m.classList.add('hidden'),200); };
         window.selectCalDate = function(y,m,d) { const s=`${y}-${(m+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`; if(calTargetInput==='recur') { document.getElementById('input-recur-until').value=s; window.updateDateDisplay('recur',s); } else if(calTargetInput==='todo') { document.getElementById('input-date-todo').value=s; window.updateDateDisplay('todo',s); window.checkTodoCalendarOption(); } else { document.getElementById(`input-date-${calTargetInput}`).value=s; window.updateDateDisplay(calTargetInput,s); } window.closeCalendar(); if(calTargetInput==='start') window.autoUpdateEnd(); else if(calTargetInput==='end') window.checkEndDateValidity(); };
         window.changeCalMonth = function(offset) {
