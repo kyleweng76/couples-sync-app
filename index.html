@@ -678,14 +678,6 @@ nav .nav-item.active::after {
 
     </div>
 
-    <!-- Footer -->
-    <div class="p-4 border-t border-gray-100 flex justify-end gap-3 pb-safe">
-      <button
-        onclick="window.saveEvent()"
-        class="px-6 py-2 text-sm font-bold text-white bg-ttgreen rounded-lg shadow-md active:scale-95"
-      >保存</button>
-    </div>
-
   </div>
 </div>
 
@@ -917,20 +909,20 @@ window.saveEvent = function () {
   if (window.__savingEvent === true) return;
   window.__savingEvent = true;
 
-  const saveBtn = document.querySelector('#add-modal button[onclick="window.saveEvent()"]');
-  if (saveBtn) {
-    saveBtn.disabled = true;
-    saveBtn.textContent = '儲存中…';
-    saveBtn.classList.add('opacity-60');
-  }
+  const saveBtn = document.getElementById('add-save-btn');
+if (saveBtn) {
+  saveBtn.disabled = true;
+  saveBtn.textContent = '儲存中…';
+  saveBtn.classList.add('opacity-60');
+}
 
   const finish = () => {
     window.__savingEvent = false;
     if (saveBtn) {
-      saveBtn.disabled = false;
-      saveBtn.textContent = '保存';
-      saveBtn.classList.remove('opacity-60');
-    }
+  saveBtn.disabled = false;
+  saveBtn.textContent = '儲存';
+  saveBtn.classList.remove('opacity-60');
+}
   };
 
   try {
