@@ -283,112 +283,6 @@ nav .nav-item.active::after {
   border-radius: 999px;
   background-color: var(--active-tab-color, #2cc998);
 }
-/* ===== Apple-like Calendar Sheet ===== */
-#calendar-picker-modal {
-  align-items: flex-end; /* mobile: bottom sheet */
-}
-
-/* backdrop */
-#calendar-picker-modal > .absolute {
-  background: rgba(0,0,0,.28);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-
-/* sheet */
-#calendar-picker-modal .relative {
-  width: 100%;
-  max-width: 420px;
-  border-radius: 22px 22px 0 0;
-  padding: 16px;
-  box-shadow: 0 -12px 40px rgba(0,0,0,.18);
-  transform: translateY(20px);
-  transition: transform .22s ease, opacity .22s ease;
-}
-
-/* show animation */
-#calendar-picker-modal.visible .relative {
-  transform: translateY(0);
-}
-
-/* desktop: center modal */
-@media (min-width: 768px) {
-  #calendar-picker-modal {
-    align-items: center;
-  }
-  #calendar-picker-modal .relative {
-    border-radius: 22px;
-  }
-}
-
-/* header typography */
-#calendar-picker-modal #cal-month-title {
-  font-size: 17px;
-  letter-spacing: .2px;
-}
-
-/* header buttons: iOS circle */
-#calendar-picker-modal button {
-  -webkit-tap-highlight-color: transparent;
-}
-
-#calendar-picker-modal .flex.gap-1 button {
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  background: #f2f2f7;
-}
-
-#calendar-picker-modal .flex.gap-1 button:active {
-  transform: scale(0.95);
-}
-
-/* weekday label */
-#calendar-picker-modal .cal-day-header {
-  font-size: 11px;
-  font-weight: 600;
-  color: #8e8e93;
-}
-
-/* day cell: more iOS */
-#calendar-picker-modal .cal-day {
-  width: 38px;
-  height: 38px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #1c1c1e;
-}
-
-/* hover/press */
-#calendar-picker-modal .cal-day:hover {
-  background: #f2f2f7;
-}
-#calendar-picker-modal .cal-day:active {
-  transform: scale(0.96);
-}
-
-/* today: ring (iOS style) */
-#calendar-picker-modal .cal-day.today {
-  color: var(--active-tab-color, #2cc998);
-  font-weight: 700;
-  box-shadow: inset 0 0 0 2px rgba(44,201,152,.35);
-}
-
-/* selected: solid */
-#calendar-picker-modal .cal-day.selected {
-  background: var(--active-tab-color, #2cc998);
-  color: #fff;
-  font-weight: 700;
-}
-
-/* empty */
-#calendar-picker-modal .cal-day.empty {
-  pointer-events: none;
-  background: transparent;
-}
     </style>
 </head>
 <body class="text-gray-700 h-screen flex flex-col overflow-hidden bg-white">
@@ -594,15 +488,19 @@ nav .nav-item.active::after {
   <div class="absolute inset-0 bg-black/20 backdrop-blur-[1px]" onclick="window.closeAddModal()"></div>
 
   <div class="relative bg-white w-full h-full md:h-auto md:w-[380px] md:rounded-2xl flex flex-col">
-    <!-- Header (Apple-like) -->
-    <div class="px-4 pt-4 pb-2 flex items-center justify-between" data-add-header="1">
-      <button onclick="window.closeAddModal()" class="text-ttgreen text-sm font-medium px-2 py-1 rounded-lg active:bg-green-50">取消</button>
-      <div class="text-sm font-bold text-gray-800">新增行程</div>
-      <div class="w-10"></div>
+
+    <!-- Top Bar -->
+    <div class="px-4 py-3 flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-10">
+      <button type="button" onclick="window.closeAddModal()" class="text-ttgreen font-semibold text-sm px-2 py-1 rounded-lg active:bg-green-50">取消</button>
+      <h3 class="text-sm font-bold text-gray-800">新增行程</h3>
+      <button id="add-save-btn" type="button" onclick="window.saveEvent()"
+        class="text-sm font-semibold px-3 py-1.5 rounded-lg bg-ttgreen text-white shadow-sm active:scale-95 transition disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed"
+        disabled
+      >儲存</button>
     </div>
 
     <!-- Title -->
-    <div class="px-6 pt-6 pb-2">
+    <div class="px-6 pt-4 pb-2">
       <label class="text-xs font-bold text-gray-400 mb-1 block">標題</label>
       <input
         type="text"
@@ -676,6 +574,18 @@ nav .nav-item.active::after {
         ></textarea>
       </div>
 
+    </div>
+
+    <!-- Footer -->
+    <div class="p-4 border-t border-gray-100 flex justify-end gap-3 pb-safe">
+      <button
+        onclick="window.closeAddModal()"
+        class="px-5 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg"
+      >取消</button>
+      <button
+        onclick="window.saveEvent()"
+        class="px-6 py-2 text-sm font-bold text-white bg-ttgreen rounded-lg shadow-md active:scale-95"
+      >保存</button>
     </div>
 
   </div>
@@ -763,17 +673,6 @@ nav .nav-item.active::after {
     </nav>
 
     <script>
-window.lockBodyScroll = function(lock) {
-  document.body.style.overflow = lock ? 'hidden' : '';
-};
-
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    const cal = document.getElementById('calendar-picker-modal');
-    if (cal && cal.classList.contains('visible')) window.closeCalendar();
-  }
-});
-
        /* ===== STABLE PATCH: SafeRun Helper ===== */
 window.safeRun = function (fn, label = 'unknown') {
   try {
@@ -844,6 +743,52 @@ function bindSnapshot(ref, cb, label = 'snapshot') {
         window.updateSettingsColorUI = function() { const h = document.getElementById('setting-color-haohao'); if(h) { h.style.backgroundColor = roleColors.haohao; document.getElementById('setting-color-maomao').style.backgroundColor = roleColors.maomao; document.getElementById('setting-color-joint').style.backgroundColor = roleColors.joint; } };
         window.setStatus = function(s) { document.getElementById('input-status').value = s; document.querySelectorAll('.status-btn').forEach(b=>{ if(b.dataset.status===s) b.classList.add('active'); else b.classList.remove('active'); }); };
         window.showToast = function(msg) { const t = document.getElementById('toast-container'); const m = document.getElementById('toast-message'); m.textContent = msg; t.classList.add('visible'); setTimeout(() => t.classList.remove('visible'), 2000); };
+        // --- Event Modal UX helpers (Apple-like) ---
+        window.setEventModalMode = function(mode) {
+            const titleEl = document.getElementById('add-modal-title');
+            const saveBtn = document.getElementById('add-save-btn');
+            if (titleEl) titleEl.textContent = (mode === 'edit') ? '編輯行程' : '新增行程';
+            if (saveBtn) saveBtn.textContent = (mode === 'edit') ? '更新' : '儲存';
+        };
+
+        window.updateEventSaveState = function() {
+            const saveBtn = document.getElementById('add-save-btn');
+            if (!saveBtn) return;
+            const title = document.getElementById('input-title')?.value?.trim();
+            const startDate = document.getElementById('input-date-start')?.value;
+            const ok = !!(title && startDate);
+
+            // 儲存中時維持 disabled
+            saveBtn.disabled = !ok || window.__savingEvent === true;
+            saveBtn.classList.toggle('opacity-60', saveBtn.disabled);
+        };
+
+        // 需要時自動判斷：沒帶 id 就是新增；有 id 就是編輯
+        window.openEventModal = function(id) {
+            if (id) return window.openEditModal(id);
+            return window.openAddModal();
+        };
+
+
+        // ===== Add Modal: Save Button UI =====
+        window.updateAddSaveButtonUI = function() {
+            const btn = document.getElementById('add-save-btn');
+            if (!btn) return;
+            const title = document.getElementById('input-title')?.value?.trim();
+            const date = document.getElementById('input-date-start')?.value;
+            const canSave = !!title && !!date;
+
+            btn.disabled = !canSave;
+
+            // 讓 disabled 狀態也看得出來是按鈕
+            if (!canSave) {
+                btn.classList.remove('bg-ttgreen','text-white','shadow-sm');
+                btn.classList.add('bg-gray-100','text-gray-400','border','border-gray-200');
+            } else {
+                btn.classList.remove('bg-gray-100','text-gray-400','border','border-gray-200');
+                btn.classList.add('bg-ttgreen','text-white','shadow-sm');
+            }
+        };
         window.updateParticipantsPreview = function() { const container = document.getElementById('participants-preview'); const isP = document.getElementById('check-partner').checked; let html = ''; html += `<div class="avatar-sm z-20" style="background-color:${roleColors[currentUserRole]}">${currentUserRole==='haohao'?'皓':'毛'}</div>`; if(isP) { const p = currentUserRole==='haohao'?'maomao':'haohao'; html += `<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[p]}">${p==='haohao'?'皓':'毛'}</div>`; } container.innerHTML = html; };
   window.setRole = function(role) {
   localStorage.setItem('user_role', role);
@@ -891,6 +836,8 @@ window.togglePartner = function() {
 
   colorPickerTarget = 'event';
 
+  window.updateAddSaveButtonUI();
+
   if (isChecked) {
     currentSelectedColor = roleColors.joint;
   } else {
@@ -899,54 +846,42 @@ window.togglePartner = function() {
 
 };
 window.saveEvent = function () {
-  if (!db) return;
+  if (!db) {
+    window.showToast('資料庫尚未連線');
+    return;
+  }
 
-  // anti double-tap
-  const now = Date.now();
-  if (now - __lastSaveAt < 800) return;
-  __lastSaveAt = now;
-
-  if (window.__savingEvent === true) return;
+  // 防連點
+  if (window.__savingEvent) return;
   window.__savingEvent = true;
 
-  const saveBtn = document.getElementById('add-save-btn');
-if (saveBtn) {
-  saveBtn.disabled = true;
-  saveBtn.textContent = '儲存中…';
-  saveBtn.classList.add('opacity-60');
-}
+    const saveBtn = document.getElementById('add-save-btn');
 
-  const finish = () => {
-    window.__savingEvent = false;
-    if (saveBtn) {
-  saveBtn.disabled = false;
-  saveBtn.textContent = '儲存';
-  saveBtn.classList.remove('opacity-60');
-}
-  };
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = '儲存中…';
+    saveBtn.classList.add('opacity-60');
+  }
 
   try {
     const title = document.getElementById('input-title')?.value?.trim();
     if (!title) {
       window.showToast('請填寫標題');
-      finish();
-      return;
+      throw new Error('Missing title');
     }
 
     const startDate = document.getElementById('input-date-start')?.value;
     if (!startDate) {
       window.showToast('請選擇日期');
-      finish();
-      return;
+      throw new Error('Missing date');
     }
 
-    const timestamp = new Date(`${startDate}T00:00`).toISOString();
+    const timestamp = new Date(`${startDate}T00:00:00`).toISOString();
 
     const data = {
       title,
       startDate,
       timestamp,
-      allDay: true,
       isJoint: document.getElementById('check-partner')?.checked || false,
       status: document.getElementById('input-status')?.value || 'confirmed',
       note: document.getElementById('input-note')?.value || '',
@@ -959,18 +894,31 @@ if (saveBtn) {
       ? db.collection('events').doc(editingEventId).update(data)
       : db.collection('events').add(data);
 
-    req.then(() => {
-      window.showToast('行程已儲存');
-      window.closeAddModal();
-    }).catch(err => {
-      console.error(err);
-      window.showToast('儲存失敗');
-    }).finally(finish);
+    req
+      .then(() => {
+        window.showToast('行程已儲存');
+        window.closeAddModal();
+      })
+      .catch(err => {
+        console.error(err);
+        window.showToast('儲存失敗');
+      })
+      .finally(() => {
+        window.__savingEvent = false;
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.textContent = '保存';
+          saveBtn.classList.remove('opacity-60');
+        }
+      });
 
   } catch (err) {
-    console.error(err);
-    window.showToast('儲存失敗');
-    finish();
+    window.__savingEvent = false;
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = '保存';
+      saveBtn.classList.remove('opacity-60');
+    }
   }
 };
 
@@ -1041,23 +989,20 @@ window.openEditModal = function (id) {
   colorPickerTarget = 'event';
 
   // === 開 modal ===
+  window.updateAddSaveButtonUI();
+
   const m = document.getElementById('add-modal');
   m.classList.remove('hidden');
   setTimeout(() => m.classList.add('visible'), 10);
 };
- window.openAddTodoModal = function() { editingTodoId = null; document.getElementById('todo-modal-title').textContent = '新增待辦事項'; document.getElementById('todo-modal-btn').textContent = '新增待辦'; document.getElementById('todo-input-title').value = ''; document.getElementById('input-date-todo').value = ''; document.getElementById('input-time-todo').value = ''; document.getElementById('display-date-todo').textContent = '--/--/--'; document.getElementById('display-time-todo').value = ''; document.getElementById('todo-check-joint').checked = false; document.getElementById('todo-check-calendar').checked = false; window.checkTodoCalendarOption(); const m = document.getElementById('add-todo-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); };
+ window.openAddTodoModal = function() { editingTodoId = null; document.getElementById('todo-modal-title').textContent = '新增待辦事項'; document.getElementById('todo-modal-btn').textContent = '新增待辦'; document.getElementById('todo-input-title').value = ''; document.getElementById('input-date-todo').value = ''; document.getElementById('input-time-todo').value = ''; document.getElementById('display-date-todo').textContent = '--/--/--'; document.getElementById('display-time-todo').value = ''; document.getElementById('todo-check-joint').checked = false; document.getElementById('todo-check-calendar').checked = false; window.checkTodoCalendarOption(); const m = document.getElementById('add-todo-modal'); window.updateEventSaveState?.();
+  m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); };
  window.closeAddModal = function() {
-  // 🔒 保險重置：避免儲存鎖卡住
-  window.__savingEvent = false;
-
-  const m = document.getElementById('add-modal');
-  if (!m) return;
-
+  window.__savingEvent = false; // 🔒 保險重置
+  const m=document.getElementById('add-modal');
   m.classList.remove('visible');
-  setTimeout(() => m.classList.add('hidden'), 200);
-
-  // 解鎖頁面捲動（iOS/PWA 常見）
-  document.body.style.overflow = '';
+  setTimeout(()=>m.classList.add('hidden'),200);
+  window.updateEventSaveState?.();
 };
         window.openEditTodoModal = function(id) { editingTodoId = id; const todo = allTodosCache.find(t => t.id === id); if(!todo) return; document.getElementById('todo-modal-title').textContent = '編輯待辦事項'; document.getElementById('todo-modal-btn').textContent = '儲存修改'; document.getElementById('todo-input-title').value = todo.title; if(todo.dueDate) { document.getElementById('input-date-todo').value = todo.dueDate; window.updateDateDisplay('todo', todo.dueDate); } else { document.getElementById('input-date-todo').value = ''; window.updateDateDisplay('todo', ''); } if(todo.dueTime) { document.getElementById('input-time-todo').value = todo.dueTime; document.getElementById('display-time-todo').value = todo.dueTime; } else { document.getElementById('input-time-todo').value = ''; document.getElementById('display-time-todo').value = ''; } document.getElementById('todo-check-joint').checked = todo.isJoint; document.getElementById('todo-check-calendar').checked = todo.addToCalendar; window.checkTodoCalendarOption(); const m = document.getElementById('add-todo-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); };
         window.closeAddTodoModal = function() { const m = document.getElementById('add-todo-modal'); m.classList.remove('visible'); setTimeout(()=>m.classList.add('hidden'),200); };
@@ -1066,13 +1011,11 @@ window.openEditModal = function (id) {
         window.toggleTodo = function(id,s) { db.collection('todos').doc(id).update({done:s}); };
         window.deleteTodo = function(id) { if(confirm('刪除?')) db.collection('todos').doc(id).delete(); };
         window.renderTodos = function(todos) { const jointList=document.getElementById('todo-list-joint'), haohaoList=document.getElementById('todo-list-haohao'), maomaoList=document.getElementById('todo-list-maomao'), dashboardList=document.getElementById('dashboard-todo-list'); if(!jointList) return; jointList.innerHTML=''; haohaoList.innerHTML=''; maomaoList.innerHTML=''; dashboardList.innerHTML=''; let pendingCount=0; todos.forEach(t => { let colorHex = roleColors.haohao; let container = haohaoList; if (t.isJoint) { colorHex = roleColors.joint; container = jointList; } else if (t.creator === 'maomao') { colorHex = roleColors.maomao; container = maomaoList; } let checkStyle = t.done ? `background-color: #d1d5db; border-color: #d1d5db;` : `border-color: ${colorHex};`; let titleClass = t.done ? "text-gray-400 line-through" : "text-gray-800"; if (t.done) { } else { pendingCount++; } let calInfo = t.dueDate ? `<span class="text-[10px] ${t.done?'text-gray-300':'text-gray-400'} ml-2 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${t.dueDate}</span>` : ''; const html = `<div class="todo-item flex items-center p-3 bg-white rounded-xl border border-gray-100 shadow-sm"><div class="flex-none p-2 cursor-pointer" onclick="window.toggleTodo('${t.id}', ${!t.done}); event.stopPropagation();"><div class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors text-white" style="${checkStyle}">${t.done?'<i data-lucide="check" class="w-3 h-3"></i>':''}</div></div><div class="flex-1 px-2 cursor-pointer overflow-hidden" onclick="window.openEditTodoModal('${t.id}')"><span class="${titleClass} font-medium truncate block">${t.title}</span>${calInfo}</div><button onclick="window.deleteTodo('${t.id}'); event.stopPropagation();" class="flex-none p-2 text-gray-300 hover:text-red-400"><i data-lucide="x" class="w-4 h-4"></i></button></div>`; container.innerHTML += html; }); if (pendingCount === 0) dashboardList.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">沒有未完成的待辦事項 🎉</p>`; else { const pendings = todos.filter(t => !t.done).slice(0, 3); pendings.forEach(t => { let dotColor = t.isJoint ? roleColors.joint : (t.creator==='haohao' ? roleColors.haohao : roleColors.maomao); dashboardList.innerHTML += `<div class="flex items-center gap-2 text-sm bg-gray-50 p-2 rounded-lg border border-gray-100"><div class="w-2 h-2 rounded-full" style="background-color: ${dotColor}"></div><span class="truncate text-gray-700">${t.title}</span></div>`; }); if (todos.filter(t => !t.done).length > 3) dashboardList.innerHTML += `<div class="text-center text-xs text-gray-400 mt-1">還有 ${todos.filter(t => !t.done).length - 3} 個項目...</div>`; } if(typeof lucide !== 'undefined') lucide.createIcons(); };
-        window.openCalendar = function(t) { calTargetInput=t; let v = ''; if (t === 'recur') v = document.getElementById('input-recur-until').value; else if (t === 'todo') v = document.getElementById('input-date-todo').value; else v = document.getElementById(`input-date-${t}`).value; calCurrentDate=v?new Date(v):new Date(); if(isNaN(calCurrentDate.getTime())) calCurrentDate = new Date(); window.renderCalendarModal(); 
-        const m=document.getElementById('calendar-picker-modal');
-window.lockBodyScroll(true);
-m.classList.remove('hidden');
-setTimeout(()=>m.classList.add('visible'),10); };
+        window.openCalendar = function(t) { calTargetInput=t; let v = ''; if (t === 'recur') v = document.getElementById('input-recur-until').value; else if (t === 'todo') v = document.getElementById('input-date-todo').value; else v = document.getElementById(`input-date-${t}`).value; calCurrentDate=v?new Date(v):new Date(); if(isNaN(calCurrentDate.getTime())) calCurrentDate = new Date(); window.renderCalendarModal(); const m=document.getElementById('calendar-picker-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); };
         window.closeCalendar = function() { const m=document.getElementById('calendar-picker-modal'); m.classList.remove('visible'); setTimeout(()=>m.classList.add('hidden'),200); };
-        window.selectCalDate = function(y,m,d) { const s=`${y}-${(m+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`; if(calTargetInput==='recur') { document.getElementById('input-recur-until').value=s; window.updateDateDisplay('recur',s); } else if(calTargetInput==='todo') { document.getElementById('input-date-todo').value=s; window.updateDateDisplay('todo',s); window.checkTodoCalendarOption(); } else { document.getElementById(`input-date-${calTargetInput}`).value=s; window.updateDateDisplay(calTargetInput,s); } window.closeCalendar(); if(calTargetInput==='start') window.autoUpdateEnd(); else if(calTargetInput==='end') window.checkEndDateValidity(); };
+        window.selectCalDate = function(y,m,d) { const s=`${y}-${(m+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`; if(calTargetInput==='recur') { document.getElementById('input-recur-until').value=s; window.updateDateDisplay('recur',s); } else if(calTargetInput==='todo') { document.getElementById('input-date-todo').value=s; window.updateDateDisplay('todo',s); window.checkTodoCalendarOption(); } else { document.getElementById(`input-date-${calTargetInput}`).value=s; window.updateDateDisplay(calTargetInput,s); }
+  window.updateAddSaveButtonUI(); window.closeCalendar(); if(calTargetInput==='start') window.autoUpdateEnd(); else if(calTargetInput==='end') window.checkEndDateValidity(); };
+        window.updateEventSaveState?.();
         window.changeCalMonth = function(offset) {
   calCurrentDate.setMonth(calCurrentDate.getMonth() + offset);
   window.renderCalendarModal();
@@ -1272,6 +1215,14 @@ document.addEventListener('DOMContentLoaded', () => {
   safeRun(() => {
     if (typeof lucide !== 'undefined') {
       lucide.createIcons();
+
+
+    // Add modal save btn state
+    const titleInput = document.getElementById('input-title');
+    if (titleInput && !titleInput.dataset.boundSaveUi) {
+      titleInput.addEventListener('input', () => window.updateAddSaveButtonUI());
+      titleInput.dataset.boundSaveUi = '1';
+    }
     }
 
     // ⭐ 初始化 Active Tab 指示線顏色
