@@ -489,15 +489,16 @@ nav .nav-item.active::after {
 
   <div class="relative bg-white w-full h-full md:h-auto md:w-[380px] md:rounded-2xl flex flex-col">
 
-    <!-- Top Bar -->
-    <div class="px-4 py-3 flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-10">
-      <button type="button" onclick="window.closeAddModal()" class="text-ttgreen font-semibold text-sm px-2 py-1 rounded-lg active:bg-green-50">取消</button>
-      <h3 class="text-sm font-bold text-gray-800">新增行程</h3>
-      <button id="add-save-btn" type="button" onclick="window.saveEvent()"
-        class="text-sm font-semibold px-3 py-1.5 rounded-lg bg-ttgreen text-white shadow-sm active:scale-95 transition disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed"
-        disabled
-      >儲存</button>
-    </div>
+   <!-- Modal Top Bar (iOS-like) -->
+<div class="flex items-center justify-between px-4 pt-4 pb-2">
+  <button onclick="window.closeAddModal()" class="text-ttgreen text-sm font-medium px-2 py-1 rounded-lg active:bg-green-50">
+    取消
+  </button>
+  <div class="text-sm font-semibold text-gray-800">新增行程</div>
+  <button id="btn-save-top" onclick="window.saveEvent()" class="text-ttgreen text-sm font-semibold px-2 py-1 rounded-lg active:bg-green-50">
+    儲存
+  </button>
+</div>
 
     <!-- Title -->
     <div class="px-6 pt-4 pb-2">
@@ -777,8 +778,20 @@ function bindSnapshot(ref, cb, label = 'snapshot') {
                 btn.classList.add('bg-ttgreen','text-white','shadow-sm');
             }
         };
-        window.updateParticipantsPreview = function() { const container = document.getElementById('participants-preview'); const isP = document.getElementById('check-partner').checked; let html = ''; html += `<div class="avatar-sm z-20" style="background-color:${roleColors[currentUserRole]}">${currentUserRole==='haohao'?'皓':'毛'}</div>`; if(isP) { const p = currentUserRole==='haohao'?'maomao':'haohao'; html += `<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[p]}">${p==='haohao'?'皓':'毛'}</div>`; } container.innerHTML = html; };
-  window.setRole = function(role) {
+window.updateParticipantsPreview = function() {
+  const container = document.getElementById('participants-preview');
+  if (!container) return; // ✅ 沒有這個區塊就直接跳過
+
+  const isP = document.getElementById('check-partner')?.checked;
+  let html = '';
+  html += `<div class="avatar-sm z-20" style="background-color:${roleColors[currentUserRole]}">${currentUserRole==='haohao'?'皓':'毛'}</div>`;
+  if(isP) {
+    const p = currentUserRole==='haohao'?'maomao':'haohao';
+    html += `<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[p]}">${p==='haohao'?'皓':'毛'}</div>`;
+  }
+  container.innerHTML = html;
+};
+        window.setRole = function(role) {
   localStorage.setItem('user_role', role);
   currentUserRole = role;
   window.updateRoleUI();
@@ -915,29 +928,53 @@ window.saveEvent = function () {
         window.closeConfirmModal = function() { const m = document.getElementById('confirm-modal'); m.classList.remove('visible'); setTimeout(() => m.classList.add('hidden'), 200); };
         window.executeDelete = function() { if(editingEventId) { db.collection('events').doc(editingEventId).delete().then(() => { window.closeConfirmModal(); window.closeAddModal(); window.showToast('行程已刪除'); }).catch(e => { console.error(e); window.showToast('刪除失敗'); }); } };
 window.openAddModal = function () {
-  editingEventId = null;
+  try {
+    // 進入「新增」模式
+    editingEventId = null;
+    if (typeof window.setEventModalMode === 'function') window.setEventModalMode('add');
 
-  // === 基本欄位（都存在）===
-  document.getElementById('input-title').value = '';
-  document.getElementById('input-note').value = '';
-  document.getElementById('input-date-start').value = '';
-  document.getElementById('display-date-start').textContent = '選擇日期';
+    // 清欄位（全部用防呆，避免抓不到元素直接噴錯）
+    const titleEl = document.getElementById('input-title');
+    if (titleEl) titleEl.value = '';
 
-  // 一起 / 不一起
-  const partner = document.getElementById('check-partner');
-  partner.checked = false;
+    const noteEl = document.getElementById('input-note');
+    if (noteEl) noteEl.value = '';
 
-  // 狀態預設 confirmed
-  window.setStatus('confirmed');
+    const dateStartEl = document.getElementById('input-date-start');
+    if (dateStartEl) dateStartEl.value = '';
 
-  // 顏色邏輯（保留，但不碰 UI）
-  currentSelectedColor = roleColors[currentUserRole];
-  colorPickerTarget = 'event';
+    // 日期顯示（若你有 updateDateDisplay）
+    if (typeof window.updateDateDisplay === 'function') window.updateDateDisplay('start', '');
 
-  // 🔓 開 modal
-  const m = document.getElementById('add-modal');
-  m.classList.remove('hidden');
-  setTimeout(() => m.classList.add('visible'), 10);
+    const partnerEl = document.getElementById('check-partner');
+    if (partnerEl) partnerEl.checked = false;
+
+    // 狀態預設 confirmed
+    window.setStatus?.('confirmed');
+
+    // 顏色預設
+    if (typeof roleColors !== 'undefined' && typeof currentUserRole !== 'undefined') {
+      currentSelectedColor = roleColors[currentUserRole];
+    }
+    colorPickerTarget = 'event';
+
+    // 解除儲存鎖
+    window.__savingEvent = false;
+    window.updateEventSaveState?.();
+    if (typeof window.updateAddSaveButtonUI === 'function') window.updateAddSaveButtonUI();
+
+    // 打開 modal
+    const m = document.getElementById('add-modal');
+    if (!m) {
+      console.error('[openAddModal] 找不到 #add-modal');
+      return;
+    }
+    m.classList.remove('hidden');
+    requestAnimationFrame(() => m.classList.add('visible'));
+  } catch (err) {
+    console.error('[openAddModal] error:', err);
+    alert('新增視窗打不開：請開 Console 看錯誤訊息（我已把錯誤印出）。');
+  }
 };
 window.openEditModal = function (id) {
   const evt = allEventsCache.find(e => e.id === id);
@@ -985,13 +1022,16 @@ window.openEditModal = function (id) {
 };
  window.openAddTodoModal = function() { editingTodoId = null; document.getElementById('todo-modal-title').textContent = '新增待辦事項'; document.getElementById('todo-modal-btn').textContent = '新增待辦'; document.getElementById('todo-input-title').value = ''; document.getElementById('input-date-todo').value = ''; document.getElementById('input-time-todo').value = ''; document.getElementById('display-date-todo').textContent = '--/--/--'; document.getElementById('display-time-todo').value = ''; document.getElementById('todo-check-joint').checked = false; document.getElementById('todo-check-calendar').checked = false; window.checkTodoCalendarOption(); const m = document.getElementById('add-todo-modal'); window.updateEventSaveState?.();
   m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); };
- window.closeAddModal = function() {
-  window.__savingEvent = false; // 🔒 保險重置
-  const m=document.getElementById('add-modal');
+ window.closeAddModal = function () {
+  window.__savingEvent = false;
+  const m = document.getElementById('add-modal');
+  if (!m) return;
   m.classList.remove('visible');
-  setTimeout(()=>m.classList.add('hidden'),200);
-  window.updateEventSaveState?.();
+  setTimeout(() => m.classList.add('hidden'), 200);
 };
+if (typeof window.updateEventSaveState === 'function') {
+  window.updateEventSaveState();
+}
         window.openEditTodoModal = function(id) { editingTodoId = id; const todo = allTodosCache.find(t => t.id === id); if(!todo) return; document.getElementById('todo-modal-title').textContent = '編輯待辦事項'; document.getElementById('todo-modal-btn').textContent = '儲存修改'; document.getElementById('todo-input-title').value = todo.title; if(todo.dueDate) { document.getElementById('input-date-todo').value = todo.dueDate; window.updateDateDisplay('todo', todo.dueDate); } else { document.getElementById('input-date-todo').value = ''; window.updateDateDisplay('todo', ''); } if(todo.dueTime) { document.getElementById('input-time-todo').value = todo.dueTime; document.getElementById('display-time-todo').value = todo.dueTime; } else { document.getElementById('input-time-todo').value = ''; document.getElementById('display-time-todo').value = ''; } document.getElementById('todo-check-joint').checked = todo.isJoint; document.getElementById('todo-check-calendar').checked = todo.addToCalendar; window.checkTodoCalendarOption(); const m = document.getElementById('add-todo-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); };
         window.closeAddTodoModal = function() { const m = document.getElementById('add-todo-modal'); m.classList.remove('visible'); setTimeout(()=>m.classList.add('hidden'),200); };
         window.checkTodoCalendarOption = function() { const dateVal = document.getElementById('input-date-todo').value; const opt = document.getElementById('todo-calendar-option'); const check = document.getElementById('todo-check-calendar'); if (dateVal) { opt.classList.remove('opacity-50', 'pointer-events-none'); check.disabled = false; } else { opt.classList.add('opacity-50', 'pointer-events-none'); check.disabled = true; check.checked = false; } };
