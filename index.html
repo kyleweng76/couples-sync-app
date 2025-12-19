@@ -391,6 +391,23 @@ nav .nav-item.active::after {
 .ios-input::placeholder {
   color: #9ca3af;
 }
+.ios-row-input { cursor: default; }
+.ios-row-input:active { background: transparent; }
+/* iOS switch */
+.ios-switch { position: relative; display: inline-block; width: 52px; height: 32px; }
+.ios-switch input { opacity: 0; width: 0; height: 0; }
+.ios-slider {
+  position: absolute; cursor: pointer; inset: 0;
+  background: #e5e7eb; border-radius: 999px; transition: .2s;
+}
+.ios-slider:before {
+  position: absolute; content: "";
+  height: 28px; width: 28px; left: 2px; top: 2px;
+  background: white; border-radius: 999px; transition: .2s;
+  box-shadow: 0 2px 6px rgba(0,0,0,.12);
+}
+.ios-switch input:checked + .ios-slider { background: #2cc998; }
+.ios-switch input:checked + .ios-slider:before { transform: translateX(20px); }
 </style>
 </head>
 <body class="text-gray-700 h-screen flex flex-col overflow-hidden bg-white">
@@ -633,31 +650,26 @@ nav .nav-item.active::after {
   </div>
 </div>
 
-    <!-- Title -->
-    <div class="px-6 pt-4 pb-2">
-      <label class="text-xs font-bold text-gray-400 mb-1 block">標題</label>
-      <input
-        type="text"
-        id="input-title"
-        placeholder="輸入行程標題"
-        class="w-full text-xl font-bold text-gray-800 border-b border-gray-200 pb-2 focus:outline-none focus:border-ttgreen bg-transparent"
-      />
-    </div>
+    <!-- Title (iOS row) -->
+<div class="ios-row ios-row-input">
+  <span class="ios-label">標題</span>
+  <input
+    type="text"
+    id="input-title"
+    class="ios-input"
+    placeholder="輸入行程標題"
+  />
+</div>
 
     <!-- Content -->
     <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
 
-      <!-- Date -->
-<div class="bg-white border border-gray-200 rounded-xl px-4 py-3">
-  <label class="text-xs font-semibold text-gray-400 block mb-1">日期</label>
-  <input type="hidden" id="input-date-start">
-  <div
-    id="display-date-start"
-    class="dt-btn text-[17px] text-gray-900"
-    onclick="window.openCalendar('start')"
-  >
-    選擇日期
-  </div>
+      <!-- Date (iOS row) -->
+<input type="hidden" id="input-date-start">
+
+<div class="ios-row" onclick="window.openCalendar('start')">
+  <span class="ios-label">日期</span>
+  <span id="display-date-start" class="ios-value">選擇日期</span>
 </div>
 
      <!-- Time (Optional) -->
@@ -678,16 +690,14 @@ nav .nav-item.active::after {
   />
 </div>
 
-      <!-- Partner -->
-      <div class="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between">
-        <span class="text-sm text-gray-700">與對方一起</span>
-        <input
-          type="checkbox"
-          id="check-partner"
-          class="custom-checkbox"
-          onchange="window.togglePartner()"
-        />
-      </div>
+      <!-- Partner toggle -->
+<div class="ios-row">
+  <span class="ios-label">與對方一起</span>
+  <label class="ios-switch">
+    <input type="checkbox" id="check-partner" onchange="window.togglePartner()">
+    <span class="ios-slider"></span>
+  </label>
+</div>
 
       <!-- Status -->
       <div class="bg-white rounded-xl p-4 border border-gray-200">
