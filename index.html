@@ -510,7 +510,7 @@
                     </div>
                 </div>
             </div>
-            <div class="text-center text-xs text-gray-400 mt-4">Firebase Connected · Version 102.2 (Fix Nav)</div>
+            <div class="text-center text-xs text-gray-400 mt-4">Firebase Connected · Version 102.4 (Fix Time Picker)</div>
         </div>
     </main>
 
@@ -643,15 +643,27 @@
         </div>
 
         <!-- Footer -->
-        <div class="p-4 border-t border-gray-100 flex justify-end gap-3 pb-safe">
+        <div class="p-4 border-t border-gray-100 flex justify-between items-center pb-safe">
+          <!-- 刪除按鈕 (左側) -->
           <button
-            onclick="window.closeAddModal()"
-            class="px-5 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg"
-          >取消</button>
-          <button
-            onclick="window.saveEvent()"
-            class="px-6 py-2 text-sm font-bold text-white bg-ttgreen rounded-lg shadow-md active:scale-95"
-          >保存</button>
+            id="btn-delete-event"
+            onclick="window.deleteCurrentEvent()"
+            class="hidden px-3 py-2 text-sm text-red-400 hover:bg-red-50 rounded-lg transition"
+          >
+            <i data-lucide="trash-2" class="w-5 h-5"></i>
+          </button>
+
+          <!-- 右側按鈕群 -->
+          <div class="flex gap-3 ml-auto">
+              <button
+                onclick="window.closeAddModal()"
+                class="px-5 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg"
+              >取消</button>
+              <button
+                onclick="window.saveEvent()"
+                class="px-6 py-2 text-sm font-bold text-white bg-ttgreen rounded-lg shadow-md active:scale-95"
+              >保存</button>
+          </div>
         </div>
 
       </div>
@@ -809,10 +821,39 @@
         };
 
         window.updateTimeDisplay = function(type, timeStr) { const el = document.getElementById(`display-time-${type}`); if(el) { el.textContent = timeStr || '選取'; el.classList.toggle('dt-placeholder', !timeStr); if(timeStr) el.value = timeStr; } }; // FIX: update to support textContent
-        window.checkRecurValidity = function() { const eD = document.getElementById('input-date-end').value; const rD = document.getElementById('input-recur-until').value; if(rD && eD && new Date(rD) < new Date(eD)) { document.getElementById('input-recur-until').value = eD; window.updateDateDisplay('recur', eD); } };
-        window.autoUpdateEnd = function() { const sD = document.getElementById('input-date-start').value; const sT = document.getElementById('input-time-start').value; if(!sD || !sT) return; const start = new Date(`${sD}T${sT}`); const end = new Date(start.getTime() + 3600000); const eD = end.toISOString().split('T')[0]; const eT = end.toTimeString().substring(0,5); document.getElementById('input-date-end').value = eD; document.getElementById('input-time-end').value = eT; document.getElementById('display-time-end').value = eT; window.updateDateDisplay('end', eD); window.checkRecurValidity(); };
+        window.checkRecurValidity = function() { const eD = document.getElementById('input-date-end')?.value; const rD = document.getElementById('input-recur-until')?.value; if(rD && eD && new Date(rD) < new Date(eD)) { const el = document.getElementById('input-recur-until'); if(el) el.value = eD; window.updateDateDisplay('recur', eD); } };
+        // FIX: Safer Auto Update
+        window.autoUpdateEnd = function() { 
+            try {
+                const sD = document.getElementById('input-date-start')?.value; 
+                const sT = document.getElementById('input-time-start')?.value; 
+                if(!sD || !sT) return; 
+                
+                // Safe Check: If end input doesn't exist, don't crash
+                const endInputD = document.getElementById('input-date-end');
+                const endInputT = document.getElementById('input-time-end');
+                
+                if (!endInputD || !endInputT) return;
+
+                const start = new Date(`${sD}T${sT}`); 
+                const end = new Date(start.getTime() + 3600000); 
+                const eD = end.toISOString().split('T')[0]; 
+                const eT = end.toTimeString().substring(0,5); 
+                
+                endInputD.value = eD; 
+                endInputT.value = eT; 
+                
+                const dispEndT = document.getElementById('display-time-end');
+                if(dispEndT) dispEndT.value = eT; 
+                
+                window.updateDateDisplay('end', eD); 
+                if(window.checkRecurValidity) window.checkRecurValidity(); 
+            } catch (e) {
+                console.warn("Auto update end failed silently", e);
+            }
+        };
         window.checkEndDateValidity = function() { const sD = document.getElementById('input-date-start').value; const sT = document.getElementById('input-time-start').value; const eD = document.getElementById('input-date-end').value; const eT = document.getElementById('input-time-end').value; if(new Date(`${eD}T${eT}`) < new Date(`${sD}T${sT}`)) { window.autoUpdateEnd(); } else { window.checkRecurValidity(); } };
-        window.setNowToInputs = function() { const now = new Date(); const dStr = now.toISOString().split('T')[0]; let h = now.getHours(), m = now.getMinutes(); if(m < 30) { m = 30; } else { m = 0; h += 1; } if(h > 23) h = 0; const tStr = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`; const startEl = document.getElementById('input-date-start'); if(startEl) { startEl.value = dStr; document.getElementById('input-time-start').value = tStr; window.updateDateDisplay('start', dStr); window.updateTimeDisplay('start', tStr); document.getElementById('input-date-end').value = dStr; document.getElementById('input-time-end').value = tStr; window.updateDateDisplay('end', dStr); window.updateTimeDisplay('end', tStr); } };
+        window.setNowToInputs = function() { const now = new Date(); const dStr = now.toISOString().split('T')[0]; let h = now.getHours(), m = now.getMinutes(); if(m < 30) { m = 30; } else { m = 0; h += 1; } if(h > 23) h = 0; const tStr = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`; const startEl = document.getElementById('input-date-start'); if(startEl) { startEl.value = dStr; document.getElementById('input-time-start').value = tStr; window.updateDateDisplay('start', dStr); window.updateTimeDisplay('start', tStr); const endD = document.getElementById('input-date-end'); if(endD) endD.value = dStr; const endT = document.getElementById('input-time-end'); if(endT) endT.value = tStr; window.updateDateDisplay('end', dStr); window.updateTimeDisplay('end', tStr); } };
         window.updateRoleUI = function() { const btnHaohao = document.getElementById('role-haohao'); const btnMaomao = document.getElementById('role-maomao'); if(!btnHaohao) return; const activeClass = "flex-1 py-3 rounded-lg text-sm font-bold border border-ttgreen bg-green-50 text-ttgreen transition shadow-sm"; const inactiveClass = "flex-1 py-3 rounded-lg text-sm font-medium border border-gray-200 text-gray-400 bg-white transition"; if(currentUserRole === 'haohao') { btnHaohao.className = activeClass; btnMaomao.className = inactiveClass; } else { btnHaohao.className = inactiveClass; btnMaomao.className = activeClass; } const ptText = document.getElementById('partner-toggle-text'); if(ptText) ptText.textContent = (currentUserRole === 'haohao' ? '與毛毛一起' : '與皓皓一起'); };
         window.updateSettingsColorUI = function() { const h = document.getElementById('setting-color-haohao'); if(h) { h.style.backgroundColor = roleColors.haohao; document.getElementById('setting-color-maomao').style.backgroundColor = roleColors.maomao; document.getElementById('setting-color-joint').style.backgroundColor = roleColors.joint; } };
         window.setStatus = function(s) { document.getElementById('input-status').value = s; document.querySelectorAll('.status-btn').forEach(b=>{ if(b.dataset.status===s) b.classList.add('active'); else b.classList.remove('active'); }); };
@@ -981,6 +1022,10 @@ if (loc) loc.value = '';
   currentSelectedColor = roleColors[currentUserRole];
   colorPickerTarget = 'event';
 
+  // 刪除按鈕：新增模式下隱藏
+  const delBtn = document.getElementById('btn-delete-event');
+  if(delBtn) delBtn.classList.add('hidden');
+
   // 🔓 開 modal
   const m = document.getElementById('add-modal');
   m.classList.remove('hidden');
@@ -1035,6 +1080,10 @@ window.openEditModal = function (id) {
   // === 顏色邏輯（只保留資料，不碰 UI）===
   currentSelectedColor = evt.color || roleColors[evt.creator] || roleColors[currentUserRole];
   colorPickerTarget = 'event';
+
+  // 刪除按鈕：編輯模式下顯示
+  const delBtn = document.getElementById('btn-delete-event');
+  if(delBtn) delBtn.classList.remove('hidden');
 
   // === 開 modal ===
   const m = document.getElementById('add-modal');
@@ -1295,16 +1344,27 @@ window.closeTimePicker = function() {
     setTimeout(() => modal.classList.add('hidden'), 200);
 };
 
+// FIX: Safe select time
 window.selectTime = function(timeStr) {
-    if (timePickerTarget === 'todo') {
-        document.getElementById('input-time-todo').value = timeStr;
-        document.getElementById('display-time-todo').value = timeStr;
-    } else {
-        document.getElementById(`input-time-${timePickerTarget}`).value = timeStr;
-        window.updateTimeDisplay(timePickerTarget, timeStr);
-        if (timePickerTarget === 'start') window.autoUpdateEnd?.(); // Trigger logic if exists
+    try {
+        if (timePickerTarget === 'todo') {
+            const el = document.getElementById('input-time-todo');
+            if(el) el.value = timeStr;
+            const disp = document.getElementById('display-time-todo');
+            if(disp) disp.value = timeStr;
+        } else {
+            const el = document.getElementById(`input-time-${timePickerTarget}`);
+            if(el) el.value = timeStr;
+            window.updateTimeDisplay(timePickerTarget, timeStr);
+            if (timePickerTarget === 'start') {
+                if(window.autoUpdateEnd) window.autoUpdateEnd(); 
+            }
+        }
+    } catch(e) {
+        console.error("selectTime error", e);
+    } finally {
+        window.closeTimePicker();
     }
-    window.closeTimePicker();
 };
 
 // ===== MISSING NAVIGATION & CALENDAR RENDER FUNCTIONS =====
