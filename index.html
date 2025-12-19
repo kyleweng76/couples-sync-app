@@ -348,6 +348,49 @@ nav .nav-item.active::after {
 [data-swipe="content"]{
   touch-action: pan-y;
 }
+/* iOS-style setting row */
+.ios-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+}
+
+/* 左側標籤 */
+.ios-label {
+  font-size: 14px;
+  color: #374151; /* gray-700 */
+  flex-shrink: 0;
+}
+
+/* 右側顯示值 */
+.ios-value {
+  font-size: 14px;
+  color: #111827; /* gray-900 */
+  text-align: right;
+}
+
+/* 尚未設定時的樣式 */
+.ios-placeholder {
+  color: #9ca3af; /* gray-400 */
+}
+
+/* 右側輸入框（地點） */
+.ios-input {
+  border: none;
+  outline: none;
+  text-align: right;
+  font-size: 14px;
+  color: #111827;
+  background: transparent;
+  width: 70%;
+}
+
+.ios-input::placeholder {
+  color: #9ca3af;
+}
 </style>
 </head>
 <body class="text-gray-700 h-screen flex flex-col overflow-hidden bg-white">
@@ -618,27 +661,20 @@ nav .nav-item.active::after {
 </div>
 
      <!-- Time (Optional) -->
-<div class="bg-white border border-gray-200 rounded-xl px-4 py-3">
-  <label class="text-xs font-semibold text-gray-400 block mb-1">
-    時間（選填）
-  </label>
-  <input
-    type="time"
-    id="input-time-start"
-    class="w-full bg-transparent text-[17px] text-gray-900 focus:outline-none"
-  />
+<div class="ios-row" onclick="window.openTimePicker('start')">
+  <span class="ios-label">時間</span>
+  <span id="display-time-start" class="ios-value ios-placeholder">未設定</span>
 </div>
+<input type="hidden" id="input-time-start">
 
 <!-- Location (Optional) -->
-<div class="bg-white border border-gray-200 rounded-xl px-4 py-3">
-  <label class="text-xs font-semibold text-gray-400 block mb-1">
-    地點（選填）
-  </label>
+<div class="ios-row">
+  <span class="ios-label">地點</span>
   <input
     type="text"
     id="input-location"
-    placeholder="例如：小畢的店 / Play bar"
-    class="w-full bg-transparent text-[17px] text-gray-900 focus:outline-none"
+    class="ios-input"
+    placeholder="可不填"
   />
 </div>
 
@@ -838,7 +874,18 @@ function bindSnapshot(ref, cb, label = 'snapshot') {
             else displayEl.textContent = `${date.getFullYear()}年${date.getMonth()+1}月${date.getDate()}日(${weekDays[date.getDay()]})`;
         };
 
-        window.updateTimeDisplay = function(type, timeStr) { const el = document.getElementById(`display-time-${type}`); if(el) el.value = timeStr || ''; };
+        window.updateTimeDisplay = function(type, timeStr) {
+  const el = document.getElementById(`display-time-${type}`);
+  if (!el) return;
+
+  if (!timeStr) {
+    el.textContent = '未設定';
+    el.classList.add('ios-placeholder');
+  } else {
+    el.textContent = timeStr;
+    el.classList.remove('ios-placeholder');
+  }
+};
         window.checkRecurValidity = function() { const eD = document.getElementById('input-date-end').value; const rD = document.getElementById('input-recur-until').value; if(rD && eD && new Date(rD) < new Date(eD)) { document.getElementById('input-recur-until').value = eD; window.updateDateDisplay('recur', eD); } };
         window.autoUpdateEnd = function() { const sD = document.getElementById('input-date-start').value; const sT = document.getElementById('input-time-start').value; if(!sD || !sT) return; const start = new Date(`${sD}T${sT}`); const end = new Date(start.getTime() + 3600000); const eD = end.toISOString().split('T')[0]; const eT = end.toTimeString().substring(0,5); document.getElementById('input-date-end').value = eD; document.getElementById('input-time-end').value = eT; document.getElementById('display-time-end').value = eT; window.updateDateDisplay('end', eD); window.checkRecurValidity(); };
         window.checkEndDateValidity = function() { const sD = document.getElementById('input-date-start').value; const sT = document.getElementById('input-time-start').value; const eD = document.getElementById('input-date-end').value; const eT = document.getElementById('input-time-end').value; if(new Date(`${eD}T${eT}`) < new Date(`${sD}T${sT}`)) { window.autoUpdateEnd(); } else { window.checkRecurValidity(); } };
