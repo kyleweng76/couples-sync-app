@@ -764,9 +764,10 @@
 
             <div id="calendar-days" class="calendar-grid"></div>
             <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center text-sm font-medium">
-                <button onclick="window.selectToday()" class="text-ttgreen hover:bg-green-50 px-3 py-1.5 rounded-lg transition">今天</button>
-                <button onclick="window.closeCalendar()" class="text-gray-400 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition">取消</button>
-            </div>
+    <button onclick="window.selectToday()" class="text-ttgreen hover:bg-green-50 px-3 py-1.5 rounded-lg transition">今天</button>
+    <button onclick="window.clearDate()" class="text-red-400 hover:bg-red-50 px-3 py-1.5 rounded-lg transition">清除</button>
+    <button onclick="window.closeCalendar()" class="text-gray-400 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition">取消</button>
+</div>
         </div>
     </div>
 
@@ -1996,7 +1997,29 @@ document.addEventListener('visibilitychange', () => {
     }, 'resume');
   }
 });
+window.clearDate = function() {
+    // 1. 如果是待辦事項 (todo)
+    if (calTargetInput === 'todo') {
+        // 清空日期與時間的隱藏值
+        document.getElementById('input-date-todo').value = '';
+        document.getElementById('input-time-todo').value = '';
+        
+        // 使用現有的 helper 函式來重置顯示文字 (變回「請選擇」)
+        if (window.updateDateDisplay) window.updateDateDisplay('todo', '');
+        if (window.updateTimeDisplay) window.updateTimeDisplay('todo', '');
+    } 
+    // 2. 如果是其他 (例如一般行程，雖然通常必填，但也提供清除功能)
+    else {
+        const el = document.getElementById(`input-date-${calTargetInput}`);
+        if (el) el.value = '';
+        if (window.updateDateDisplay) window.updateDateDisplay(calTargetInput, '');
+        
+        // 如果是開始日期被清除，可能需要連動結束日期檢查，但因為是清空，暫不處理自動計算
+    }
 
+    // 3. 關閉視窗
+    window.closeCalendar();
+};
 </script>
 
 </body>
