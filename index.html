@@ -307,11 +307,11 @@ nav .nav-item.active::after {
 .swipe-actions{
   position: absolute;
   top: 0; bottom: 0; right: 0;
-  width: 84px;                 /* ✅ 這個要跟 JS translateX 一致 */
+  width: 84px;                  /* ✅ 這個要跟 JS translateX 一致 */
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ff3b30;         /* iOS delete red */
+  background: #ff3b30;          /* iOS delete red */
 }
 
 .swipe-delete-btn{
@@ -615,7 +615,7 @@ nav .nav-item.active::after {
   <div class="relative bg-white w-full h-full md:h-auto md:w-[380px] md:rounded-2xl flex flex-col">
 
    <!-- Modal Top Bar (iOS-like) -->
-<div class="px-6 py-4 border-b flex items-center justify-between"></div>
+<div class="px-6 py-4 border-b flex items-center justify-between">
    <!-- 左：取消 -->
   <button
     onclick="window.closeAddModal()"
@@ -642,6 +642,7 @@ nav .nav-item.active::after {
 
     <!-- 儲存 -->
     <button
+      id="add-save-btn"
       onclick="window.saveEvent()"
       class="text-ttgreen text-sm font-semibold"
     >
@@ -896,10 +897,81 @@ function bindSnapshot(ref, cb, label = 'snapshot') {
     el.classList.remove('ios-placeholder');
   }
 };
-        window.checkRecurValidity = function() { const eD = document.getElementById('input-date-end').value; const rD = document.getElementById('input-recur-until').value; if(rD && eD && new Date(rD) < new Date(eD)) { document.getElementById('input-recur-until').value = eD; window.updateDateDisplay('recur', eD); } };
-        window.autoUpdateEnd = function() { const sD = document.getElementById('input-date-start').value; const sT = document.getElementById('input-time-start').value; if(!sD || !sT) return; const start = new Date(`${sD}T${sT}`); const end = new Date(start.getTime() + 3600000); const eD = end.toISOString().split('T')[0]; const eT = end.toTimeString().substring(0,5); document.getElementById('input-date-end').value = eD; document.getElementById('input-time-end').value = eT; document.getElementById('display-time-end').value = eT; window.updateDateDisplay('end', eD); window.checkRecurValidity(); };
-        window.checkEndDateValidity = function() { const sD = document.getElementById('input-date-start').value; const sT = document.getElementById('input-time-start').value; const eD = document.getElementById('input-date-end').value; const eT = document.getElementById('input-time-end').value; if(new Date(`${eD}T${eT}`) < new Date(`${sD}T${sT}`)) { window.autoUpdateEnd(); } else { window.checkRecurValidity(); } };
-        window.setNowToInputs = function() { const now = new Date(); const dStr = now.toISOString().split('T')[0]; let h = now.getHours(), m = now.getMinutes(); if(m < 30) { m = 30; } else { m = 0; h += 1; } if(h > 23) h = 0; const tStr = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`; const startEl = document.getElementById('input-date-start'); if(startEl) { startEl.value = dStr; document.getElementById('input-time-start').value = tStr; window.updateDateDisplay('start', dStr); window.updateTimeDisplay('start', tStr); document.getElementById('input-date-end').value = dStr; document.getElementById('input-time-end').value = tStr; window.updateDateDisplay('end', dStr); window.updateTimeDisplay('end', tStr); } };
+        window.checkRecurValidity = function() { 
+            const eD_el = document.getElementById('input-date-end');
+            const rD_el = document.getElementById('input-recur-until');
+            if (!eD_el || !rD_el) return;
+            const eD = eD_el.value; 
+            const rD = rD_el.value; 
+            if(rD && eD && new Date(rD) < new Date(eD)) { 
+                rD_el.value = eD; 
+                window.updateDateDisplay('recur', eD); 
+            } 
+        };
+        
+        window.autoUpdateEnd = function() { 
+            const sD = document.getElementById('input-date-start')?.value; 
+            const sT = document.getElementById('input-time-start')?.value; 
+            
+            // Check for end inputs existence
+            const eD_el = document.getElementById('input-date-end');
+            const eT_el = document.getElementById('input-time-end');
+            const dT_el = document.getElementById('display-time-end');
+            
+            if(!sD || !sT || !eD_el || !eT_el) return; 
+            
+            const start = new Date(`${sD}T${sT}`); 
+            const end = new Date(start.getTime() + 3600000); 
+            const eD = end.toISOString().split('T')[0]; 
+            const eT = end.toTimeString().substring(0,5); 
+            
+            eD_el.value = eD; 
+            eT_el.value = eT; 
+            if(dT_el) dT_el.value = eT; 
+            window.updateDateDisplay('end', eD); 
+            window.checkRecurValidity(); 
+        };
+        
+        window.checkEndDateValidity = function() { 
+            const sD = document.getElementById('input-date-start')?.value; 
+            const sT = document.getElementById('input-time-start')?.value; 
+            const eD = document.getElementById('input-date-end')?.value; 
+            const eT = document.getElementById('input-time-end')?.value; 
+            
+            if (!sD || !sT || !eD || !eT) return;
+            
+            if(new Date(`${eD}T${eT}`) < new Date(`${sD}T${sT}`)) { 
+                window.autoUpdateEnd(); 
+            } else { 
+                window.checkRecurValidity(); 
+            } 
+        };
+        
+        window.setNowToInputs = function() { 
+            const now = new Date(); 
+            const dStr = now.toISOString().split('T')[0]; 
+            let h = now.getHours(), m = now.getMinutes(); 
+            if(m < 30) { m = 30; } else { m = 0; h += 1; } 
+            if(h > 23) h = 0; 
+            const tStr = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`; 
+            
+            const startEl = document.getElementById('input-date-start'); 
+            if(startEl) { 
+                startEl.value = dStr; 
+                document.getElementById('input-time-start').value = tStr; 
+                window.updateDateDisplay('start', dStr); 
+                window.updateTimeDisplay('start', tStr); 
+                
+                // Only update end if elements exist
+                const endEl = document.getElementById('input-date-end');
+                if (endEl) {
+                    endEl.value = dStr; 
+                    document.getElementById('input-time-end').value = tStr; 
+                    window.updateDateDisplay('end', dStr); 
+                    window.updateTimeDisplay('end', tStr); 
+                }
+            } 
+        };
         window.updateRoleUI = function() { const btnHaohao = document.getElementById('role-haohao'); const btnMaomao = document.getElementById('role-maomao'); if(!btnHaohao) return; const activeClass = "flex-1 py-3 rounded-lg text-sm font-bold border border-ttgreen bg-green-50 text-ttgreen transition shadow-sm"; const inactiveClass = "flex-1 py-3 rounded-lg text-sm font-medium border border-gray-200 text-gray-400 bg-white transition"; if(currentUserRole === 'haohao') { btnHaohao.className = activeClass; btnMaomao.className = inactiveClass; } else { btnHaohao.className = inactiveClass; btnMaomao.className = activeClass; } const ptText = document.getElementById('partner-toggle-text'); if(ptText) ptText.textContent = (currentUserRole === 'haohao' ? '與毛毛一起' : '與皓皓一起'); };
         window.updateSettingsColorUI = function() { const h = document.getElementById('setting-color-haohao'); if(h) { h.style.backgroundColor = roleColors.haohao; document.getElementById('setting-color-maomao').style.backgroundColor = roleColors.maomao; document.getElementById('setting-color-joint').style.backgroundColor = roleColors.joint; } };
         window.setStatus = function(s) { document.getElementById('input-status').value = s; document.querySelectorAll('.status-btn').forEach(b=>{ if(b.dataset.status===s) b.classList.add('active'); else b.classList.remove('active'); }); };
@@ -974,7 +1046,36 @@ window.updateParticipantsPreview = function() {
     roleColors[role]
   );
 };
-        window.updateMyStatus = function() { if(!db) return; const moods = ['normal', 'charging', 'sleepy', 'love', 'busy']; const randomMood = moods[Math.floor(Math.random() * moods.length)]; const d = {}; d[currentUserRole] = randomMood; db.collection('status').doc('current').set(d, { merge: true }); };
+        window.updateMyStatus = function(specificMood) { 
+            if(!db) return; 
+            const moods = ['normal', 'charging', 'sleepy', 'love', 'busy']; 
+            let nextMood;
+            // Use specific mood if provided and valid, otherwise random
+            if (specificMood && moods.includes(specificMood)) {
+                nextMood = specificMood;
+            } else {
+                nextMood = moods[Math.floor(Math.random() * moods.length)]; 
+            }
+            const d = {}; 
+            d[currentUserRole] = nextMood; 
+            db.collection('status').doc('current').set(d, { merge: true }); 
+        };
+
+        // ⭐ NEW: Render function for Status UI
+        window.renderStatus = function(data) {
+            if (!data) return;
+            ['haohao', 'maomao'].forEach(role => {
+                const mood = data[role] || 'normal';
+                const config = moodMap[mood] || moodMap.normal;
+                const el = document.getElementById(`status-icon-${role}`);
+                if (el) {
+                    el.textContent = config.icon;
+                    // Reset and apply new classes
+                    el.className = `w-12 h-12 rounded-full flex items-center justify-center text-2xl border transition-all duration-300 ${config.bg} ${config.border}`;
+                }
+            });
+        };
+
         window.toggleGlobalColorPicker = function(show) { const el = document.getElementById('global-color-picker'); const grid = document.getElementById('global-color-grid'); if(show) { grid.innerHTML = ''; timeTreeColors.forEach(color => { const row = document.createElement('div'); row.className = "flex items-center p-2 rounded hover:bg-gray-50 cursor-pointer transition"; row.onclick = () => window.selectGlobalColor(color); row.innerHTML = `<div class="w-5 h-5 rounded-full mr-3 shadow-sm" style="background-color: ${color.hex}"></div><span class="text-sm text-gray-700">${color.name}</span>`; grid.appendChild(row); }); el.classList.remove('hidden'); setTimeout(() => el.classList.add('visible'), 10); } else { el.classList.remove('visible'); setTimeout(() => el.classList.add('hidden'), 200); colorPickerTarget = null; } };
 
         window.selectGlobalColor = function(c) { if (colorPickerTarget === 'event') { currentSelectedColor = c.hex; document.getElementById('selected-color-name').textContent = c.name; document.getElementById('selected-color-dot').style.backgroundColor = c.hex; } else if (colorPickerTarget) { roleColors[colorPickerTarget] = c.hex; localStorage.setItem(`color_${colorPickerTarget}`, c.hex); window.updateSettingsColorUI(); } window.toggleGlobalColorPicker(false); };
@@ -1484,7 +1585,7 @@ content.addEventListener('pointercancel', () => end());
         document.removeEventListener('mousemove', mm);
         document.removeEventListener('mouseup', mu);
         end();
-      };
+            };
       document.addEventListener('mousemove', mm);
       document.addEventListener('mouseup', mu);
     });
@@ -1544,8 +1645,8 @@ if (!v) {
   document.getElementById('cal-month-title').textContent =
     `${y}年${m+1}月`;
 
-  const dim = new Date(y, m+1, 0).getDate();
-  const sd  = new Date(y, m, 1).getDay();
+  const dim = new Date(year, month+1, 0).getDate();
+  const sd  = new Date(year, month, 1).getDay();
 
   let h = '';
 
@@ -1732,6 +1833,7 @@ function initApp(db) {
     db.collection('status').doc('current'),
     (doc) => {
       if (doc.exists) {
+        // ⭐ Now window.renderStatus exists and is safe to call
         safeRun(() => window.renderStatus?.(doc.data()), 'status');
       }
     },
