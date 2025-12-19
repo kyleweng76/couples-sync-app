@@ -1256,17 +1256,33 @@ window.openEditTodoModal = function(id) {
     setTimeout(() => m.classList.add('visible'), 10);
 };
 window.checkTodoCalendarOption = function() { const dateVal = document.getElementById('input-date-todo').value; const opt = document.getElementById('todo-calendar-option'); const check = document.getElementById('todo-check-calendar'); if (dateVal) { opt.classList.remove('opacity-50', 'pointer-events-none'); check.disabled = false; } else { opt.classList.add('opacity-50', 'pointer-events-none'); check.disabled = true; check.checked = false; } };
+// === 新增一個防止連點的變數 ===
+window.isSavingTodo = false;
+
 window.saveTodoItem = function() {
+    // 1. 檢查是否正在儲存中，如果是就直接擋掉
+    if (window.isSavingTodo) return;
+
     const title = document.getElementById('todo-input-title').value;
     if (!title) {
         window.showToast('請輸入內容');
         return;
     }
+
+    // 2. 鎖定按鈕並變更文字，讓使用者知道正在處理
+    window.isSavingTodo = true;
+    const btn = document.getElementById('todo-modal-btn');
+    const originalText = btn.textContent;
+    if (btn) {
+        btn.textContent = '儲存中...';
+        btn.style.opacity = '0.5';
+    }
+
     const date = document.getElementById('input-date-todo').value;
     const time = document.getElementById('input-time-todo').value;
     const isJoint = document.getElementById('todo-check-joint').checked;
     
-    // === 修改處：直接判斷是否有日期，若有日期則自動設為 true ===
+    // 若有日期則自動同步至行事曆
     const addToCalendar = !!date; 
 
     const todoData = {
@@ -1285,16 +1301,39 @@ window.saveTodoItem = function() {
         todoData.timestamp = new Date(`${date}T${tStr}`).toISOString();
     }
 
+    // 定義成功後的動作
+    const onSuccess = (msg) => {
+        window.closeAddTodoModal();
+        window.showToast(msg);
+        // 恢復按鈕狀態
+        window.isSavingTodo = false;
+        if (btn) {
+            btn.textContent = originalText;
+            btn.style.opacity = '1';
+        }
+    };
+
+    // 定義失敗後的動作
+    const onError = (err) => {
+        console.error(err);
+        window.showToast('儲存失敗，請檢查網路');
+        // 恢復按鈕狀態，讓使用者可以重試
+        window.isSavingTodo = false;
+        if (btn) {
+            btn.textContent = originalText;
+            btn.style.opacity = '1';
+        }
+    };
+
+    // 3. 執行資料庫寫入
     if (editingTodoId) {
-        db.collection('todos').doc(editingTodoId).update(todoData).then(() => {
-            window.closeAddTodoModal();
-            window.showToast('待辦事項已更新');
-        }).catch(err => console.error(err));
+        db.collection('todos').doc(editingTodoId).update(todoData)
+            .then(() => onSuccess('待辦事項已更新'))
+            .catch(onError);
     } else {
-        db.collection('todos').add(todoData).then(() => {
-            window.closeAddTodoModal();
-            window.showToast('待辦事項已新增');
-        }).catch(err => console.error(err));
+        db.collection('todos').add(todoData)
+            .then(() => onSuccess('待辦事項已新增'))
+            .catch(onError);
     }
 };
 window.toggleTodo = function(id,s) { db.collection('todos').doc(id).update({done:s}); };
