@@ -826,8 +826,12 @@
         let isSavingEvent = false;
         let __lastSaveAt = 0;
         let allTodosCache = [];
-        let roleColors = { haohao: '#2cc998', maomao: '#e6688d', joint: '#f7b546' };
-        let colorPickerTarget = null;
+// 修改處：優先從 localStorage 讀取顏色，若沒有才使用預設值
+let roleColors = { 
+    haohao: localStorage.getItem('color_haohao') || '#2cc998', 
+    maomao: localStorage.getItem('color_maomao') || '#e6688d', 
+    joint: localStorage.getItem('color_joint') || '#f7b546' 
+};        let colorPickerTarget = null;
         let calTargetInput = 'start'; 
         let calCurrentDate = new Date(); 
         let bigCalDate = new Date();
@@ -1875,21 +1879,27 @@ window.selectTime = function(timeStr) {
 
 // ===== MISSING NAVIGATION & CALENDAR RENDER FUNCTIONS =====
 window.switchTab = function(tabId) {
-    // 1. Pages
+    // 1. Pages 切換顯示
     document.querySelectorAll('.page-content').forEach(el => el.classList.remove('active'));
     const target = document.getElementById('page-' + tabId);
     if(target) target.classList.add('active');
     
-    // 2. Nav
+    // 2. Nav 圖標狀態切換
     const tabs = ['dashboard', 'calendar', 'todo', 'settings'];
     document.querySelectorAll('.nav-item').forEach((el, idx) => {
         if(tabs[idx] === tabId) el.classList.add('active');
         else el.classList.remove('active');
     });
 
-    // 3. Special Logic
+    // 3. 特殊邏輯處理
+    // 如果切換到行事曆且是月曆模式，需要重繪
     if(tabId === 'calendar' && currentViewMode === 'month') {
         window.renderBigCalendar();
+    }
+    
+    // === 修改處：如果切換到設定頁，強制更新顏色圓圈 UI ===
+    if(tabId === 'settings') {
+        window.updateSettingsColorUI();
     }
 };
 
