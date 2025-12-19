@@ -88,24 +88,23 @@
         .dt-wrapper-date { flex: 2; position: relative; }
         .dt-wrapper-time { flex: 1; position: relative; }
 
-        /* ===== FIX: Add styles for dt-row that were missing ===== */
+        /* ===== UPDATED: Unified Input Row Styles ===== */
         .dt-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 16px;
             background: white;
-            border-bottom: 1px solid #f3f4f6;
+            /* Border logic handled by HTML classes now for better control */
             cursor: pointer;
             transition: background-color 0.2s;
         }
-        .dt-row:last-child { border-bottom: none; }
         .dt-row:active { background-color: #f9fafb; }
         
         .dt-label {
-            font-size: 14px;
+            font-size: 15px; /* Slightly larger */
             font-weight: 500;
-            color: #374151;
+            color: #1f2937; /* Darker gray */
             min-width: 60px;
         }
         
@@ -114,24 +113,35 @@
             display: flex;
             justify-content: flex-end;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
+            overflow: hidden;
         }
         
+        /* Unified Input Style */
         .dt-input {
             width: 100%;
             text-align: right;
-            font-size: 16px; /* Prevent iOS zoom */
-            color: #374151;
+            font-size: 15px; 
+            color: #1f2937;
             outline: none;
             border: none;
             background: transparent;
             padding: 0;
-            font-weight: 500;
+            font-weight: 400;
+        }
+        .dt-input::placeholder {
+            color: #9ca3af; /* Matches the chevron color */
         }
         
-        .dt-placeholder {
+        /* Text placeholder for Date/Time spans */
+        .dt-text-placeholder {
             color: #9ca3af;
-            font-size: 14px;
+            font-size: 15px;
+        }
+        .dt-text-value {
+            color: #1f2937; /* Dark */
+            font-size: 15px;
+            font-weight: 500;
         }
 
         /* Fixed Time Dropdown Modal Style */
@@ -510,7 +520,7 @@
                     </div>
                 </div>
             </div>
-            <div class="text-center text-xs text-gray-400 mt-4">Firebase Connected · Version 102.5 (Layout Refresh)</div>
+            <div class="text-center text-xs text-gray-400 mt-4">Firebase Connected · Version 102.6 (Unified Inputs)</div>
         </div>
     </main>
 
@@ -570,31 +580,35 @@
         <!-- Content -->
         <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
 
-          <!-- Date -->
-          <div class="bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
+          <!-- Date / Time / Location Group -->
+          <!-- 採用白底、內部有分隔線的列表風格 -->
+          <div class="bg-white border border-gray-100 rounded-xl overflow-hidden">
+             
+             <!-- Date -->
              <div class="dt-row" onclick="window.openCalendar('start')">
                <div class="dt-label">日期</div>
-               <div class="dt-value">
-                 <span id="display-date-start" class="font-bold text-ttgreen">選擇日期</span>
+               <div class="dt-value group">
+                 <span id="display-date-start" class="dt-text-placeholder transition-colors">請選擇</span>
+                 <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 ml-1 group-active:text-gray-500"></i>
                </div>
                <input type="hidden" id="input-date-start">
              </div>
 
-             <!-- 時間: 修正了樣式與點擊 -->
-            <div class="dt-row dt-wrapper-time" onclick="window.openTimePicker('start')">
+             <!-- Time -->
+            <div class="dt-row border-t border-gray-50 dt-wrapper-time" onclick="window.openTimePicker('start')">
               <div class="dt-label">時間</div>
-              <div class="dt-value">
-                <span id="display-time-start" class="dt-placeholder">選取</span>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
+              <div class="dt-value group">
+                <span id="display-time-start" class="dt-text-placeholder transition-colors">請選擇</span>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 ml-1 group-active:text-gray-500"></i>
               </div>
               <input type="hidden" id="input-time-start" value="">
             </div>
 
-            <!-- 地點: 修正了樣式 -->
-            <div class="dt-row">
+            <!-- Location -->
+            <div class="dt-row border-t border-gray-50">
               <div class="dt-label">地點</div>
               <div class="dt-value">
-                <input id="input-location" type="text" placeholder="選填" class="dt-input text-right" />
+                <input id="input-location" type="text" placeholder="輸入地點" class="dt-input" />
               </div>
             </div>
           </div>
@@ -809,13 +823,44 @@
         window.updateDateDisplay = function(type, dateStr) {
             const displayEl = (type === 'recur') ? document.getElementById('display-recur-until') : (type === 'todo' ? document.getElementById('display-date-todo') : document.getElementById(`display-date-${type}`));
             if(!displayEl) return;
-            if(!dateStr) { if (type === 'recur') displayEl.textContent = "設定日期"; if (type === 'todo') displayEl.textContent = "--/--/--"; else displayEl.textContent = "選擇日期"; return; }
-            const date = new Date(dateStr); const weekDays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+            if(!dateStr) { 
+                // Empty state styling
+                if (type === 'recur') displayEl.textContent = "設定日期"; 
+                else if (type === 'todo') displayEl.textContent = "--/--/--"; 
+                else displayEl.textContent = "請選擇"; // Unified placeholder
+                
+                // Add gray placeholder style
+                displayEl.classList.add('dt-text-placeholder');
+                displayEl.classList.remove('dt-text-value');
+                return; 
+            }
+            
+            // Value state styling
+            displayEl.classList.remove('dt-text-placeholder');
+            displayEl.classList.add('dt-text-value');
+
+            const date = new Date(dateStr); 
+            const weekDays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
             if (type === 'recur' || type === 'todo') displayEl.textContent = `${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()} (${weekDays[date.getDay()]})`;
             else displayEl.textContent = `${date.getFullYear()}年${date.getMonth()+1}月${date.getDate()}日(${weekDays[date.getDay()]})`;
         };
 
-        window.updateTimeDisplay = function(type, timeStr) { const el = document.getElementById(`display-time-${type}`); if(el) { el.textContent = timeStr || '選取'; el.classList.toggle('dt-placeholder', !timeStr); if(timeStr) el.value = timeStr; } }; // FIX: update to support textContent
+        window.updateTimeDisplay = function(type, timeStr) { 
+            const el = document.getElementById(`display-time-${type}`); 
+            if(el) { 
+                if(!timeStr) {
+                    el.textContent = '請選擇';
+                    el.classList.add('dt-text-placeholder');
+                    el.classList.remove('dt-text-value');
+                } else {
+                    el.textContent = timeStr;
+                    el.value = timeStr; 
+                    el.classList.remove('dt-text-placeholder');
+                    el.classList.add('dt-text-value');
+                }
+            } 
+        }; 
+        
         window.checkRecurValidity = function() { const eD = document.getElementById('input-date-end')?.value; const rD = document.getElementById('input-recur-until')?.value; if(rD && eD && new Date(rD) < new Date(eD)) { const el = document.getElementById('input-recur-until'); if(el) el.value = eD; window.updateDateDisplay('recur', eD); } };
         // FIX: Safer Auto Update
         window.autoUpdateEnd = function() { 
@@ -997,14 +1042,24 @@ window.openAddModal = function () {
   document.getElementById('input-title').value = '';
   document.getElementById('input-note').value = '';
   document.getElementById('input-date-start').value = '';
-  document.getElementById('display-date-start').textContent = '選擇日期';
-  const t = document.getElementById('input-time-start');
-if (t) t.value = '';
-const td = document.getElementById('display-time-start');
-if (td) { td.textContent = '選取'; td.classList.add('dt-placeholder'); }
+  
+  // FIX: Reset displays style
+  const dD = document.getElementById('display-date-start');
+  dD.textContent = '請選擇';
+  dD.classList.add('dt-text-placeholder');
+  dD.classList.remove('dt-text-value');
 
-const loc = document.getElementById('input-location');
-if (loc) loc.value = '';
+  const t = document.getElementById('input-time-start');
+  if (t) t.value = '';
+  const td = document.getElementById('display-time-start');
+  if (td) { 
+      td.textContent = '請選擇';
+      td.classList.add('dt-text-placeholder');
+      td.classList.remove('dt-text-value');
+  }
+
+  const loc = document.getElementById('input-location');
+  if (loc) loc.value = '';
 
   // 一起 / 不一起
   const partner = document.getElementById('check-partner');
