@@ -510,7 +510,7 @@
                     </div>
                 </div>
             </div>
-            <div class="text-center text-xs text-gray-400 mt-4">Firebase Connected · Version 102.4 (Fix Time Picker)</div>
+            <div class="text-center text-xs text-gray-400 mt-4">Firebase Connected · Version 102.5 (Layout Refresh)</div>
         </div>
     </main>
 
@@ -547,10 +547,17 @@
     <div id="add-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal">
       <div class="absolute inset-0 bg-black/20 backdrop-blur-[1px]" onclick="window.closeAddModal()"></div>
 
-      <div class="relative bg-white w-full h-full md:h-auto md:w-[380px] md:rounded-2xl flex flex-col">
+      <div class="relative bg-white w-full h-full md:h-auto md:w-[380px] md:rounded-2xl flex flex-col md:max-h-[85vh]">
+        
+        <!-- NEW HEADER: Standard App Style -->
+        <div class="flex justify-between items-center px-4 py-3 border-b border-gray-100">
+            <button onclick="window.closeAddModal()" class="text-gray-500 text-sm font-medium px-2 py-1 hover:bg-gray-50 rounded-lg transition">取消</button>
+            <span class="text-sm font-bold text-gray-800">行程詳情</span>
+            <button onclick="window.saveEvent()" class="text-ttgreen text-sm font-bold px-2 py-1 hover:bg-green-50 rounded-lg transition">保存</button>
+        </div>
 
         <!-- Title -->
-        <div class="px-6 pt-6 pb-2">
+        <div class="px-6 pt-4 pb-2">
           <label class="text-xs font-bold text-gray-400 mb-1 block">標題</label>
           <input
             type="text"
@@ -643,27 +650,15 @@
         </div>
 
         <!-- Footer -->
-        <div class="p-4 border-t border-gray-100 flex justify-between items-center pb-safe">
-          <!-- 刪除按鈕 (左側) -->
+        <div class="p-4 border-t border-gray-100 flex justify-center pb-safe">
+          <!-- 刪除按鈕 (只在編輯時顯示，全寬紅色按鈕) -->
           <button
             id="btn-delete-event"
             onclick="window.deleteCurrentEvent()"
-            class="hidden px-3 py-2 text-sm text-red-400 hover:bg-red-50 rounded-lg transition"
+            class="hidden w-full py-3 text-sm font-bold text-red-500 bg-red-50 hover:bg-red-100 rounded-xl transition"
           >
-            <i data-lucide="trash-2" class="w-5 h-5"></i>
+            刪除此行程
           </button>
-
-          <!-- 右側按鈕群 -->
-          <div class="flex gap-3 ml-auto">
-              <button
-                onclick="window.closeAddModal()"
-                class="px-5 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg"
-              >取消</button>
-              <button
-                onclick="window.saveEvent()"
-                class="px-6 py-2 text-sm font-bold text-white bg-ttgreen rounded-lg shadow-md active:scale-95"
-              >保存</button>
-          </div>
         </div>
 
       </div>
