@@ -1499,11 +1499,11 @@ window.closeAddTodoModal = function() {
     }
 };
 
-// 4. 儲存待辦事項 (含防連點與錯誤處理)
-window.isSavingTodo = false; // 初始化狀態鎖
+// 4. 儲存待辦事項 (修復：清除日期後無法存檔的問題)
+window.isSavingTodo = false;
 
 window.saveTodoItem = function() {
-    if (window.isSavingTodo) return; // 防止重複點擊
+    if (window.isSavingTodo) return;
 
     const title = document.getElementById('todo-input-title').value;
     if (!title) {
@@ -1527,34 +1527,41 @@ window.saveTodoItem = function() {
     // 若有日期則自動標記需同步
     const addToCalendar = !!date; 
 
+    // === 修改重點 ===
+    // 我們必須「明確」設定日期欄位，即使是空的也要設為 null
+    // 這樣資料庫才會知道要把舊的日期刪掉
     const todoData = {
         title,
         done: false,
         creator: currentUserRole,
         isJoint: isJoint,
         addToCalendar: addToCalendar,
-        createdAt: new Date().toISOString()
+        // 如果 date 是空的，就設為 null；否則設為 date
+        dueDate: date || null,
+        // 如果 date 或 time 是空的，就設為 null
+        dueTime: (date && time) ? time : null,
+        // timestamp 也是一樣
+        timestamp: null,
+        // 注意：編輯時通常不更新 createdAt，以免順序亂掉，這裡我們維持原樣或可選擇不傳
+        createdAt: new Date().toISOString() 
     };
 
+    // 計算 Timestamp (只有在有日期時才計算)
     if (date) {
-        todoData.dueDate = date;
-        todoData.dueTime = time || null;
         const tStr = time || "00:00";
         todoData.timestamp = new Date(`${date}T${tStr}`).toISOString();
     }
 
     const onSuccess = (msg) => {
-        // 這裡呼叫 closeAddTodoModal，如果函式不存在就會報錯
         if (typeof window.closeAddTodoModal === 'function') {
             window.closeAddTodoModal();
         } else {
-            // 保險措施：如果函式真的不見了，手動關閉
             const m = document.getElementById('add-todo-modal');
             if(m) {
                  m.classList.remove('visible');
                  setTimeout(() => m.classList.add('hidden'), 200);
             }
-            window.isSavingTodo = false; // 手動解鎖
+            window.isSavingTodo = false;
         }
         window.showToast(msg);
     };
@@ -1562,7 +1569,6 @@ window.saveTodoItem = function() {
     const onError = (err) => {
         console.error("Save Error:", err);
         window.showToast('儲存失敗，請檢查網路');
-        // 解鎖並恢復按鈕
         window.isSavingTodo = false;
         if (btn) {
             btn.textContent = originalText;
@@ -1572,6 +1578,7 @@ window.saveTodoItem = function() {
 
     // 執行寫入
     if (editingTodoId) {
+        // 編輯模式：這裡傳送 null 會把資料庫裡的舊日期洗掉
         db.collection('todos').doc(editingTodoId).update(todoData)
             .then(() => onSuccess('待辦事項已更新'))
             .catch(onError);
