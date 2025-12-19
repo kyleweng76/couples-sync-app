@@ -1158,8 +1158,6 @@ window.saveEvent = function () {
     window.showToast('資料庫尚未連線');
     return;
   }
-
-  // 防連點
   if (window.__savingEvent) return;
   window.__savingEvent = true;
 
@@ -1185,13 +1183,19 @@ window.saveEvent = function () {
       throw new Error('Missing date');
     }
 
-    const time = document.getElementById('input-time-start')?.value || '00:00'; // Default time if missing
+    // === 修改處：判斷是否為全天行程 ===
+    const timeInput = document.getElementById('input-time-start')?.value;
+    // 如果時間欄位是空的，就視為 All Day
+    const isAllDay = !timeInput; 
+    // 若為全天，Timestamp 仍需一個時間排序，暫定 00:00
+    const time = timeInput || '00:00'; 
     const timestamp = new Date(`${startDate}T${time}:00`).toISOString();
 
     const data = {
       title,
       startDate,
       timestamp,
+      allDay: isAllDay, // 寫入全天旗標
       isJoint: document.getElementById('check-partner')?.checked || false,
       status: document.getElementById('input-status')?.value || 'confirmed',
       note: document.getElementById('input-note')?.value || '',
@@ -1312,15 +1316,23 @@ window.openEditModal = function (id) {
     window.updateDateDisplay('start', ds);
   }
 
-  // === 時間 ===
-    if (evt.timestamp) {
-        const d = new Date(evt.timestamp);
-        const hours = d.getHours().toString().padStart(2, '0');
-        const minutes = d.getMinutes().toString().padStart(2, '0');
-        const timeStr = `${hours}:${minutes}`;
-        document.getElementById('input-time-start').value = timeStr;
-        window.updateTimeDisplay('start', timeStr);
-    }
+  // === 修改處：時間 (若為 All Day 則清空，否則解析顯示) ===
+  const timeInput = document.getElementById('input-time-start');
+  
+  if (evt.allDay) {
+      // 1. 如果是全天行程，清空時間欄位
+      timeInput.value = '';
+      // 2. 顯示文字設為預設 (通常是 '請選擇'，這代表無時間=全天)
+      window.updateTimeDisplay('start', ''); 
+  } else if (evt.timestamp) {
+      // 3. 一般行程，解析時間並顯示
+      const d = new Date(evt.timestamp);
+      const hours = d.getHours().toString().padStart(2, '0');
+      const minutes = d.getMinutes().toString().padStart(2, '0');
+      const timeStr = `${hours}:${minutes}`;
+      timeInput.value = timeStr;
+      window.updateTimeDisplay('start', timeStr);
+  }
   
   // === 地點 ===
   document.getElementById('input-location').value = evt.location || '';
@@ -1335,15 +1347,16 @@ window.openEditModal = function (id) {
   // === 備註 ===
   document.getElementById('input-note').value = evt.note || '';
 
-  // === 顏色邏輯（只保留資料，不碰 UI）===
+  // === 顏色邏輯 ===
   currentSelectedColor = evt.color || roleColors[evt.creator] || roleColors[currentUserRole];
   colorPickerTarget = 'event';
+  if(window.syncSelectedColorUI) window.syncSelectedColorUI();
 
-  // 刪除按鈕：編輯模式下顯示
+  // 刪除按鈕
   const delBtn = document.getElementById('btn-delete-event');
   if(delBtn) delBtn.classList.remove('hidden');
 
-  // === 開 modal ===
+  // 開 modal
   const m = document.getElementById('add-modal');
   m.classList.remove('hidden');
   setTimeout(() => m.classList.add('visible'), 10);
