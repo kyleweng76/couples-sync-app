@@ -940,8 +940,28 @@ let roleColors = {
 };
         window.updateMyStatus = function() { if(!db) return; const moods = ['normal', 'charging', 'sleepy', 'love', 'busy']; const randomMood = moods[Math.floor(Math.random() * moods.length)]; const d = {}; d[currentUserRole] = randomMood; db.collection('status').doc('current').set(d, { merge: true }); };
         window.toggleGlobalColorPicker = function(show) { const el = document.getElementById('global-color-picker'); const grid = document.getElementById('global-color-grid'); if(show) { grid.innerHTML = ''; timeTreeColors.forEach(color => { const row = document.createElement('div'); row.className = "flex items-center p-2 rounded hover:bg-gray-50 cursor-pointer transition"; row.onclick = () => window.selectGlobalColor(color); row.innerHTML = `<div class="w-5 h-5 rounded-full mr-3 shadow-sm" style="background-color: ${color.hex}"></div><span class="text-sm text-gray-700">${color.name}</span>`; grid.appendChild(row); }); el.classList.remove('hidden'); setTimeout(() => el.classList.add('visible'), 10); } else { el.classList.remove('visible'); setTimeout(() => el.classList.add('hidden'), 200); colorPickerTarget = null; } };
+        window.selectGlobalColor = function(c) {
+    if (colorPickerTarget === 'event') {
+        // 修改行程顏色
+        currentSelectedColor = c.hex;
+        document.getElementById('selected-color-name').textContent = c.name;
+        document.getElementById('selected-color-dot').style.backgroundColor = c.hex;
+    } else if (colorPickerTarget) {
+        // 修改角色代表色 (設定頁面)
+        roleColors[colorPickerTarget] = c.hex;
+        localStorage.setItem(`color_${colorPickerTarget}`, c.hex);
+        window.updateSettingsColorUI();
 
-        window.selectGlobalColor = function(c) { if (colorPickerTarget === 'event') { currentSelectedColor = c.hex; document.getElementById('selected-color-name').textContent = c.name; document.getElementById('selected-color-dot').style.backgroundColor = c.hex; } else if (colorPickerTarget) { roleColors[colorPickerTarget] = c.hex; localStorage.setItem(`color_${colorPickerTarget}`, c.hex); window.updateSettingsColorUI(); } window.toggleGlobalColorPicker(false); };
+        // === 修改處：如果修改的是「當前登入者」的顏色，立刻更新底部橫條 CSS ===
+        if (colorPickerTarget === currentUserRole) {
+            document.documentElement.style.setProperty(
+                '--active-tab-color',
+                c.hex
+            );
+        }
+    }
+    window.toggleGlobalColorPicker(false);
+};
         window.openColorConfig = function(target) { colorPickerTarget = target; window.toggleGlobalColorPicker(true); };
         window.syncSelectedColorUI = function() {
             const dot = document.getElementById('selected-color-dot');
