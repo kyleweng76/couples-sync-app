@@ -1460,11 +1460,26 @@ function initApp(db) {
       );
       allTodosCache = todos;
 
+      // 1. 更新待辦清單頁面 (原本就有)
       safeRun(() => window.renderTodos(todos), 'todos');
+
+      // 2. 更新 Dashboard 摘要 (原本就有)
       safeRun(
         () => window.renderDashboardNextUp(window.getCalendarItems()),
         'dashboard-todos'
       );
+
+      // 3. === 新增：強制更新行事曆列表 ===
+      // 這行會讓列表視圖抓取最新的待辦事項
+      safeRun(
+        () => window.renderCalendarListView(),
+        'calendar-list-from-todos'
+      );
+
+      // 4. === 新增：如果當前在看月曆，也要更新月曆上的小橫條 ===
+      if (currentViewMode === 'month') {
+        safeRun(() => window.renderBigCalendar(), 'big-calendar-from-todos');
+      }
     },
     'todos'
   );
