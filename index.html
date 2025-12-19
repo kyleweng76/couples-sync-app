@@ -88,9 +88,71 @@
         .dt-wrapper-date { flex: 2; position: relative; }
         .dt-wrapper-time { flex: 1; position: relative; }
 
-        .time-dropdown { position: absolute; background: white; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; z-index: 60; width: 100px; }
-        .time-option { padding: 8px 16px; font-size: 14px; color: #374151; cursor: pointer; }
+        /* ===== FIX: Add styles for dt-row that were missing ===== */
+        .dt-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: white;
+            border-bottom: 1px solid #f3f4f6;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .dt-row:last-child { border-bottom: none; }
+        .dt-row:active { background-color: #f9fafb; }
+        
+        .dt-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            min-width: 60px;
+        }
+        
+        .dt-value {
+            flex: 1;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .dt-input {
+            width: 100%;
+            text-align: right;
+            font-size: 16px; /* Prevent iOS zoom */
+            color: #374151;
+            outline: none;
+            border: none;
+            background: transparent;
+            padding: 0;
+            font-weight: 500;
+        }
+        
+        .dt-placeholder {
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        /* Fixed Time Dropdown Modal Style */
+        .time-picker-modal-content {
+            background: white;
+            border-radius: 16px;
+            max-height: 300px;
+            overflow-y: auto;
+            width: 280px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 8px 0;
+        }
+        .time-option { 
+            padding: 10px 16px; 
+            font-size: 16px; 
+            color: #374151; 
+            cursor: pointer; 
+            text-align: center;
+        }
         .time-option:hover { background-color: #f3f4f6; }
+        .time-option.selected { color: #2cc998; font-weight: bold; background-color: #ecfdf5; }
 
         .status-btn { flex: 1; padding: 8px; text-align: center; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 12px; color: #6b7280; transition: all 0.2s; }
         .status-btn.active { background-color: #f3f4f6; border-color: #d1d5db; color: #374151; font-weight: bold; }
@@ -157,132 +219,130 @@
         grid-template-columns: repeat(7, minmax(0, 1fr));
         }
         /* ===== FIX: Calendar Picker Height ===== */
-#calendar-picker-modal .calendar-grid {
-  min-height: auto;
-}
+        #calendar-picker-modal .calendar-grid {
+        min-height: auto;
+        }
 
-#calendar-picker-modal #calendar-days {
-  min-height: unset;
-}
-/* ===== iOS-like Calendar Picker ===== */
+        #calendar-picker-modal #calendar-days {
+        min-height: unset;
+        }
+        /* ===== iOS-like Calendar Picker ===== */
 
-/* 整個日期 grid 更緊湊 */
-#calendar-picker-modal .calendar-grid {
-  gap: 6px;
-}
+        /* 整個日期 grid 更緊湊 */
+        #calendar-picker-modal .calendar-grid {
+        gap: 6px;
+        }
 
-/* 日期格子：圓形、無外框 */
-#calendar-picker-modal .cal-day {
-  width: 36px;
-  height: 36px;
-  aspect-ratio: unset;
-  border-radius: 9999px;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
+        /* 日期格子：圓形、無外框 */
+        #calendar-picker-modal .cal-day {
+        width: 36px;
+        height: 36px;
+        aspect-ratio: unset;
+        border-radius: 9999px;
+        font-size: 14px;
+        font-weight: 500;
+        transition: background-color 0.15s ease, color 0.15s ease;
+        }
 
-/* Hover（像 iOS 輕觸） */
-#calendar-picker-modal .cal-day:hover {
-  background-color: #f2f2f7;
-}
+        /* Hover（像 iOS 輕觸） */
+        #calendar-picker-modal .cal-day:hover {
+        background-color: #f2f2f7;
+        }
 
-/* 今天（iOS 常用「字色提示」） */
-#calendar-picker-modal .cal-day.today {
-  color: #2cc998;
-  font-weight: 600;
-}
+        /* 今天（iOS 常用「字色提示」） */
+        #calendar-picker-modal .cal-day.today {
+        color: #2cc998;
+        font-weight: 600;
+        }
 
-/* 選中日期（iOS 核心） */
-#calendar-picker-modal .cal-day.selected {
-  background-color: #2cc998;
-  color: white;
-  font-weight: 600;
-}
+        /* 選中日期（iOS 核心） */
+        #calendar-picker-modal .cal-day.selected {
+        background-color: #2cc998;
+        color: white;
+        font-weight: 600;
+        }
 
-/* 空白格完全不可點 */
-#calendar-picker-modal .cal-day.empty {
-  pointer-events: none;
-  background: transparent;
-}
+        /* 空白格完全不可點 */
+        #calendar-picker-modal .cal-day.empty {
+        pointer-events: none;
+        background: transparent;
+        }
 
-/* 星期標題更像 iOS */
-#calendar-picker-modal .cal-day-header {
-  font-size: 11px;
-  font-weight: 500;
-  color: #8e8e93;
-}
+        /* 星期標題更像 iOS */
+        #calendar-picker-modal .cal-day-header {
+        font-size: 11px;
+        font-weight: 500;
+        color: #8e8e93;
+        }
 
-/* 整個 modal 高度縮短 */
-#calendar-picker-modal .relative {
-  padding-bottom: 12px;
-}
-/* ===== iOS Bottom Nav Touch Fix ===== */
-nav .nav-item {
-  padding-bottom: 6px;
-}
-/* ===== iOS-like Bottom Tab Bounce ===== */
+        /* 整個 modal 高度縮短 */
+        #calendar-picker-modal .relative {
+        padding-bottom: 12px;
+        }
+        /* ===== iOS Bottom Nav Touch Fix ===== */
+        nav .nav-item {
+        padding-bottom: 6px;
+        }
+        /* ===== iOS-like Bottom Tab Bounce ===== */
 
-/* Tab 本體 */
-nav .nav-item {
-  transition:
-    transform 0.12s ease-out,
-    background-color 0.12s ease-out;
-  border-radius: 12px;
-}
+        /* Tab 本體 */
+        nav .nav-item {
+        transition:
+            transform 0.12s ease-out,
+            background-color 0.12s ease-out;
+        border-radius: 12px;
+        }
 
+        /* iOS Safari：避免長按出現藍色遮罩 */
+        nav .nav-item {
+        -webkit-tap-highlight-color: transparent;
+        }
+        /* ===== iOS-like Bottom Tab (Icon Only Bounce) ===== */
 
+        /* icon 本體 */
+        nav .nav-item i {
+        transition: transform 0.12s ease-out;
+        will-change: transform;
+        }
 
-/* iOS Safari：避免長按出現藍色遮罩 */
-nav .nav-item {
-  -webkit-tap-highlight-color: transparent;
-}
-/* ===== iOS-like Bottom Tab (Icon Only Bounce) ===== */
+        /* 按下時：只有 icon 縮 */
+        nav .nav-item:active i {
+        transform: scale(0.85);
+        }
 
-/* icon 本體 */
-nav .nav-item i {
-  transition: transform 0.12s ease-out;
-  will-change: transform;
-}
+        /* 目前頁：icon 微放大 */
+        nav .nav-item.active i {
+        transform: scale(1.1);
+        }
 
-/* 按下時：只有 icon 縮 */
-nav .nav-item:active i {
-  transform: scale(0.85);
-}
+        /* 文字完全不動（保險） */
+        nav .nav-item span {
+        transform: none !important;
+        }
 
-/* 目前頁：icon 微放大 */
-nav .nav-item.active i {
-  transform: scale(1.1);
-}
+        /* iOS Safari 防藍色高亮 */
+        nav .nav-item {
+        -webkit-tap-highlight-color: transparent;
+        }
+        /* ===== iOS-like Active Tab Indicator ===== */
 
-/* 文字完全不動（保險） */
-nav .nav-item span {
-  transform: none !important;
-}
+        /* nav-item 變成定位容器 */
+        nav .nav-item {
+        position: relative;
+        }
 
-/* iOS Safari 防藍色高亮 */
-nav .nav-item {
-  -webkit-tap-highlight-color: transparent;
-}
-/* ===== iOS-like Active Tab Indicator ===== */
-
-/* nav-item 變成定位容器 */
-nav .nav-item {
-  position: relative;
-}
-
-/* 使用 CSS 變數控制顏色 */
-nav .nav-item.active::after {
-  content: "";
-  position: absolute;
-  bottom: 2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 20px;
-  height: 3px;
-  border-radius: 999px;
-  background-color: var(--active-tab-color, #2cc998);
-}
+        /* 使用 CSS 變數控制顏色 */
+        nav .nav-item.active::after {
+        content: "";
+        position: absolute;
+        bottom: 2px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 20px;
+        height: 3px;
+        border-radius: 999px;
+        background-color: var(--active-tab-color, #2cc998);
+        }
     </style>
 </head>
 <body class="text-gray-700 h-screen flex flex-col overflow-hidden bg-white">
@@ -450,7 +510,7 @@ nav .nav-item.active::after {
                     </div>
                 </div>
             </div>
-            <div class="text-center text-xs text-gray-400 mt-4">Firebase Connected · Version 102.0 (Stable Click)</div>
+            <div class="text-center text-xs text-gray-400 mt-4">Firebase Connected · Version 102.2 (Fix Nav)</div>
         </div>
     </main>
 
@@ -483,103 +543,119 @@ nav .nav-item.active::after {
         </div>
     </div>
 
-    <!-- Add Event Modal (Minimal Stable) -->
-<div id="add-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal">
-  <div class="absolute inset-0 bg-black/20 backdrop-blur-[1px]" onclick="window.closeAddModal()"></div>
+    <!-- Add Event Modal -->
+    <div id="add-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal">
+      <div class="absolute inset-0 bg-black/20 backdrop-blur-[1px]" onclick="window.closeAddModal()"></div>
 
-  <div class="relative bg-white w-full h-full md:h-auto md:w-[380px] md:rounded-2xl flex flex-col">
+      <div class="relative bg-white w-full h-full md:h-auto md:w-[380px] md:rounded-2xl flex flex-col">
 
-    <!-- Title -->
-    <div class="px-6 pt-6 pb-2">
-      <label class="text-xs font-bold text-gray-400 mb-1 block">標題</label>
-      <input
-        type="text"
-        id="input-title"
-        placeholder="輸入行程標題"
-        class="w-full text-xl font-bold text-gray-800 border-b border-gray-200 pb-2 focus:outline-none focus:border-ttgreen bg-transparent"
-      />
-    </div>
-
-    <!-- Content -->
-    <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-
-      <!-- Date -->
-      <div class="bg-gray-50 rounded-xl p-4">
-        <label class="text-xs font-bold text-gray-400 mb-2 block">日期</label>
-        <input type="hidden" id="input-date-start">
-        <div
-          id="display-date-start"
-          class="dt-btn justify-start"
-          onclick="window.openCalendar('start')"
-        >
-          選擇日期
+        <!-- Title -->
+        <div class="px-6 pt-6 pb-2">
+          <label class="text-xs font-bold text-gray-400 mb-1 block">標題</label>
+          <input
+            type="text"
+            id="input-title"
+            placeholder="輸入行程標題"
+            class="w-full text-xl font-bold text-gray-800 border-b border-gray-200 pb-2 focus:outline-none focus:border-ttgreen bg-transparent"
+          />
         </div>
-      </div>
 
-      <!-- Partner -->
-      <div class="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between">
-        <span class="text-sm text-gray-700">與對方一起</span>
-        <input
-          type="checkbox"
-          id="check-partner"
-          class="custom-checkbox"
-          onchange="window.togglePartner()"
-        />
-      </div>
+        <!-- Content -->
+        <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
 
-      <!-- Status -->
-      <div class="bg-white rounded-xl p-4 border border-gray-200">
-        <label class="text-xs font-bold text-gray-400 mb-2 block">狀態</label>
-        <div class="flex gap-2">
-          <button
-            type="button"
-            class="status-btn active"
-            data-status="confirmed"
-            onclick="window.setStatus('confirmed')"
-          >已確認</button>
-          <button
-            type="button"
-            class="status-btn"
-            data-status="tbc"
-            onclick="window.setStatus('tbc')"
-          >TBC</button>
-          <button
-            type="button"
-            class="status-btn"
-            data-status="tbd"
-            onclick="window.setStatus('tbd')"
-          >TBD</button>
+          <!-- Date -->
+          <div class="bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
+             <div class="dt-row" onclick="window.openCalendar('start')">
+               <div class="dt-label">日期</div>
+               <div class="dt-value">
+                 <span id="display-date-start" class="font-bold text-ttgreen">選擇日期</span>
+               </div>
+               <input type="hidden" id="input-date-start">
+             </div>
+
+             <!-- 時間: 修正了樣式與點擊 -->
+            <div class="dt-row dt-wrapper-time" onclick="window.openTimePicker('start')">
+              <div class="dt-label">時間</div>
+              <div class="dt-value">
+                <span id="display-time-start" class="dt-placeholder">選取</span>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
+              </div>
+              <input type="hidden" id="input-time-start" value="">
+            </div>
+
+            <!-- 地點: 修正了樣式 -->
+            <div class="dt-row">
+              <div class="dt-label">地點</div>
+              <div class="dt-value">
+                <input id="input-location" type="text" placeholder="選填" class="dt-input text-right" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Partner -->
+          <div class="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between">
+            <span class="text-sm text-gray-700">與對方一起</span>
+            <input
+              type="checkbox"
+              id="check-partner"
+              class="custom-checkbox"
+              onchange="window.togglePartner()"
+            />
+          </div>
+
+          <!-- Status -->
+          <div class="bg-white rounded-xl p-4 border border-gray-200">
+            <label class="text-xs font-bold text-gray-400 mb-2 block">狀態</label>
+            <div class="flex gap-2">
+              <button
+                type="button"
+                class="status-btn active"
+                data-status="confirmed"
+                onclick="window.setStatus('confirmed')"
+              >已確認</button>
+              <button
+                type="button"
+                class="status-btn"
+                data-status="tbc"
+                onclick="window.setStatus('tbc')"
+              >TBC</button>
+              <button
+                type="button"
+                class="status-btn"
+                data-status="tbd"
+                onclick="window.setStatus('tbd')"
+              >TBD</button>
+            </div>
+            <input type="hidden" id="input-status" value="confirmed">
+          </div>
+
+          <!-- Note -->
+          <div class="bg-white border border-gray-200 rounded-xl p-4">
+            <label class="text-xs font-bold text-gray-400 mb-1 block">備註</label>
+            <textarea
+              id="input-note"
+              rows="3"
+              placeholder="簡單備註一下就好"
+              class="w-full text-sm bg-transparent focus:outline-none resize-none"
+            ></textarea>
+          </div>
+
         </div>
-        <input type="hidden" id="input-status" value="confirmed">
+
+        <!-- Footer -->
+        <div class="p-4 border-t border-gray-100 flex justify-end gap-3 pb-safe">
+          <button
+            onclick="window.closeAddModal()"
+            class="px-5 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg"
+          >取消</button>
+          <button
+            onclick="window.saveEvent()"
+            class="px-6 py-2 text-sm font-bold text-white bg-ttgreen rounded-lg shadow-md active:scale-95"
+          >保存</button>
+        </div>
+
       </div>
-
-      <!-- Note -->
-      <div class="bg-white border border-gray-200 rounded-xl p-4">
-        <label class="text-xs font-bold text-gray-400 mb-1 block">備註</label>
-        <textarea
-          id="input-note"
-          rows="3"
-          placeholder="簡單備註一下就好"
-          class="w-full text-sm bg-transparent focus:outline-none resize-none"
-        ></textarea>
-      </div>
-
     </div>
-
-    <!-- Footer -->
-    <div class="p-4 border-t border-gray-100 flex justify-end gap-3 pb-safe">
-      <button
-        onclick="window.closeAddModal()"
-        class="px-5 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg"
-      >取消</button>
-      <button
-        onclick="window.saveEvent()"
-        class="px-6 py-2 text-sm font-bold text-white bg-ttgreen rounded-lg shadow-md active:scale-95"
-      >保存</button>
-    </div>
-
-  </div>
-</div>
 
     
     <!-- Add Todo Modal -->
@@ -605,7 +681,7 @@ nav .nav-item.active::after {
                             <div id="display-date-todo" class="dt-btn justify-start w-full" onclick="window.openCalendar('todo')">--/--/--</div>
                         </div>
                         <div class="dt-wrapper-time relative w-24">
-                            <input type="text" id="display-time-todo" class="dt-btn justify-center w-full focus:bg-white outline-none" placeholder="--:--" maxlength="5" onfocus="window.openTimePicker('todo')" oninput="window.handleTimeInput('todo', this.value)" onblur="window.validateTimeInput('todo', this)">
+                            <input type="text" id="display-time-todo" class="dt-btn justify-center w-full focus:bg-white outline-none" placeholder="--:--" maxlength="5" onfocus="window.openTimePicker('todo')" readonly>
                         </div>
                     </div>
                 </div>
@@ -631,8 +707,15 @@ nav .nav-item.active::after {
         </div>
     </div>
 
+    <!-- Time Picker Modal -->
+    <div id="time-picker-modal" class="fixed inset-0 z-[60] flex items-center justify-center hidden modal">
+         <div class="absolute inset-0 bg-black/20 backdrop-blur-[1px]" onclick="window.closeTimePicker()"></div>
+         <div id="time-list-container" class="relative time-picker-modal-content flex flex-col">
+             <!-- Time slots will be populated here -->
+         </div>
+    </div>
+
     <!-- Dropdowns & Pickers -->
-    <div id="time-picker-dropdown" class="time-dropdown hidden"></div>
     <div id="calendar-picker-modal" class="fixed inset-0 z-[60] flex items-center justify-center hidden modal">
         <div class="absolute inset-0 bg-black/20 backdrop-blur-[1px]" onclick="window.closeCalendar()"></div>
         <div class="relative bg-white rounded-2xl shadow-xl w-[320px] p-4 overflow-hidden max-h-[420px]">
@@ -664,31 +747,31 @@ nav .nav-item.active::after {
 
     <script>
        /* ===== STABLE PATCH: SafeRun Helper ===== */
-window.safeRun = function (fn, label = 'unknown') {
-  try {
-    return fn();
-  } catch (err) {
-    console.error(`[SafeRun:${label}]`, err);
-    if (window.showToast) {
-      window.showToast('發生錯誤，但 App 仍可使用');
-    }
-    return null;
-  }
-};
+        window.safeRun = function (fn, label = 'unknown') {
+        try {
+            return fn();
+        } catch (err) {
+            console.error(`[SafeRun:${label}]`, err);
+            if (window.showToast) {
+            window.showToast('發生錯誤，但 App 仍可使用');
+            }
+            return null;
+        }
+        };
         // --- 1. VARIABLES ---
         /* ===== STABLE PATCH: Firestore Listener Guard ===== */
-const snapshotRegistry = {};
+        const snapshotRegistry = {};
 
-function bindSnapshot(ref, cb, label = 'snapshot') {
-  if (snapshotRegistry[label]) return; // 已綁過
+        function bindSnapshot(ref, cb, label = 'snapshot') {
+        if (snapshotRegistry[label]) return; // 已綁過
 
-  const unsub = ref.onSnapshot(
-    snap => window.safeRun(() => cb(snap), label),
-    err => console.error(`[Firestore:${label}]`, err)
-  );
+        const unsub = ref.onSnapshot(
+            snap => window.safeRun(() => cb(snap), label),
+            err => console.error(`[Firestore:${label}]`, err)
+        );
 
-  snapshotRegistry[label] = unsub;
-}
+        snapshotRegistry[label] = unsub;
+        }
 
 
         const firebaseConfig = { apiKey: "AIzaSyDLrPr4X6r3e2V_vqFaCICgKVwLmiykxpc", authDomain: "kyle-mao.firebaseapp.com", projectId: "kyle-mao", storageBucket: "kyle-mao.firebasestorage.app", messagingSenderId: "290564848532", appId: "1:290564848532:web:006c4e9df4b1330895ad81" };
@@ -709,6 +792,7 @@ function bindSnapshot(ref, cb, label = 'snapshot') {
         let calCurrentDate = new Date(); 
         let bigCalDate = new Date();
         let currentViewMode = 'list';
+        let timePickerTarget = ''; // FIX: variable for time picker
 
         const timeTreeColors = [ { name: "Emerald Green", hex: "#2cc998" }, { name: "Modern Cyan", hex: "#5cc2d1" }, { name: "Deep Sky Blue", hex: "#5ba3eb" }, { name: "Pastel Brown", hex: "#a68b75" }, { name: "Midnight Black", hex: "#333333" }, { name: "Apple Red", hex: "#e35651" }, { name: "French Rose", hex: "#e6688d" }, { name: "Coral Pink", hex: "#f29074" }, { name: "Bright Orange", hex: "#f7b546" }, { name: "Soft Violet", hex: "#9f82d1" } ];
         const moodMap = { 'charging': { icon: '⚡️', bg: 'bg-yellow-100', border: 'border-yellow-300' }, 'sleepy': { icon: '💤', bg: 'bg-blue-100', border: 'border-blue-300' }, 'love': { icon: '❤️', bg: 'bg-rose-100', border: 'border-rose-300' }, 'busy': { icon: '🔥', bg: 'bg-orange-100', border: 'border-orange-300' }, 'normal': { icon: '😶', bg: 'bg-gray-50', border: 'border-gray-100' } };
@@ -718,13 +802,13 @@ function bindSnapshot(ref, cb, label = 'snapshot') {
         window.updateDateDisplay = function(type, dateStr) {
             const displayEl = (type === 'recur') ? document.getElementById('display-recur-until') : (type === 'todo' ? document.getElementById('display-date-todo') : document.getElementById(`display-date-${type}`));
             if(!displayEl) return;
-            if(!dateStr) { if (type === 'recur') displayEl.textContent = "設定日期"; if (type === 'todo') displayEl.textContent = "--/--/--"; return; }
+            if(!dateStr) { if (type === 'recur') displayEl.textContent = "設定日期"; if (type === 'todo') displayEl.textContent = "--/--/--"; else displayEl.textContent = "選擇日期"; return; }
             const date = new Date(dateStr); const weekDays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
             if (type === 'recur' || type === 'todo') displayEl.textContent = `${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()} (${weekDays[date.getDay()]})`;
             else displayEl.textContent = `${date.getFullYear()}年${date.getMonth()+1}月${date.getDate()}日(${weekDays[date.getDay()]})`;
         };
 
-        window.updateTimeDisplay = function(type, timeStr) { const el = document.getElementById(`display-time-${type}`); if(el) el.value = timeStr || ''; };
+        window.updateTimeDisplay = function(type, timeStr) { const el = document.getElementById(`display-time-${type}`); if(el) { el.textContent = timeStr || '選取'; el.classList.toggle('dt-placeholder', !timeStr); if(timeStr) el.value = timeStr; } }; // FIX: update to support textContent
         window.checkRecurValidity = function() { const eD = document.getElementById('input-date-end').value; const rD = document.getElementById('input-recur-until').value; if(rD && eD && new Date(rD) < new Date(eD)) { document.getElementById('input-recur-until').value = eD; window.updateDateDisplay('recur', eD); } };
         window.autoUpdateEnd = function() { const sD = document.getElementById('input-date-start').value; const sT = document.getElementById('input-time-start').value; if(!sD || !sT) return; const start = new Date(`${sD}T${sT}`); const end = new Date(start.getTime() + 3600000); const eD = end.toISOString().split('T')[0]; const eT = end.toTimeString().substring(0,5); document.getElementById('input-date-end').value = eD; document.getElementById('input-time-end').value = eT; document.getElementById('display-time-end').value = eT; window.updateDateDisplay('end', eD); window.checkRecurValidity(); };
         window.checkEndDateValidity = function() { const sD = document.getElementById('input-date-start').value; const sT = document.getElementById('input-time-start').value; const eD = document.getElementById('input-date-end').value; const eT = document.getElementById('input-time-end').value; if(new Date(`${eD}T${eT}`) < new Date(`${sD}T${sT}`)) { window.autoUpdateEnd(); } else { window.checkRecurValidity(); } };
@@ -819,7 +903,8 @@ window.saveEvent = function () {
       throw new Error('Missing date');
     }
 
-    const timestamp = new Date(`${startDate}T00:00:00`).toISOString();
+    const time = document.getElementById('input-time-start')?.value || '00:00'; // Default time if missing
+    const timestamp = new Date(`${startDate}T${time}:00`).toISOString();
 
     const data = {
       title,
@@ -830,6 +915,7 @@ window.saveEvent = function () {
       note: document.getElementById('input-note')?.value || '',
       creator: currentUserRole,
       color: currentSelectedColor,
+      location: document.getElementById('input-location')?.value || '',
       createdAt: new Date().toISOString()
     };
 
@@ -876,6 +962,13 @@ window.openAddModal = function () {
   document.getElementById('input-note').value = '';
   document.getElementById('input-date-start').value = '';
   document.getElementById('display-date-start').textContent = '選擇日期';
+  const t = document.getElementById('input-time-start');
+if (t) t.value = '';
+const td = document.getElementById('display-time-start');
+if (td) { td.textContent = '選取'; td.classList.add('dt-placeholder'); }
+
+const loc = document.getElementById('input-location');
+if (loc) loc.value = '';
 
   // 一起 / 不一起
   const partner = document.getElementById('check-partner');
@@ -916,6 +1009,19 @@ window.openEditModal = function (id) {
     window.updateDateDisplay('start', ds);
   }
 
+  // === 時間 ===
+    if (evt.timestamp) {
+        const d = new Date(evt.timestamp);
+        const hours = d.getHours().toString().padStart(2, '0');
+        const minutes = d.getMinutes().toString().padStart(2, '0');
+        const timeStr = `${hours}:${minutes}`;
+        document.getElementById('input-time-start').value = timeStr;
+        window.updateTimeDisplay('start', timeStr);
+    }
+  
+  // === 地點 ===
+  document.getElementById('input-location').value = evt.location || '';
+  
   // === 一起 / 不一起 ===
   const partner = document.getElementById('check-partner');
   partner.checked = !!evt.isJoint;
@@ -1136,7 +1242,168 @@ window.selectToday = function() {
   const t = new Date();
   window.selectCalDate(t.getFullYear(), t.getMonth(), t.getDate());
 };
-// ===== End Calendar Picker (fixed) =====
+
+// ===== NEW: Time Picker Logic (Fix for Missing Function) =====
+window.openTimePicker = function(target) {
+    timePickerTarget = target;
+    const container = document.getElementById('time-list-container');
+    container.innerHTML = ''; // clear
+
+    // Generate time slots every 15 mins
+    const times = [];
+    for (let h=0; h<24; h++) {
+        for (let m=0; m<60; m+=15) { // 15 min intervals
+            const timeStr = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;
+            times.push(timeStr);
+        }
+    }
+
+    // Current value
+    let currentVal = '';
+    if (target === 'todo') currentVal = document.getElementById('input-time-todo').value;
+    else currentVal = document.getElementById(`input-time-${target}`).value;
+
+    let html = '';
+    times.forEach(t => {
+        const isSelected = t === currentVal;
+        html += `<div class="time-option ${isSelected?'selected':''}" onclick="window.selectTime('${t}')">${t}</div>`;
+    });
+    
+    // Add "None" option only for Todo or if needed, but for now strict times
+    if (target === 'todo') {
+        html = `<div class="time-option text-gray-400" onclick="window.selectTime('')">清除時間</div>` + html;
+    }
+
+    container.innerHTML = html;
+
+    const modal = document.getElementById('time-picker-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('visible'), 10);
+    
+    // Scroll to selected
+    if (currentVal) {
+        setTimeout(() => {
+            const selectedEl = container.querySelector('.selected');
+            if (selectedEl) selectedEl.scrollIntoView({block: 'center'});
+        }, 100);
+    }
+};
+
+window.closeTimePicker = function() {
+    const modal = document.getElementById('time-picker-modal');
+    modal.classList.remove('visible');
+    setTimeout(() => modal.classList.add('hidden'), 200);
+};
+
+window.selectTime = function(timeStr) {
+    if (timePickerTarget === 'todo') {
+        document.getElementById('input-time-todo').value = timeStr;
+        document.getElementById('display-time-todo').value = timeStr;
+    } else {
+        document.getElementById(`input-time-${timePickerTarget}`).value = timeStr;
+        window.updateTimeDisplay(timePickerTarget, timeStr);
+        if (timePickerTarget === 'start') window.autoUpdateEnd?.(); // Trigger logic if exists
+    }
+    window.closeTimePicker();
+};
+
+// ===== MISSING NAVIGATION & CALENDAR RENDER FUNCTIONS =====
+window.switchTab = function(tabId) {
+    // 1. Pages
+    document.querySelectorAll('.page-content').forEach(el => el.classList.remove('active'));
+    const target = document.getElementById('page-' + tabId);
+    if(target) target.classList.add('active');
+    
+    // 2. Nav
+    const tabs = ['dashboard', 'calendar', 'todo', 'settings'];
+    document.querySelectorAll('.nav-item').forEach((el, idx) => {
+        if(tabs[idx] === tabId) el.classList.add('active');
+        else el.classList.remove('active');
+    });
+
+    // 3. Special Logic
+    if(tabId === 'calendar' && currentViewMode === 'month') {
+        window.renderBigCalendar();
+    }
+};
+
+window.switchCalendarView = function(mode) {
+    currentViewMode = mode;
+    const vList = document.getElementById('calendar-view-list');
+    const vMonth = document.getElementById('calendar-view-month');
+    const bList = document.getElementById('btn-view-list');
+    const bMonth = document.getElementById('btn-view-month');
+    
+    if(mode === 'list') {
+        vList.classList.remove('hidden');
+        vMonth.classList.add('hidden');
+        bList.classList.add('bg-white','shadow-sm','text-ttgreen','font-bold');
+        bList.classList.remove('text-gray-500','font-medium');
+        bMonth.classList.remove('bg-white','shadow-sm','text-ttgreen','font-bold');
+        bMonth.classList.add('text-gray-500','font-medium');
+    } else {
+        vList.classList.add('hidden');
+        vMonth.classList.remove('hidden');
+        bMonth.classList.add('bg-white','shadow-sm','text-ttgreen','font-bold');
+        bMonth.classList.remove('text-gray-500','font-medium');
+        bList.classList.remove('bg-white','shadow-sm','text-ttgreen','font-bold');
+        bList.classList.add('text-gray-500','font-medium');
+        window.renderBigCalendar();
+    }
+};
+
+window.changeBigCalMonth = function(delta) {
+    bigCalDate.setMonth(bigCalDate.getMonth() + delta);
+    window.renderBigCalendar();
+};
+
+window.renderBigCalendar = function() {
+    const y = bigCalDate.getFullYear();
+    const m = bigCalDate.getMonth();
+    const title = document.getElementById('big-cal-title');
+    if(title) title.textContent = `${y}年${m+1}月`;
+    
+    const firstDay = new Date(y, m, 1).getDay();
+    const daysInMonth = new Date(y, m+1, 0).getDate();
+    
+    let html = '';
+    for(let i=0; i<firstDay; i++) {
+        html += `<div class="big-cal-cell bg-gray-50/50"></div>`;
+    }
+    
+    const nowStr = new Date().toDateString();
+    const items = window.getCalendarItems ? window.getCalendarItems() : [];
+
+    for(let d=1; d<=daysInMonth; d++) {
+        const dateObj = new Date(y, m, d);
+        const isToday = dateObj.toDateString() === nowStr;
+        
+        // Filter events for this day
+        const dayEvents = items.filter(e => {
+            const t = new Date(e.timestamp);
+            return t.getDate() === d && t.getMonth() === m && t.getFullYear() === y;
+        });
+
+        // Bars HTML
+        let bars = '';
+        dayEvents.slice(0, 3).forEach(e => {
+            let bg = e.color || '#2cc998';
+            if(e.isTodo) bg = e.isJoint ? roleColors.joint : (e.creator==='haohao'?roleColors.haohao:roleColors.maomao);
+            bars += `<div class="event-bar ${e.isTodo&&e.done?'done':''}" style="background-color:${bg}">${e.title}</div>`;
+        });
+        if(dayEvents.length > 3) {
+            bars += `<div class="more-events">+${dayEvents.length-3}</div>`;
+        }
+
+        html += `<div class="big-cal-cell ${isToday?'today':''}" id="big-cal-day-${d}" onclick="window.selectBigCalendarDate(${y},${m},${d})">
+            <div class="big-cal-day-num">${d}</div>
+            <div class="w-full px-1 space-y-px">${bars}</div>
+        </div>`;
+    }
+    
+    const grid = document.getElementById('big-cal-grid');
+    if(grid) grid.innerHTML = html;
+};
 
 document.addEventListener('DOMContentLoaded', () => {
   safeRun(() => {
