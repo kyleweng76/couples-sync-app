@@ -944,26 +944,59 @@ let roleColors = {
 };
         window.updateMyStatus = function() { if(!db) return; const moods = ['normal', 'charging', 'sleepy', 'love', 'busy']; const randomMood = moods[Math.floor(Math.random() * moods.length)]; const d = {}; d[currentUserRole] = randomMood; db.collection('status').doc('current').set(d, { merge: true }); };
         window.toggleGlobalColorPicker = function(show) { const el = document.getElementById('global-color-picker'); const grid = document.getElementById('global-color-grid'); if(show) { grid.innerHTML = ''; timeTreeColors.forEach(color => { const row = document.createElement('div'); row.className = "flex items-center p-2 rounded hover:bg-gray-50 cursor-pointer transition"; row.onclick = () => window.selectGlobalColor(color); row.innerHTML = `<div class="w-5 h-5 rounded-full mr-3 shadow-sm" style="background-color: ${color.hex}"></div><span class="text-sm text-gray-700">${color.name}</span>`; grid.appendChild(row); }); el.classList.remove('hidden'); setTimeout(() => el.classList.add('visible'), 10); } else { el.classList.remove('visible'); setTimeout(() => el.classList.add('hidden'), 200); colorPickerTarget = null; } };
-        window.selectGlobalColor = function(c) {
+window.selectGlobalColor = function(c) {
+    // 1. 如果是在「新增/編輯行程」時選顏色 (維持原樣)
     if (colorPickerTarget === 'event') {
-        // 修改行程顏色
         currentSelectedColor = c.hex;
         document.getElementById('selected-color-name').textContent = c.name;
         document.getElementById('selected-color-dot').style.backgroundColor = c.hex;
-    } else if (colorPickerTarget) {
-        // 修改角色代表色 (設定頁面)
-        roleColors[colorPickerTarget] = c.hex;
-        localStorage.setItem(`color_${colorPickerTarget}`, c.hex);
+    } 
+    // 2. 如果是在「設定頁面」選代表色 (修改邏輯)
+    else if (colorPickerTarget) {
+        const newHex = c.hex;
+        const targetRole = colorPickerTarget; // 目前正在修改的角色 (haohao, maomao, joint)
+        const oldHex = roleColors[targetRole]; // 該角色原本的顏色 (用來交換用)
+
+        // === 步驟 A: 檢查衝突 ===
+        let conflictRole = null;
+        for (let key in roleColors) {
+            // 如果不是自己，且顏色跟新選的一樣，就是衝突者
+            if (key !== targetRole && roleColors[key] === newHex) {
+                conflictRole = key;
+                break;
+            }
+        }
+
+        // === 步驟 B: 更新目標角色的顏色 ===
+        roleColors[targetRole] = newHex;
+        localStorage.setItem(`color_${targetRole}`, newHex);
+
+        // === 步驟 C: 處理衝突 (自動交換) ===
+        if (conflictRole) {
+            // 把衝突者的顏色換成舊顏色
+            roleColors[conflictRole] = oldHex;
+            localStorage.setItem(`color_${conflictRole}`, oldHex);
+            
+            // 顯示提示訊息
+            const roleNames = { haohao: '皓皓', maomao: '毛毛', joint: '共同行程' };
+            window.showToast(`顏色重複，已與「${roleNames[conflictRole]}」交換顏色！`);
+        }
+
+        // === 步驟 D: 更新介面 ===
+        // 1. 更新設定頁面的三個圓圈
         window.updateSettingsColorUI();
 
-        // === 修改處：如果修改的是「當前登入者」的顏色，立刻更新底部橫條 CSS ===
-        if (colorPickerTarget === currentUserRole) {
-            document.documentElement.style.setProperty(
+        // 2. 檢查是否影響到底部導航列 (Active Tab) 的顏色
+        // (無論是「直接修改自己」或是「因為交換而改變了自己」都要更新)
+        if (targetRole === currentUserRole || conflictRole === currentUserRole) {
+             document.documentElement.style.setProperty(
                 '--active-tab-color',
-                c.hex
+                roleColors[currentUserRole]
             );
         }
     }
+    
+    // 關閉選色視窗
     window.toggleGlobalColorPicker(false);
 };
         window.openColorConfig = function(target) { colorPickerTarget = target; window.toggleGlobalColorPicker(true); };
