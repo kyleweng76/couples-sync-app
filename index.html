@@ -322,7 +322,15 @@ nav .nav-item.active::after {
 .swipe-row.open .swipe-content {
   transform: translateX(-84px);
 }
-    </style>
+    
+/* ===== iOS Swipe-to-Delete (Calendar List) ===== */
+.swipe-row{position:relative;overflow:hidden;border-radius:12px;}
+.swipe-actions{position:absolute;top:0;right:0;bottom:0;display:flex;align-items:stretch;}
+.swipe-delete-btn{display:flex;align-items:center;justify-content:center;padding:0 18px;font-weight:700;font-size:14px;color:#fff;background:#ff3b30;user-select:none;-webkit-user-select:none;}
+.swipe-content{position:relative;transform:translateX(0);transition:transform .18s ease;will-change:transform;background:#fff;}
+.swipe-row.open .swipe-content{transform:translateX(calc(-1 * var(--swipe-open, 88px)));}
+
+</style>
 </head>
 <body class="text-gray-700 h-screen flex flex-col overflow-hidden bg-white">
 
@@ -890,39 +898,32 @@ window.updateParticipantsPreview = function() {
         
         window.renderDashboardNextUp = function(items) { const now = new Date(); const next7Days = new Date(); next7Days.setDate(now.getDate() + 7); const upcoming = items.filter(item => { const t = new Date(item.timestamp); if (item.isTodo && item.done) return false; return !isNaN(t) && t >= now && t <= next7Days; }); const countEl = document.getElementById('dashboard-countdown'); if (upcoming.length > 0) { const first = upcoming[0]; const d = new Date(first.timestamp); const diff = Math.ceil((d - now) / (1000 * 60 * 60 * 24)); countEl.textContent = diff <= 0 ? "TODAY" : `D - ${diff}`; } else { countEl.textContent = "FREE"; } const container = document.getElementById('dashboard-next-list'); if (!container) return; container.innerHTML = ''; if (upcoming.length === 0) { container.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">未來 7 天沒有行程 😴</div>`; } else { let html = ''; upcoming.forEach(item => { const date = new Date(item.timestamp); const timeStr = item.allDay ? "All Day" : date.toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit', hour12:false}); const dateStr = date.toLocaleDateString('zh-TW', {month:'numeric', day:'numeric', weekday:'short'}); let color = '#2cc998'; if (item.isTodo) { color = item.isJoint ? roleColors.joint : (item.creator==='haohao' ? roleColors.haohao : roleColors.maomao); } else { color = item.color; } let tagHtml = item.isTodo ? `<span class="ml-2 text-[10px] border border-gray-200 text-gray-400 px-1 rounded">待辦</span>` : ''; let clickAction = item.isTodo ? `window.openEditTodoModal('${item.id}')` : `window.openEditModal('${item.id}')`; html += `<div class="flex items-center p-3 hover:bg-gray-50 cursor-pointer" onclick="${clickAction}"><div class="w-1 self-stretch rounded-full mr-3" style="background-color: ${color}"></div><div class="flex-1 min-w-0"><div class="flex items-center"><span class="text-sm font-bold text-gray-800 truncate">${item.title}</span>${tagHtml}</div><div class="text-xs text-gray-500 mt-0.5">${dateStr} · ${timeStr} ${item.location ? `· ${item.location}` : ''}</div></div></div>`; }); container.innerHTML = html; } };
         window.renderCalendarListView = function() { const items = window.getCalendarItems(); const listEl = document.getElementById('event-list'); if(!listEl) return; if (items.length === 0) { listEl.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">無行程</div>`; } else { window.renderEventListItems(items, listEl); } };
+
 window.renderEventListItems = function(items, container) {
   let html = '';
-
   items.forEach(e => {
     const date = new Date(e.timestamp);
     if (isNaN(date)) return;
 
-    const timeStr = e.allDay
-      ? "All Day"
-      : date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const timeStr = e.allDay ? "All Day" : date.toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit', hour12:false});
 
-    // ===== TODO ROW =====
+    // ===== TODO item =====
     if (e.isTodo) {
       const statusClass = e.done ? "line-through text-gray-400" : "text-gray-800";
       const checkIcon = e.done
         ? '<i data-lucide="check-square" class="w-5 h-5 text-green-500"></i>'
         : '<i data-lucide="square" class="w-5 h-5 text-gray-400"></i>';
 
-      const dotColor = e.isJoint
-        ? roleColors.joint
-        : (e.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
+      const dotColor = e.isJoint ? roleColors.joint : (e.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
 
-      // 你原本的卡片（幾乎不動）
-      const cardHtml = `
-        <div class="flex p-4 items-center gap-4 hover:bg-gray-50 transition cursor-pointer">
+      const content = `
+        <div class="flex p-4 items-center gap-4 hover:bg-gray-50 transition">
           <div class="flex flex-col items-center w-10">
-            <span class="text-xs text-gray-400 font-medium uppercase">${date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+            <span class="text-xs text-gray-400 font-medium uppercase">${date.toLocaleDateString('en-US',{weekday:'short'})}</span>
             <span class="text-xl font-bold text-gray-800 leading-none">${date.getDate()}</span>
           </div>
-
-          <div class="w-1 self-stretch rounded-full" style="background-color: ${dotColor}"></div>
-
-          <div class="flex-1 min-w-0 flex items-center justify-between" onclick="window.openEditTodoModal('${e.id}')">
+          <div class="w-1 self-stretch rounded-full" style="background-color:${dotColor}"></div>
+          <div class="flex-1 min-w-0 flex items-center justify-between">
             <div>
               <div class="flex items-center gap-2 ${statusClass}">
                 <span class="font-bold truncate block">${e.title}</span>
@@ -931,60 +932,22 @@ window.renderEventListItems = function(items, container) {
               <div class="text-xs text-gray-500">${timeStr}</div>
             </div>
           </div>
+          <div class="flex-none p-2 cursor-pointer" onclick="window.toggleTodo('${e.id}', ${!e.done}); event.stopPropagation();">${checkIcon}</div>
+        </div>`;
 
-          <div class="flex-none p-2 cursor-pointer"
-               onclick="window.toggleTodo('${e.id}', ${!e.done}); event.stopPropagation();">
-            ${checkIcon}
+      html += `
+        <div class="swipe-row mx-3 my-2 border border-gray-100 shadow-sm" data-swipe="row">
+          <div class="swipe-actions" data-swipe="actions">
+            <button class="swipe-delete-btn" onclick="window.deleteTodoFromSwipe('${e.id}'); event.stopPropagation();">刪除</button>
           </div>
-        </div>
-      `;
-
-      // ✅ Event（行程）— iOS swipe delete 正確結構
-html += `
-  <div class="swipe-row" data-swipe-type="event" data-swipe-id="${e.id}">
-    <div class="swipe-actions">
-      <button type="button"
-        class="swipe-delete-btn"
-        onclick="window.requestDelete('event','${e.id}'); event.stopPropagation();">
-        刪除
-      </button>
-    </div>
-
-    <div class="swipe-content">
-      <div class="flex p-4 items-start gap-4 hover:bg-gray-50 transition cursor-pointer card-press"
-           onclick="window.openEditModal('${e.id}')">
-        <div class="flex flex-col items-center w-10 pt-1">
-          <span class="text-xs text-gray-400 font-medium uppercase">
-            ${date.toLocaleDateString('en-US',{weekday:'short'})}
-          </span>
-          <span class="text-xl font-bold text-gray-800 leading-none" style="color:${e.color}">
-            ${date.getDate()}
-          </span>
-        </div>
-
-        <div class="w-1 self-stretch rounded-full" style="background-color:${e.color}"></div>
-
-        <div class="flex-1 min-w-0 pt-1">
-          <div class="flex items-center gap-1">
-            ${ico}
-            <h4 class="font-bold text-gray-800 truncate">${e.title}</h4>
-            ${st}
+          <div class="swipe-content card-press" data-swipe="content" onclick="window.openEditTodoModal('${e.id}')">
+            ${content}
           </div>
-          <div class="text-xs text-gray-500">
-            ${timeStr} ${e.location ? '· ' + e.location : ''}
-          </div>
-        </div>
-
-        <div class="flex items-center self-center -space-x-1 pl-2">${av}</div>
-      </div>
-    </div>
-  </div>
-`;
-
+        </div>`;
       return;
     }
 
-    // ===== EVENT ROW =====
+    // ===== Event item =====
     let ic = '';
     if (e.category === 'travel') ic = 'plane';
     else if (e.category === 'appointment') ic = 'scissors';
@@ -997,62 +960,39 @@ html += `
     if (e.status === 'tbc') st = `<span class="status-tag tbc">TBC</span>`;
     else if (e.status === 'tbd') st = `<span class="status-tag tbd">TBD</span>`;
 
-    let av = `<div class="avatar-sm z-20" style="background-color:${roleColors[e.creator] || '#2cc998'}">${e.creator === 'haohao' ? '皓' : '毛'}</div>`;
+    let av = `<div class="avatar-sm z-20" style="background-color:${roleColors[e.creator]||'#2cc998'}">${e.creator==='haohao'?'皓':'毛'}</div>`;
     if (e.isJoint) {
-      av += `<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[e.creator === 'haohao' ? 'maomao' : 'haohao'] || '#e6688d'}">${e.creator === 'haohao' ? '皓' : '毛'}</div>`;
+      const p = e.creator === 'haohao' ? 'maomao' : 'haohao';
+      av += `<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[p]||'#e6688d'}">${p==='haohao'?'皓':'毛'}</div>`;
     }
 
-    const cardHtml = `
-      <div class="swipe-row mb-2">
-    <div class="swipe-actions">
-      <button onclick="window.requestDelete('event','${e.id}'); event.stopPropagation();">刪除</button>
-    </div>
-
-    <div class="swipe-content">
-      <div class="swipe-row mb-2">
-    <div class="swipe-actions">
-      <button onclick="window.requestDelete('todo','${e.id}'); event.stopPropagation();">刪除</button>
-    </div>
-
-    <div class="swipe-content">
-      <div class="flex p-4 items-center gap-4 hover:bg-gray-50 transition cursor-pointer">
+    const eventContent = `
+      <div class="flex p-4 items-start gap-4 hover:bg-gray-50 transition">
         <div class="flex flex-col items-center w-10 pt-1">
-          <span class="text-xs text-gray-400 font-medium uppercase">${date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+          <span class="text-xs text-gray-400 font-medium uppercase">${date.toLocaleDateString('en-US',{weekday:'short'})}</span>
           <span class="text-xl font-bold text-gray-800 leading-none" style="color:${e.color}">${date.getDate()}</span>
         </div>
-
         <div class="w-1 self-stretch rounded-full" style="background-color:${e.color}"></div>
-
         <div class="flex-1 min-w-0 pt-1">
           <div class="flex items-center gap-1">
             ${ico}
             <h4 class="font-bold text-gray-800 truncate">${e.title}</h4>
             ${st}
           </div>
-          <div class="text-xs text-gray-500">
-            ${timeStr} ${e.location ? '· ' + e.location : ''}
-          </div>
+          <div class="text-xs text-gray-500">${timeStr} ${e.location ? '· ' + e.location : ''}</div>
         </div>
-
-        <div class="flex items-center self-center -space-x-1 pl-2">
-          ${av}
-        </div>
-      </div>
-    `;
+        <div class="flex items-center self-center -space-x-1 pl-2">${av}</div>
+      </div>`;
 
     html += `
-      <div class="swipe-row" data-type="event" data-id="${e.id}">
-        <div class="swipe-actions">
-          <button type="button"
-            onclick="window.requestDelete('event','${e.id}'); event.stopPropagation();">
-            刪除
-          </button>
+      <div class="swipe-row mx-3 my-2 border border-gray-100 shadow-sm" data-swipe="row">
+        <div class="swipe-actions" data-swipe="actions">
+          <button class="swipe-delete-btn" onclick="window.deleteEventFromSwipe('${e.id}'); event.stopPropagation();">刪除</button>
         </div>
-        <div class="swipe-content">
-          ${cardHtml}
+        <div class="swipe-content card-press" data-swipe="content" onclick="window.openEditModal('${e.id}')">
+          ${eventContent}
         </div>
-      </div>
-    `;
+      </div>`;
   });
 
   container.innerHTML = html;
@@ -1061,9 +1001,11 @@ html += `
     lucide.createIcons({ root: container });
   }
 
-  // 綁定 swipe 行為
-  window.bindSwipeToDelete(container);
+  if (window.bindSwipeToDelete) {
+    window.bindSwipeToDelete(container);
+  }
 };
+
         window.toggleAllDay = function() { const isChecked = document.getElementById('check-allday').checked; document.querySelectorAll('.dt-wrapper-time').forEach(d => d.style.display = isChecked ? 'none' : 'block'); };
         window.toggleRecurring = function() { const isChecked = document.getElementById('check-recurring').checked; const opts = document.getElementById('recurring-options'); if(isChecked) { opts.classList.remove('hidden'); if(!document.getElementById('input-recur-until').value) document.getElementById('input-recur-until').value = document.getElementById('input-date-end').value; } else opts.classList.add('hidden'); };
         window.toggleTravelFields = function() { const type = document.getElementById('input-transport-type').value; const isPlane = type === 'plane'; document.getElementById('travel-region-intl').classList.toggle('hidden', !isPlane); document.getElementById('travel-region-tw').classList.toggle('hidden', isPlane); };
@@ -1338,76 +1280,121 @@ window.executeDelete = function() {
 };
 
 // ===== Swipe binder =====
-window.bindSwipeToDelete = function(container) {
-  const rows = container.querySelectorAll('.swipe-row');
 
+window.deleteEventFromSwipe = function(id) {
+  if (!db) return;
+  editingEventId = id;
+  window.confirmDelete();
+};
+
+window.deleteTodoFromSwipe = function(id) {
+  if (!db) return;
+  // reuse existing deleteTodo (has confirm)
+  window.deleteTodo(id);
+};
+
+window.bindSwipeToDelete = function(container) {
+  if (!container) return;
+
+  const rows = container.querySelectorAll('[data-swipe="row"]');
   rows.forEach(row => {
     if (row.__swipeBound) return;
     row.__swipeBound = true;
+
+    const content = row.querySelector('[data-swipe="content"]');
+    const actions = row.querySelector('[data-swipe="actions"]');
+    if (!content || !actions) return;
+
+    // compute open width
+    const openW = Math.max(72, actions.getBoundingClientRect().width || 88);
+    row.style.setProperty('--swipe-open', `${openW}px`);
 
     let startX = 0;
     let currentX = 0;
     let dragging = false;
 
-    const content = row.querySelector('.swipe-content');
-    if (!content) return;
+    const getX = (e) => (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
 
-    const closeOthers = () => {
-      container.querySelectorAll('.swipe-row.open').forEach(r => {
-        if (r !== row) r.classList.remove('open');
-      });
+    const start = (e) => {
+      // ignore if tapping delete button
+      if (e.target && e.target.closest && e.target.closest('.swipe-delete-btn')) return;
+
+      dragging = true;
+      startX = getX(e);
+      currentX = 0;
+      content.style.transition = 'none';
     };
 
-    row.addEventListener('touchstart', (e) => {
-      if (!e.touches || !e.touches[0]) return;
-      startX = e.touches[0].clientX;
-      currentX = startX;
-      dragging = true;
-      closeOthers();
-      content.style.transition = 'none';
-    }, { passive: true });
+    const move = (e) => {
+      if (!dragging) return;
 
-    row.addEventListener('touchmove', (e) => {
-      if (!dragging || !e.touches || !e.touches[0]) return;
-      currentX = e.touches[0].clientX;
-      const dx = currentX - startX;
+      // prevent page scroll while horizontal swiping
+      if (e.cancelable) e.preventDefault();
 
-      // 只處理左滑（dx < 0）
-      if (dx < 0) {
-        const limited = Math.max(dx, -84); // 最多 -84px
-        content.style.transform = `translateX(${limited}px)`;
-      }
-    }, { passive: true });
+      const dx = getX(e) - startX;
+      let tx = Math.min(0, dx); // only allow left swipe
+      tx = Math.max(tx, -openW * 1.2); // clamp
+      currentX = tx;
+      content.style.transform = `translateX(${tx}px)`;
+    };
 
-    row.addEventListener('touchend', () => {
+    const end = () => {
       if (!dragging) return;
       dragging = false;
+      content.style.transition = 'transform .18s ease';
 
-      const dx = currentX - startX;
-      content.style.transition = 'transform 0.18s ease';
-
-      // 超過門檻就打開
-      if (dx < -40) {
+      const shouldOpen = currentX < -openW * 0.45;
+      if (shouldOpen) {
         row.classList.add('open');
-        content.style.transform = 'translateX(-84px)';
+        content.style.transform = `translateX(${-openW}px)`;
       } else {
         row.classList.remove('open');
         content.style.transform = 'translateX(0px)';
       }
+    };
+
+    // touch
+    content.addEventListener('touchstart', start, { passive: true });
+    content.addEventListener('touchmove', move, { passive: false });
+    content.addEventListener('touchend', end);
+    content.addEventListener('touchcancel', end);
+
+    // mouse (desktop testing)
+    content.addEventListener('mousedown', (e) => {
+      start(e);
+      const mm = (ev) => move(ev);
+      const mu = () => {
+        document.removeEventListener('mousemove', mm);
+        document.removeEventListener('mouseup', mu);
+        end();
+      };
+      document.addEventListener('mousemove', mm);
+      document.addEventListener('mouseup', mu);
     });
 
-    // 點內容區：如果是 open 就先關起來（避免誤觸進編輯）
-    row.addEventListener('click', (e) => {
+    // tap content while open => close (matches iOS feel)
+    content.addEventListener('click', (e) => {
       if (row.classList.contains('open')) {
-        row.classList.remove('open');
-        const c = row.querySelector('.swipe-content');
-        if (c) c.style.transform = 'translateX(0px)';
-        e.preventDefault();
         e.stopPropagation();
+        row.classList.remove('open');
+        content.style.transition = 'transform .18s ease';
+        content.style.transform = 'translateX(0px)';
       }
-    }, true);
+    });
   });
+
+  // clicking anywhere else in container closes open rows
+  container.addEventListener('click', (e) => {
+    const row = e.target.closest?.('[data-swipe="row"]');
+    container.querySelectorAll('[data-swipe="row"].open').forEach(r => {
+      if (row && r === row) return;
+      const c = r.querySelector('[data-swipe="content"]');
+      r.classList.remove('open');
+      if (c) c.style.transform = 'translateX(0px)';
+    });
+  }, { capture: true });
 };
+
         window.renderTodos = function(todos) { const jointList=document.getElementById('todo-list-joint'), haohaoList=document.getElementById('todo-list-haohao'), maomaoList=document.getElementById('todo-list-maomao'), dashboardList=document.getElementById('dashboard-todo-list'); if(!jointList) return; jointList.innerHTML=''; haohaoList.innerHTML=''; maomaoList.innerHTML=''; dashboardList.innerHTML=''; let pendingCount=0; todos.forEach(t => { let colorHex = roleColors.haohao; let container = haohaoList; if (t.isJoint) { colorHex = roleColors.joint; container = jointList; } else if (t.creator === 'maomao') { colorHex = roleColors.maomao; container = maomaoList; } let checkStyle = t.done ? `background-color: #d1d5db; border-color: #d1d5db;` : `border-color: ${colorHex};`; let titleClass = t.done ? "text-gray-400 line-through" : "text-gray-800"; if (t.done) { } else { pendingCount++; } let calInfo = t.dueDate ? `<span class="text-[10px] ${t.done?'text-gray-300':'text-gray-400'} ml-2 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${t.dueDate}</span>` : ''; const html = `<div class="todo-item flex items-center p-3 bg-white rounded-xl border border-gray-100 shadow-sm"><div class="flex-none p-2 cursor-pointer" onclick="window.toggleTodo('${t.id}', ${!t.done}); event.stopPropagation();"><div class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors text-white" style="${checkStyle}">${t.done?'<i data-lucide="check" class="w-3 h-3"></i>':''}</div></div><div class="flex-1 px-2 cursor-pointer overflow-hidden" onclick="window.openEditTodoModal('${t.id}')"><span class="${titleClass} font-medium truncate block">${t.title}</span>${calInfo}</div><button onclick="window.deleteTodo('${t.id}'); event.stopPropagation();" class="flex-none p-2 text-gray-300 hover:text-red-400"><i data-lucide="x" class="w-4 h-4"></i></button></div>`; container.innerHTML += html; }); if (pendingCount === 0) dashboardList.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">沒有未完成的待辦事項 🎉</p>`; else { const pendings = todos.filter(t => !t.done).slice(0, 3); pendings.forEach(t => { let dotColor = t.isJoint ? roleColors.joint : (t.creator==='haohao' ? roleColors.haohao : roleColors.maomao); dashboardList.innerHTML += `<div class="flex items-center gap-2 text-sm bg-gray-50 p-2 rounded-lg border border-gray-100"><div class="w-2 h-2 rounded-full" style="background-color: ${dotColor}"></div><span class="truncate text-gray-700">${t.title}</span></div>`; }); if (todos.filter(t => !t.done).length > 3) dashboardList.innerHTML += `<div class="text-center text-xs text-gray-400 mt-1">還有 ${todos.filter(t => !t.done).length - 3} 個項目...</div>`; } if(typeof lucide !== 'undefined') lucide.createIcons(); };
         window.openCalendar = function(t) { calTargetInput=t; let v = ''; if (t === 'recur') v = document.getElementById('input-recur-until').value; else if (t === 'todo') v = document.getElementById('input-date-todo').value; else v = document.getElementById(`input-date-${t}`).value; calCurrentDate=v?new Date(v):new Date(); if(isNaN(calCurrentDate.getTime())) calCurrentDate = new Date(); window.renderCalendarModal(); const m=document.getElementById('calendar-picker-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); };
         window.closeCalendar = function() { const m=document.getElementById('calendar-picker-modal'); m.classList.remove('visible'); setTimeout(()=>m.classList.add('hidden'),200); };
