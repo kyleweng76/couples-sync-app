@@ -1219,15 +1219,59 @@ window.closeAddModal = function() {
   m.classList.remove('visible');
   setTimeout(()=>m.classList.add('hidden'),200);
 };
+/* =========================================
+   待辦事項邏輯修復包 (請替換相關函式)
+   ========================================= */
+
+// 1. 開啟新增視窗
+window.openAddTodoModal = function() {
+    editingTodoId = null;
+    document.getElementById('todo-modal-title').textContent = '新增待辦事項';
+    document.getElementById('todo-modal-btn').textContent = '新增';
+    document.getElementById('todo-input-title').value = '';
+    document.getElementById('input-date-todo').value = '';
+    document.getElementById('input-time-todo').value = '';
+
+    // 重置日期顯示
+    const dd = document.getElementById('display-date-todo');
+    if(dd) {
+        dd.textContent = '請選擇';
+        dd.classList.add('dt-text-placeholder');
+        dd.classList.remove('dt-text-value');
+    }
+
+    const dt = document.getElementById('display-time-todo');
+    if(dt) {
+        dt.textContent = '請選擇';
+        dt.classList.add('dt-text-placeholder');
+        dt.classList.remove('dt-text-value');
+    }
+
+    // 重置勾選框
+    const jointCheck = document.getElementById('todo-check-joint');
+    if(jointCheck) jointCheck.checked = false;
+
+    // 隱藏刪除按鈕
+    const btnDel = document.getElementById('btn-delete-todo');
+    if (btnDel) btnDel.classList.add('hidden');
+
+    // 顯示視窗
+    const m = document.getElementById('add-todo-modal');
+    m.classList.remove('hidden');
+    setTimeout(() => m.classList.add('visible'), 10);
+};
+
+// 2. 開啟編輯視窗
 window.openEditTodoModal = function(id) {
     editingTodoId = id;
     const todo = allTodosCache.find(t => t.id === id);
     if (!todo) return;
-    
+
     document.getElementById('todo-modal-title').textContent = '編輯待辦事項';
     document.getElementById('todo-modal-btn').textContent = '儲存';
     document.getElementById('todo-input-title').value = todo.title;
-    
+
+    // 設定日期
     if (todo.dueDate) {
         document.getElementById('input-date-todo').value = todo.dueDate;
         window.updateDateDisplay('todo', todo.dueDate);
@@ -1235,7 +1279,8 @@ window.openEditTodoModal = function(id) {
         document.getElementById('input-date-todo').value = '';
         window.updateDateDisplay('todo', '');
     }
-    
+
+    // 設定時間
     if (todo.dueTime) {
         document.getElementById('input-time-todo').value = todo.dueTime;
         window.updateTimeDisplay('todo', todo.dueTime);
@@ -1243,25 +1288,43 @@ window.openEditTodoModal = function(id) {
         document.getElementById('input-time-todo').value = '';
         window.updateTimeDisplay('todo', '');
     }
-    
-    document.getElementById('todo-check-joint').checked = todo.isJoint;
-    
-    // === 修改處：已移除舊的 checkbox 設定程式碼 ===
 
-    const btn = document.getElementById('btn-delete-todo');
-    if (btn) btn.classList.remove('hidden');
-    
+    // 設定共同勾選
+    const jointCheck = document.getElementById('todo-check-joint');
+    if(jointCheck) jointCheck.checked = todo.isJoint;
+
+    // 顯示刪除按鈕
+    const btnDel = document.getElementById('btn-delete-todo');
+    if (btnDel) btnDel.classList.remove('hidden');
+
+    // 顯示視窗
     const m = document.getElementById('add-todo-modal');
     m.classList.remove('hidden');
     setTimeout(() => m.classList.add('visible'), 10);
 };
-window.checkTodoCalendarOption = function() { const dateVal = document.getElementById('input-date-todo').value; const opt = document.getElementById('todo-calendar-option'); const check = document.getElementById('todo-check-calendar'); if (dateVal) { opt.classList.remove('opacity-50', 'pointer-events-none'); check.disabled = false; } else { opt.classList.add('opacity-50', 'pointer-events-none'); check.disabled = true; check.checked = false; } };
-// === 新增一個防止連點的變數 ===
-window.isSavingTodo = false;
+
+// 3. 關閉視窗 (這就是之前可能遺失的關鍵函式)
+window.closeAddTodoModal = function() {
+    const m = document.getElementById('add-todo-modal');
+    if (!m) return;
+    
+    m.classList.remove('visible');
+    setTimeout(() => m.classList.add('hidden'), 200);
+
+    // 強制重置儲存狀態 (解鎖按鈕)
+    window.isSavingTodo = false;
+    const btn = document.getElementById('todo-modal-btn');
+    if (btn) {
+        btn.textContent = editingTodoId ? '儲存' : '新增';
+        btn.style.opacity = '1';
+    }
+};
+
+// 4. 儲存待辦事項 (含防連點與錯誤處理)
+window.isSavingTodo = false; // 初始化狀態鎖
 
 window.saveTodoItem = function() {
-    // 1. 檢查是否正在儲存中，如果是就直接擋掉
-    if (window.isSavingTodo) return;
+    if (window.isSavingTodo) return; // 防止重複點擊
 
     const title = document.getElementById('todo-input-title').value;
     if (!title) {
@@ -1269,10 +1332,10 @@ window.saveTodoItem = function() {
         return;
     }
 
-    // 2. 鎖定按鈕並變更文字，讓使用者知道正在處理
+    // 鎖定按鈕
     window.isSavingTodo = true;
     const btn = document.getElementById('todo-modal-btn');
-    const originalText = btn.textContent;
+    const originalText = btn ? btn.textContent : '儲存';
     if (btn) {
         btn.textContent = '儲存中...';
         btn.style.opacity = '0.5';
@@ -1282,7 +1345,7 @@ window.saveTodoItem = function() {
     const time = document.getElementById('input-time-todo').value;
     const isJoint = document.getElementById('todo-check-joint').checked;
     
-    // 若有日期則自動同步至行事曆
+    // 若有日期則自動標記需同步
     const addToCalendar = !!date; 
 
     const todoData = {
@@ -1301,23 +1364,26 @@ window.saveTodoItem = function() {
         todoData.timestamp = new Date(`${date}T${tStr}`).toISOString();
     }
 
-    // 定義成功後的動作
     const onSuccess = (msg) => {
-        window.closeAddTodoModal();
+        // 這裡呼叫 closeAddTodoModal，如果函式不存在就會報錯
+        if (typeof window.closeAddTodoModal === 'function') {
+            window.closeAddTodoModal();
+        } else {
+            // 保險措施：如果函式真的不見了，手動關閉
+            const m = document.getElementById('add-todo-modal');
+            if(m) {
+                 m.classList.remove('visible');
+                 setTimeout(() => m.classList.add('hidden'), 200);
+            }
+            window.isSavingTodo = false; // 手動解鎖
+        }
         window.showToast(msg);
-        // 恢復按鈕狀態
-        window.isSavingTodo = false;
-        if (btn) {
-            btn.textContent = originalText;
-            btn.style.opacity = '1';
-        }
     };
 
-    // 定義失敗後的動作
     const onError = (err) => {
-        console.error(err);
+        console.error("Save Error:", err);
         window.showToast('儲存失敗，請檢查網路');
-        // 恢復按鈕狀態，讓使用者可以重試
+        // 解鎖並恢復按鈕
         window.isSavingTodo = false;
         if (btn) {
             btn.textContent = originalText;
@@ -1325,7 +1391,7 @@ window.saveTodoItem = function() {
         }
     };
 
-    // 3. 執行資料庫寫入
+    // 執行寫入
     if (editingTodoId) {
         db.collection('todos').doc(editingTodoId).update(todoData)
             .then(() => onSuccess('待辦事項已更新'))
