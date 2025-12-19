@@ -615,8 +615,8 @@ nav .nav-item.active::after {
   <div class="relative bg-white w-full h-full md:h-auto md:w-[380px] md:rounded-2xl flex flex-col">
 
    <!-- Modal Top Bar (iOS-like) -->
-<div class="p-4 border-b border-gray-100 flex items-center justify-between">
-  <!-- 左：取消 -->
+<div class="px-6 py-4 border-b flex items-center justify-between"></div>
+   <!-- 左：取消 -->
   <button
     onclick="window.closeAddModal()"
     class="text-gray-500 text-sm"
@@ -1513,7 +1513,20 @@ content.addEventListener('pointercancel', () => end());
 };
 
         window.renderTodos = function(todos) { const jointList=document.getElementById('todo-list-joint'), haohaoList=document.getElementById('todo-list-haohao'), maomaoList=document.getElementById('todo-list-maomao'), dashboardList=document.getElementById('dashboard-todo-list'); if(!jointList) return; jointList.innerHTML=''; haohaoList.innerHTML=''; maomaoList.innerHTML=''; dashboardList.innerHTML=''; let pendingCount=0; todos.forEach(t => { let colorHex = roleColors.haohao; let container = haohaoList; if (t.isJoint) { colorHex = roleColors.joint; container = jointList; } else if (t.creator === 'maomao') { colorHex = roleColors.maomao; container = maomaoList; } let checkStyle = t.done ? `background-color: #d1d5db; border-color: #d1d5db;` : `border-color: ${colorHex};`; let titleClass = t.done ? "text-gray-400 line-through" : "text-gray-800"; if (t.done) { } else { pendingCount++; } let calInfo = t.dueDate ? `<span class="text-[10px] ${t.done?'text-gray-300':'text-gray-400'} ml-2 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${t.dueDate}</span>` : ''; const html = `<div class="todo-item flex items-center p-3 bg-white rounded-xl border border-gray-100 shadow-sm"><div class="flex-none p-2 cursor-pointer" onclick="window.toggleTodo('${t.id}', ${!t.done}); event.stopPropagation();"><div class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors text-white" style="${checkStyle}">${t.done?'<i data-lucide="check" class="w-3 h-3"></i>':''}</div></div><div class="flex-1 px-2 cursor-pointer overflow-hidden" onclick="window.openEditTodoModal('${t.id}')"><span class="${titleClass} font-medium truncate block">${t.title}</span>${calInfo}</div><button onclick="window.deleteTodo('${t.id}'); event.stopPropagation();" class="flex-none p-2 text-gray-300 hover:text-red-400"><i data-lucide="x" class="w-4 h-4"></i></button></div>`; container.innerHTML += html; }); if (pendingCount === 0) dashboardList.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">沒有未完成的待辦事項 🎉</p>`; else { const pendings = todos.filter(t => !t.done).slice(0, 3); pendings.forEach(t => { let dotColor = t.isJoint ? roleColors.joint : (t.creator==='haohao' ? roleColors.haohao : roleColors.maomao); dashboardList.innerHTML += `<div class="flex items-center gap-2 text-sm bg-gray-50 p-2 rounded-lg border border-gray-100"><div class="w-2 h-2 rounded-full" style="background-color: ${dotColor}"></div><span class="truncate text-gray-700">${t.title}</span></div>`; }); if (todos.filter(t => !t.done).length > 3) dashboardList.innerHTML += `<div class="text-center text-xs text-gray-400 mt-1">還有 ${todos.filter(t => !t.done).length - 3} 個項目...</div>`; } if(typeof lucide !== 'undefined') lucide.createIcons(); };
-        window.openCalendar = function(t) { calTargetInput=t; let v = ''; if (t === 'recur') v = document.getElementById('input-recur-until').value; else if (t === 'todo') v = document.getElementById('input-date-todo').value; else v = document.getElementById(`input-date-${t}`).value; calCurrentDate=v?new Date(v):new Date(); if(isNaN(calCurrentDate.getTime())) calCurrentDate = new Date(); window.renderCalendarModal(); const m=document.getElementById('calendar-picker-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); };
+        window.openCalendar = function(t) { calTargetInput=t; let v = ''; if (t === 'recur') v = document.getElementById('input-recur-until').value; else if (t === 'todo') v = document.getElementById('input-date-todo').value; else v = document.getElementById(`input-date-${t}`).value; // ✅ 如果尚未選日期：使用者「點了日期」才自動帶入今天
+if (!v) {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  v = `${yyyy}-${mm}-${dd}`;
+
+  document.getElementById(`input-date-${t}`).value = v;
+
+  // 更新顯示（用你原本的格式）
+  const disp = document.getElementById(`display-date-${t}`);
+  if (disp) disp.textContent = window.formatDisplayDate?.(v) || v;
+}calCurrentDate=v?new Date(v):new Date(); if(isNaN(calCurrentDate.getTime())) calCurrentDate = new Date(); window.renderCalendarModal(); const m=document.getElementById('calendar-picker-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); };
         window.closeCalendar = function() { const m=document.getElementById('calendar-picker-modal'); m.classList.remove('visible'); setTimeout(()=>m.classList.add('hidden'),200); };
         window.selectCalDate = function(y,m,d) { const s=`${y}-${(m+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`; if(calTargetInput==='recur') { document.getElementById('input-recur-until').value=s; window.updateDateDisplay('recur',s); } else if(calTargetInput==='todo') { document.getElementById('input-date-todo').value=s; window.updateDateDisplay('todo',s); window.checkTodoCalendarOption(); } else { document.getElementById(`input-date-${calTargetInput}`).value=s; window.updateDateDisplay(calTargetInput,s); }
   window.updateAddSaveButtonUI(); window.closeCalendar(); if(calTargetInput==='start') window.autoUpdateEnd(); else if(calTargetInput==='end') window.checkEndDateValidity(); };
@@ -1570,7 +1583,24 @@ h += `<div class="cal-day ${isT?'today':''} ${selected?'selected':''}"
 };
         window.selectToday = function() { window.selectCalDate(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()); };
         window.initInputListeners = function() { document.addEventListener('click',e=>{ const p=document.getElementById('time-picker-dropdown'); if(p && !p.classList.contains('hidden') && !e.target.closest('.dt-wrapper-time') && !e.target.closest('.time-dropdown')) { p.classList.add('hidden'); } }); };
-        window.openTimePicker = function(t) { const p=document.getElementById('time-picker-dropdown'), w=document.getElementById(`display-time-${t}`).parentElement; let h=''; for(let i=0;i<24;i++) for(let j=0;j<60;j+=30) { let s=`${i.toString().padStart(2,'0')}:${j.toString().padStart(2,'0')}`; h+=`<div class="time-option" onmousedown="window.setTime('${t}','${s}')">${s}</div>`; } p.innerHTML=h; p.style.top=(w.offsetTop+w.offsetHeight+5)+'px'; p.style.left=w.offsetLeft+'px'; p.style.width=w.offsetWidth+'px'; p.dataset.target=t; p.classList.remove('hidden'); };
+        window.openTimePicker = function(t) { const p=document.getElementById('time-picker-dropdown'), w=document.getElementById(`display-time-${t}`).parentElement; let h=''; // ✅ 如果尚未選時間：使用者「點了時間」才自動帶入現在時間（配合 30 分鐘選項）
+const timeInput = document.getElementById(`input-time-${t}`);
+if (timeInput && !timeInput.value) {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+
+  // 你的選項是每 30 分鐘一格，所以把分鐘「四捨五入到 00/30」
+  const mRaw = now.getMinutes();
+  const m = (mRaw < 15) ? '00' : (mRaw < 45 ? '30' : '00');
+  const hh = (mRaw >= 45) ? String((now.getHours() + 1) % 24).padStart(2, '0') : h;
+
+  const v = `${hh}:${m}`;
+  timeInput.value = v;
+  window.updateTimeDisplay?.(t, v);
+
+  // 如果你有「開始時間 -> 自動更新結束時間」的邏輯，這裡順便帶一下
+  if (t === 'start') window.autoUpdateEnd?.();
+}for(let i=0;i<24;i++) for(let j=0;j<60;j+=30) { let s=`${i.toString().padStart(2,'0')}:${j.toString().padStart(2,'0')}`; h+=`<div class="time-option" onmousedown="window.setTime('${t}','${s}')">${s}</div>`; } p.innerHTML=h; p.style.top=(w.offsetTop+w.offsetHeight+5)+'px'; p.style.left=w.offsetLeft+'px'; p.style.width=w.offsetWidth+'px'; p.dataset.target=t; p.classList.remove('hidden'); };
         window.setTime = function(t,v) { document.getElementById(`input-time-${t}`).value=v; window.updateTimeDisplay(t,v); document.getElementById('time-picker-dropdown').classList.add('hidden'); if(t==='start') window.autoUpdateEnd(); else if(t==='end') window.checkEndDateValidity(); };
         window.handleTimeInput = function(t,v) { if(v.length===2 && !v.includes(':') && /^\d+$/.test(v)) document.getElementById(`display-time-${t}`).value=v+':'; };
         window.validateTimeInput = function(t,el) { let v=el.value.trim(), m=v.match(/^(\d{1,2}):?(\d{1,2})?$/); if(m){ let h=parseInt(m[1]), min=m[2]?parseInt(m[2]):0; if(h>=0&&h<24&&min>=0&&min<60){ const f=`${h.toString().padStart(2,'0')}:${min.toString().padStart(2,'0')}`; el.value=f; document.getElementById(`input-time-${t}`).value=f; if(t==='start') window.autoUpdateEnd(); else if(t==='end') window.checkEndDateValidity(); return; } } el.value=document.getElementById(`input-time-${t}`).value||'--:--'; }
