@@ -329,6 +329,10 @@ nav .nav-item.active::after {
 .swipe-delete-btn{display:flex;align-items:center;justify-content:center;padding:0 18px;font-weight:700;font-size:14px;color:#fff;background:#ff3b30;user-select:none;-webkit-user-select:none;}
 .swipe-content{position:relative;transform:translateX(0);transition:transform .18s ease;will-change:transform;background:#fff;}
 .swipe-row.open .swipe-content{transform:translateX(calc(-1 * var(--swipe-open, 88px)));}
+/* ===== iOS swipe polish: easing ===== */
+.swipe-content {
+  transition-timing-function: cubic-bezier(.25,.8,.25,1);
+}
 
 </style>
 </head>
@@ -559,7 +563,7 @@ nav .nav-item.active::after {
       onclick="window.deleteCurrentEvent()"
       class="text-red-500 text-sm hidden"
     >
-      刪除
+      Delete
     </button>
 
     <!-- 儲存 -->
@@ -1347,6 +1351,7 @@ window.bindSwipeToDelete = function(container) {
       if (shouldOpen) {
         row.classList.add('open');
         content.style.transform = `translateX(${-openW}px)`;
+        if (navigator.vibrate) navigator.vibrate(10);
       } else {
         row.classList.remove('open');
         content.style.transform = 'translateX(0px)';
