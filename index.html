@@ -603,6 +603,28 @@ nav .nav-item.active::after {
         </div>
       </div>
 
+      <!-- Time (Optional) -->
+<div class="bg-gray-50 rounded-xl p-4">
+  <label class="text-xs font-bold text-gray-400 mb-2 block">時間（選填）</label>
+  <input
+    type="time"
+    id="input-time-start"
+    class="w-full bg-white border border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-ttgreen"
+  />
+  <p class="text-[11px] text-gray-400 mt-2">不填代表全天</p>
+</div>
+
+<!-- Location (Optional) -->
+<div class="bg-white border border-gray-200 rounded-xl p-4">
+  <label class="text-xs font-bold text-gray-400 mb-2 block">地點（選填）</label>
+  <input
+    type="text"
+    id="input-location"
+    placeholder="例如：安和診所 / Play bar"
+    class="w-full bg-transparent text-sm focus:outline-none"
+  />
+</div>
+
       <!-- Partner -->
       <div class="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between">
         <span class="text-sm text-gray-700">與對方一起</span>
@@ -1055,24 +1077,27 @@ window.saveEvent = function () {
     }
 
     const startDate = document.getElementById('input-date-start')?.value;
-    if (!startDate) {
-      window.showToast('請選擇日期');
-      throw new Error('Missing date');
-    }
+const startTimeRaw = document.getElementById('input-time-start')?.value || '';
+const startTime = startTimeRaw.trim(); // 可能是 '' 或 '14:00'
 
-    const timestamp = new Date(`${startDate}T00:00:00`).toISOString();
+const allDay = !startTime;
+const timeForTs = startTime || '00:00';
+const timestamp = new Date(`${startDate}T${timeForTs}`).toISOString();
 
-    const data = {
-      title,
-      startDate,
-      timestamp,
-      isJoint: document.getElementById('check-partner')?.checked || false,
-      status: document.getElementById('input-status')?.value || 'confirmed',
-      note: document.getElementById('input-note')?.value || '',
-      creator: currentUserRole,
-      color: currentSelectedColor,
-      createdAt: new Date().toISOString()
-    };
+const data = {
+  title,
+  startDate,
+  startTime: startTime || null,     // ⭐選填
+  timestamp,
+  allDay,                           // ⭐自動判斷
+  location: document.getElementById('input-location')?.value?.trim() || '', // ⭐選填
+  note: document.getElementById('input-note')?.value || '',
+  isJoint: document.getElementById('check-partner')?.checked || false,
+  status: document.getElementById('input-status')?.value || 'confirmed',
+  creator: currentUserRole,
+  color: currentSelectedColor,
+  createdAt: new Date().toISOString()
+};
 
     const req = editingEventId
       ? db.collection('events').doc(editingEventId).update(data)
@@ -1125,6 +1150,9 @@ window.openAddModal = function () {
 
     const dateStartEl = document.getElementById('input-date-start');
     if (dateStartEl) dateStartEl.value = '';
+
+    document.getElementById('input-time-start').value = '';
+    document.getElementById('input-location').value = '';
 
     // 日期顯示（若你有 updateDateDisplay）
     if (typeof window.updateDateDisplay === 'function') window.updateDateDisplay('start', '');
@@ -1183,7 +1211,8 @@ if (delBtn) delBtn.classList.remove('hidden');
     document.getElementById('input-date-start').value = ds;
     window.updateDateDisplay('start', ds);
   }
-
+    document.getElementById('input-time-start').value = evt.startTime || '';
+    document.getElementById('input-location').value = evt.location || '';
   // === 一起 / 不一起 ===
   const partner = document.getElementById('check-partner');
   partner.checked = !!evt.isJoint;
