@@ -968,8 +968,90 @@ window.getCalendarItems = function() {
 
     return [...events, ...todos].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 };        
-        window.renderDashboardNextUp = function(items) { const now = new Date(); const next7Days = new Date(); next7Days.setDate(now.getDate() + 7); const upcoming = items.filter(item => { const t = new Date(item.timestamp); if (item.isTodo && item.done) return false; return !isNaN(t) && t >= now && t <= next7Days; }); const countEl = document.getElementById('dashboard-countdown'); if (upcoming.length > 0) { const first = upcoming[0]; const d = new Date(first.timestamp); const diff = Math.ceil((d - now) / (1000 * 60 * 60 * 24)); countEl.textContent = diff <= 0 ? "TODAY" : `D - ${diff}`; } else { countEl.textContent = "FREE"; } const container = document.getElementById('dashboard-next-list'); if (!container) return; container.innerHTML = ''; if (upcoming.length === 0) { container.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">未來 7 天沒有行程 😴</div>`; } else { let html = ''; upcoming.forEach(item => { const date = new Date(item.timestamp); const timeStr = item.allDay ? "All Day" : date.toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit', hour12:false}); const dateStr = date.toLocaleDateString('zh-TW', {month:'numeric', day:'numeric', weekday:'short'}); let color = '#2cc998'; if (item.isTodo) { color = item.isJoint ? roleColors.joint : (item.creator==='haohao' ? roleColors.haohao : roleColors.maomao); } else { color = item.color; } let tagHtml = item.isTodo ? `<span class="ml-2 text-[10px] border border-gray-200 text-gray-400 px-1 rounded">待辦</span>` : ''; let clickAction = item.isTodo ? `window.openEditTodoModal('${item.id}')` : `window.openEditModal('${item.id}')`; html += `<div class="flex items-center p-3 hover:bg-gray-50 cursor-pointer" onclick="${clickAction}"><div class="w-1 self-stretch rounded-full mr-3" style="background-color: ${color}"></div><div class="flex-1 min-w-0"><div class="flex items-center"><span class="text-sm font-bold text-gray-800 truncate">${item.title}</span>${tagHtml}</div><div class="text-xs text-gray-500 mt-0.5">${dateStr} · ${timeStr} ${item.location ? `· ${item.location}` : ''}</div></div></div>`; }); container.innerHTML = html; } };
-        window.renderCalendarListView = function() { const items = window.getCalendarItems(); const listEl = document.getElementById('event-list'); if(!listEl) return; if (items.length === 0) { listEl.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">無行程</div>`; } else { window.renderEventListItems(items, listEl); } };
+window.renderDashboardNextUp = function(items) {
+    const now = new Date();
+    const next7Days = new Date();
+    next7Days.setDate(now.getDate() + 7);
+
+    const upcoming = items.filter(item => {
+        const t = new Date(item.timestamp);
+        if (item.isTodo && item.done) return false;
+        return !isNaN(t) && t >= now && t <= next7Days;
+    });
+
+    const countEl = document.getElementById('dashboard-countdown');
+    if (upcoming.length > 0) {
+        const first = upcoming[0];
+        const d = new Date(first.timestamp);
+        const diff = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
+        countEl.textContent = diff <= 0 ? "TODAY" : `D - ${diff}`;
+    } else {
+        countEl.textContent = "FREE";
+    }
+
+    const container = document.getElementById('dashboard-next-list');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (upcoming.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">未來 7 天沒有行程 😴</div>`;
+    } else {
+        let html = '';
+        upcoming.forEach(item => {
+            const date = new Date(item.timestamp);
+            const timeStr = item.allDay ? "All Day" : date.toLocaleTimeString('zh-TW', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+            const dateStr = date.toLocaleDateString('zh-TW', {
+                month: 'numeric',
+                day: 'numeric',
+                weekday: 'short'
+            });
+
+            let color = '#2cc998';
+            if (item.isTodo) {
+                color = item.isJoint ? roleColors.joint : (item.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
+            } else {
+                color = item.color;
+            }
+
+            // === 修改處：增加狀態標籤邏輯 ===
+            let tagHtml = '';
+            
+            if (item.isTodo) {
+                // 待辦標籤
+                tagHtml = `<span class="ml-2 text-[10px] border border-gray-200 text-gray-400 px-1 rounded flex-shrink-0">待辦</span>`;
+            } else {
+                // 行程狀態標籤 (TBC / TBD)
+                if (item.status === 'tbc') {
+                    tagHtml = `<span class="ml-2 status-tag tbc">TBC</span>`;
+                } else if (item.status === 'tbd') {
+                    tagHtml = `<span class="ml-2 status-tag tbd">TBD</span>`;
+                }
+            }
+            // ==============================
+
+            let clickAction = item.isTodo ? `window.openEditTodoModal('${item.id}')` : `window.openEditModal('${item.id}')`;
+            
+            html += `
+            <div class="flex items-center p-3 hover:bg-gray-50 cursor-pointer" onclick="${clickAction}">
+                <div class="w-1 self-stretch rounded-full mr-3" style="background-color: ${color}"></div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center">
+                        <span class="text-sm font-bold text-gray-800 truncate">${item.title}</span>
+                        ${tagHtml}
+                    </div>
+                    <div class="text-xs text-gray-500 mt-0.5">${dateStr} · ${timeStr} ${item.location ? `· ${item.location}` : ''}</div>
+                </div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+};
+window.renderCalendarListView = function() { const items = window.getCalendarItems(); const listEl = document.getElementById('event-list'); if(!listEl) return; if (items.length === 0) { listEl.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">無行程</div>`; } else { window.renderEventListItems(items, listEl); } };
         window.renderEventListItems = function(items, container) { let html = ''; items.forEach(e => { const date = new Date(e.timestamp); if(isNaN(date)) return; const timeStr = e.allDay ? "All Day" : date.toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit', hour12:false}); if (e.isTodo) { const statusClass = e.done ? "line-through text-gray-400" : "text-gray-800"; const checkIcon = e.done ? '<i data-lucide="check-square" class="w-5 h-5 text-green-500"></i>' : '<i data-lucide="square" class="w-5 h-5 text-gray-400"></i>'; let dotColor = e.isJoint ? roleColors.joint : (e.creator==='haohao' ? roleColors.haohao : roleColors.maomao); html += `<div class="flex p-4 items-center gap-4 hover:bg-gray-50 transition cursor-pointer"><div class="flex flex-col items-center w-10"><span class="text-xs text-gray-400 font-medium uppercase">${date.toLocaleDateString('en-US',{weekday:'short'})}</span><span class="text-xl font-bold text-gray-800 leading-none">${date.getDate()}</span></div><div class="w-1 self-stretch rounded-full" style="background-color: ${dotColor}"></div><div class="flex-1 min-w-0 flex items-center justify-between" onclick="window.openEditTodoModal('${e.id}')"><div><div class="flex items-center gap-2 ${statusClass}"><span class="font-bold truncate block">${e.title}</span><span class="text-xs border border-gray-200 px-1 rounded text-gray-400 flex-shrink-0">待辦</span></div><div class="text-xs text-gray-500">${timeStr}</div></div></div><div class="flex-none p-2 cursor-pointer" onclick="window.toggleTodo('${e.id}', ${!e.done}); event.stopPropagation();">${checkIcon}</div></div>`; } else { let ic=''; if(e.category==='travel') ic='plane'; else if(e.category==='appointment') ic='scissors'; else if(e.category==='gathering') ic='users'; else if(e.category==='vacation') ic='palmtree'; let ico = ic ? `<i data-lucide="${ic}" class="w-3 h-3 text-gray-400"></i>` : ''; let st=''; if(e.status==='tbc') st=`<span class="status-tag tbc">TBC</span>`; else if(e.status==='tbd') st=`<span class="status-tag tbd">TBD</span>`; let av=`<div class="avatar-sm z-20" style="background-color:${roleColors[e.creator]||'#2cc998'}">${e.creator==='haohao'?'皓':'毛'}</div>`; if(e.isJoint) av+=`<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[e.creator==='haohao'?'maomao':'haohao']||'#e6688d'}">${e.creator==='haohao'?'皓':'毛'}</div>`; html += `<div class="flex p-4 items-start gap-4 hover:bg-gray-50 transition cursor-pointer card-press" onclick="window.openEditModal('${e.id}')"><div class="flex flex-col items-center w-10 pt-1"><span class="text-xs text-gray-400 font-medium uppercase">${date.toLocaleDateString('en-US',{weekday:'short'})}</span><span class="text-xl font-bold text-gray-800 leading-none" style="color:${e.color}">${date.getDate()}</span></div><div class="w-1 self-stretch rounded-full" style="background-color:${e.color}"></div><div class="flex-1 min-w-0 pt-1"><div class="flex items-center gap-1">${ico}<h4 class="font-bold text-gray-800 truncate">${e.title}</h4>${st}</div><div class="text-xs text-gray-500">${timeStr} ${e.location?'· '+e.location:''}</div></div><div class="flex items-center self-center -space-x-1 pl-2">${av}</div></div>`; } }); container.innerHTML = html; if(typeof lucide !== 'undefined') lucide.createIcons({root: container}); }
         window.toggleAllDay = function() { const isChecked = document.getElementById('check-allday').checked; document.querySelectorAll('.dt-wrapper-time').forEach(d => d.style.display = isChecked ? 'none' : 'block'); };
         window.toggleRecurring = function() { const isChecked = document.getElementById('check-recurring').checked; const opts = document.getElementById('recurring-options'); if(isChecked) { opts.classList.remove('hidden'); if(!document.getElementById('input-recur-until').value) document.getElementById('input-recur-until').value = document.getElementById('input-date-end').value; } else opts.classList.add('hidden'); };
