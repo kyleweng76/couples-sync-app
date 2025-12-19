@@ -603,25 +603,28 @@ nav .nav-item.active::after {
         </div>
       </div>
 
-      <!-- Time (Optional) -->
-<div class="bg-gray-50 rounded-xl p-4">
-  <label class="text-xs font-bold text-gray-400 mb-2 block">時間（選填）</label>
+     <!-- Time (Optional) -->
+<div class="bg-white border border-gray-200 rounded-xl px-4 py-3">
+  <label class="text-xs font-semibold text-gray-400 block mb-1">
+    時間（選填）
+  </label>
   <input
     type="time"
     id="input-time-start"
-    class="w-full bg-white border border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-ttgreen"
+    class="w-full bg-transparent text-[17px] text-gray-900 focus:outline-none"
   />
-  <p class="text-[11px] text-gray-400 mt-2">不填代表全天</p>
 </div>
 
 <!-- Location (Optional) -->
-<div class="bg-white border border-gray-200 rounded-xl p-4">
-  <label class="text-xs font-bold text-gray-400 mb-2 block">地點（選填）</label>
+<div class="bg-white border border-gray-200 rounded-xl px-4 py-3">
+  <label class="text-xs font-semibold text-gray-400 block mb-1">
+    地點（選填）
+  </label>
   <input
     type="text"
     id="input-location"
-    placeholder="例如：安和診所 / Play bar"
-    class="w-full bg-transparent text-sm focus:outline-none"
+    placeholder="例如：小畢的店 / Play bar"
+    class="w-full bg-transparent text-[17px] text-gray-900 focus:outline-none"
   />
 </div>
 
@@ -664,13 +667,13 @@ nav .nav-item.active::after {
 
       <!-- Note -->
       <div class="bg-white border border-gray-200 rounded-xl p-4">
-        <label class="text-xs font-bold text-gray-400 mb-1 block">備註</label>
+        <label class="text-xs font-bold text-gray-400 mb-1 block">備註（選填）</label>
         <textarea
-          id="input-note"
-          rows="3"
-          placeholder="簡單備註一下就好"
-          class="w-full text-sm bg-transparent focus:outline-none resize-none"
-        ></textarea>
+  id="input-note"
+  class="w-full bg-transparent text-[17px] text-gray-900 focus:outline-none resize-none"
+  rows="3"
+  placeholder="其他需要註明的事項"
+></textarea>
       </div>
 
     </div>
