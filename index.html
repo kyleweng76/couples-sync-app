@@ -875,7 +875,10 @@
             <div id="calendar-days" class="calendar-grid"></div>
             <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center text-sm font-medium">
                 <button onclick="window.selectToday()" class="text-ttgreen hover:bg-green-50 px-3 py-1.5 rounded-lg transition">今天</button>
-                <button onclick="window.closeCalendar()" class="text-gray-400 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition">取消</button>
+                <div class="flex gap-2">
+                    <button onclick="window.clearDate()" class="text-red-400 hover:bg-red-50 px-3 py-1.5 rounded-lg transition">清除</button>
+                    <button onclick="window.closeCalendar()" class="text-gray-400 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition">取消</button>
+                </div>
             </div>
         </div>
     </div>
@@ -949,6 +952,171 @@
         const moodMap = { 'charging': { icon: '⚡️', bg: 'bg-yellow-100', border: 'border-yellow-300' }, 'sleepy': { icon: '💤', bg: 'bg-blue-100', border: 'border-blue-300' }, 'love': { icon: '❤️', bg: 'bg-rose-100', border: 'border-rose-300' }, 'busy': { icon: '🔥', bg: 'bg-orange-100', border: 'border-orange-300' }, 'normal': { icon: '😶', bg: 'bg-gray-50', border: 'border-gray-100' } };
 
         // --- 2. GLOBAL FUNCTION DEFINITIONS (Assigned to window immediately) ---
+
+        // ==========================================
+        //  MISSING PICKER LOGIC (RE-ADDED)
+        // ==========================================
+
+        // --- Calendar Picker ---
+        window.openCalendar = function(type) {
+            calTargetInput = type; // 'start', 'end', 'todo'
+            
+            // Get current value
+            const val = document.getElementById(`input-date-${type}`).value;
+            if (val) {
+                calCurrentDate = new Date(val);
+            } else {
+                calCurrentDate = new Date();
+            }
+            
+            window.renderCalendarPicker();
+            const m = document.getElementById('calendar-picker-modal');
+            m.classList.remove('hidden');
+            setTimeout(() => m.classList.add('visible'), 10);
+        };
+
+        window.closeCalendar = function() {
+            const m = document.getElementById('calendar-picker-modal');
+            m.classList.remove('visible');
+            setTimeout(() => m.classList.add('hidden'), 200);
+        };
+
+        window.changeCalMonth = function(delta) {
+            calCurrentDate.setMonth(calCurrentDate.getMonth() + delta);
+            window.renderCalendarPicker();
+        };
+
+        window.renderCalendarPicker = function() {
+            const y = calCurrentDate.getFullYear();
+            const m = calCurrentDate.getMonth();
+            
+            document.getElementById('cal-month-title').textContent = `${y}年${m + 1}月`;
+            
+            const firstDay = new Date(y, m, 1).getDay();
+            const daysInMonth = new Date(y, m + 1, 0).getDate();
+            
+            const grid = document.getElementById('calendar-days');
+            grid.innerHTML = '';
+            
+            // Empty slots
+            for (let i = 0; i < firstDay; i++) {
+                grid.innerHTML += `<div class="cal-day empty"></div>`;
+            }
+            
+            const todayStr = new Date().toDateString();
+            // Current selected value
+            const inputVal = document.getElementById(`input-date-${calTargetInput}`).value;
+            const selectedDateStr = inputVal ? new Date(inputVal).toDateString() : '';
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const thisDate = new Date(y, m, d);
+                const thisDateStr = thisDate.toDateString();
+                
+                let classes = "cal-day";
+                if (thisDateStr === todayStr) classes += " today";
+                if (thisDateStr === selectedDateStr) classes += " selected";
+                
+                const el = document.createElement('div');
+                el.className = classes;
+                el.textContent = d;
+                el.onclick = () => window.selectDate(y, m, d);
+                grid.appendChild(el);
+            }
+        };
+
+        window.selectDate = function(y, m, d) {
+            const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            
+            // Set value
+            document.getElementById(`input-date-${calTargetInput}`).value = dateStr;
+            
+            // Update Display
+            window.updateDateDisplay(calTargetInput, dateStr);
+            
+            // If setting start date, auto-set end date if needed (legacy logic, keep safe)
+            if (calTargetInput === 'start') {
+                if(window.autoUpdateEnd) window.autoUpdateEnd(); 
+            }
+            
+            // Special: if in todo modal, check calendar option
+            if (calTargetInput === 'todo') {
+                window.checkTodoCalendarOption();
+            }
+            
+            window.closeCalendar();
+        };
+
+        window.selectToday = function() {
+            const now = new Date();
+            window.selectDate(now.getFullYear(), now.getMonth(), now.getDate());
+        };
+
+        // --- Time Picker Logic ---
+        window.openTimePicker = function(type) {
+            timePickerTarget = type;
+            const container = document.getElementById('time-list-container');
+            container.innerHTML = '';
+            
+            const currentVal = document.getElementById(`input-time-${type}`).value;
+            
+            // Header for clear/cancel (Sticky)
+            const header = document.createElement('div');
+            header.className = "sticky top-0 bg-white border-b border-gray-100 flex justify-between items-center px-4 py-3 z-10 flex-none";
+            header.innerHTML = `
+                <button onclick="window.closeTimePicker()" class="text-sm text-gray-500">取消</button>
+                <span class="text-sm font-bold text-gray-800">選擇時間</span>
+                <button onclick="window.clearTime()" class="text-sm text-red-400">清除</button>
+            `;
+            container.appendChild(header);
+
+            // Time slots list
+            const list = document.createElement('div');
+            list.className = "overflow-y-auto flex-1 p-2"; // Allow this part to scroll
+            
+            for (let h = 0; h < 24; h++) {
+                for (let m = 0; m < 60; m += 30) {
+                    const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                    const isSelected = currentVal === timeStr;
+                    
+                    const item = document.createElement('div');
+                    item.className = `time-option rounded-lg ${isSelected ? 'selected' : ''}`;
+                    item.textContent = timeStr;
+                    item.onclick = () => window.selectTime(timeStr);
+                    list.appendChild(item);
+                }
+            }
+            container.appendChild(list);
+
+            const m = document.getElementById('time-picker-modal');
+            m.classList.remove('hidden');
+            setTimeout(() => m.classList.add('visible'), 10);
+            
+            // Scroll to selected
+            if (currentVal) {
+                setTimeout(() => {
+                    const selectedEl = list.querySelector('.selected');
+                    if (selectedEl) selectedEl.scrollIntoView({ block: 'center' });
+                }, 50);
+            }
+        };
+
+        window.closeTimePicker = function() {
+            const m = document.getElementById('time-picker-modal');
+            m.classList.remove('visible');
+            setTimeout(() => m.classList.add('hidden'), 200);
+        };
+
+        window.selectTime = function(timeStr) {
+            document.getElementById(`input-time-${timePickerTarget}`).value = timeStr;
+            window.updateTimeDisplay(timePickerTarget, timeStr);
+            window.closeTimePicker();
+        };
+
+        window.clearTime = function() {
+            document.getElementById(`input-time-${timePickerTarget}`).value = '';
+            window.updateTimeDisplay(timePickerTarget, ''); 
+            window.closeTimePicker();
+        };
 
         /* =========================================
            身分強制檢查機制
@@ -1505,6 +1673,7 @@ window.saveEvent = function () {
 
     const time = document.getElementById('input-time-start')?.value || '00:00'; // Default time if missing
     const timestamp = new Date(`${startDate}T${time}:00`).toISOString();
+    const isAllDay = !document.getElementById('input-time-start').value;
 
     const data = {
       title,
