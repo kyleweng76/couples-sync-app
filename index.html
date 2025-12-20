@@ -408,12 +408,8 @@
 
                             <div id="note-bubble-haohao" class="hidden absolute left-[64px] top-1/2 transform -translate-y-1/2 opacity-0 -translate-x-2 transition-all duration-300 z-10 w-[110px] flex flex-col items-start">
                                 <div class="absolute top-1/2 -translate-y-1/2 -left-1.5 w-3 h-3 bg-white transform rotate-45 border-b border-l border-gray-100 z-20 pointer-events-none"></div>
-                                <div class="relative bg-white border border-gray-100 px-2 py-2 rounded-2xl shadow-md text-xs text-gray-600 text-left leading-relaxed break-all whitespace-normal z-10 w-full group-hover:border-green-100 transition-colors">
+                                <div class="relative bg-white border border-gray-100 px-2 py-2 rounded-2xl shadow-md text-xs text-gray-600 text-left leading-relaxed break-all whitespace-normal z-10 w-full group-hover:border-green-100 transition-colors cursor-pointer select-none active:scale-95 duration-200" ondblclick="window.confirmDeleteNote('haohao')">
                                     <span id="note-text-haohao">...</span>
-                                    <!-- 刪除按鈕 (加大尺寸 w-8 h-8、改用 active 避免殘留) -->
-                                    <button onclick="window.deleteNote('haohao'); event.stopPropagation();" class="absolute -top-4 -right-4 w-8 h-8 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center shadow-md active:bg-red-500 active:text-white transition scale-100 z-50 cursor-pointer">
-                                        <i data-lucide="x" class="w-4 h-4"></i>
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -430,12 +426,8 @@
 
                             <div id="note-bubble-maomao" class="hidden absolute right-[64px] top-1/2 transform -translate-y-1/2 opacity-0 translate-x-2 transition-all duration-300 z-10 w-[110px] flex flex-col items-end">
                                 <div class="absolute top-1/2 -translate-y-1/2 -right-1.5 w-3 h-3 bg-white transform rotate-45 border-t border-r border-gray-100 z-20 pointer-events-none"></div>
-                                <div class="relative bg-white border border-gray-100 px-2 py-2 rounded-2xl shadow-md text-xs text-gray-600 text-left leading-relaxed break-all whitespace-normal z-10 w-full group-hover:border-pink-100 transition-colors">
+                                <div class="relative bg-white border border-gray-100 px-2 py-2 rounded-2xl shadow-md text-xs text-gray-600 text-left leading-relaxed break-all whitespace-normal z-10 w-full group-hover:border-pink-100 transition-colors cursor-pointer select-none active:scale-95 duration-200" ondblclick="window.confirmDeleteNote('maomao')">
                                     <span id="note-text-maomao">...</span>
-                                    <!-- 刪除按鈕 (加大尺寸 w-8 h-8、改用 active 避免殘留) -->
-                                    <button onclick="window.deleteNote('maomao'); event.stopPropagation();" class="absolute -top-4 -left-4 w-8 h-8 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center shadow-md active:bg-red-500 active:text-white transition scale-100 z-50 cursor-pointer">
-                                        <i data-lucide="x" class="w-4 h-4"></i>
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -939,6 +931,7 @@
         let currentViewMode = 'list';
         let timePickerTarget = ''; // FIX: variable for time picker
         let deleteTarget = 'event'; // 'event' or 'todo'
+        let noteToDelete = null;
 
         const timeTreeColors = [ { name: "Emerald Green", hex: "#2cc998" }, { name: "Modern Cyan", hex: "#5cc2d1" }, { name: "Deep Sky Blue", hex: "#5ba3eb" }, { name: "Pastel Brown", hex: "#a68b75" }, { name: "Midnight Black", hex: "#333333" }, { name: "Apple Red", hex: "#e35651" }, { name: "French Rose", hex: "#e6688d" }, { name: "Coral Pink", hex: "#f29074" }, { name: "Bright Orange", hex: "#f7b546" }, { name: "Soft Violet", hex: "#9f82d1" } ];
         const moodMap = { 'charging': { icon: '⚡️', bg: 'bg-yellow-100', border: 'border-yellow-300' }, 'sleepy': { icon: '💤', bg: 'bg-blue-100', border: 'border-blue-300' }, 'love': { icon: '❤️', bg: 'bg-rose-100', border: 'border-rose-300' }, 'busy': { icon: '🔥', bg: 'bg-orange-100', border: 'border-orange-300' }, 'normal': { icon: '😶', bg: 'bg-gray-50', border: 'border-gray-100' } };
@@ -1498,6 +1491,12 @@
                         else if (item.status === 'tbd') tagHtml = `<span class="ml-2 status-tag tbd">TBD</span>`;
                     }
 
+                    // === 新增：備註顯示 (如果有) ===
+                    let noteDisplay = '';
+                    if (item.note && item.note.trim()) {
+                        noteDisplay = `<div class="text-xs text-gray-400 mt-1 flex items-start gap-1"><i data-lucide="sticky-note" class="w-3 h-3 mt-0.5 flex-shrink-0"></i><span class="truncate">${item.note}</span></div>`;
+                    }
+
                     let clickAction = item.isTodo ? `window.openEditTodoModal('${item.id}')` : `window.openEditModal('${item.id}')`;
                     
                     html += `
@@ -1509,10 +1508,14 @@
                                 ${tagHtml}
                             </div>
                             <div class="text-xs text-gray-500 mt-0.5">${dateStr} · ${timeStr} ${item.location ? `· ${item.location}` : ''}</div>
+                            ${noteDisplay}
                         </div>
                     </div>`;
                 });
                 container.innerHTML = html;
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons({ root: container });
+                }
             }
         };
         window.renderCalendarListView = function() { const items = window.getCalendarItems(); const listEl = document.getElementById('event-list'); if(!listEl) return; if (items.length === 0) { listEl.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">無行程</div>`; } else { window.renderEventListItems(items, listEl); } };
@@ -1585,6 +1588,12 @@
                         av += `<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[partner]}">${partnerName}</div>`;
                     }
 
+                    // === 新增：備註顯示 (如果有) ===
+                    let noteDisplay = '';
+                    if (e.note && e.note.trim()) {
+                        noteDisplay = `<div class="text-xs text-gray-400 mt-1 flex items-start gap-1"><i data-lucide="sticky-note" class="w-3 h-3 mt-0.5 flex-shrink-0"></i><span class="truncate">${e.note}</span></div>`;
+                    }
+
                     html += `
                     <div class="flex p-4 items-start gap-4 hover:bg-gray-50 transition cursor-pointer card-press" onclick="window.openEditModal('${e.id}')">
                         <div class="flex flex-col items-center w-10 pt-1">
@@ -1601,6 +1610,7 @@
                                 ${st}
                             </div>
                             <div class="text-xs text-gray-500">${timeStr} ${e.location?'· '+e.location:''}</div>
+                            ${noteDisplay}
                         </div>
                         <div class="flex items-center self-center -space-x-1 pl-2">${av}</div>
                     </div>`;
@@ -1718,6 +1728,9 @@ window.saveEvent = function () {
                 db.collection('events').doc(editingEventId).delete().then(() => { window.closeConfirmModal(); window.closeAddModal(); window.showToast('行程已刪除'); }).catch(e => { console.error(e); window.showToast('刪除失敗'); }); 
             } else if (deleteTarget === 'todo' && editingTodoId) {
                 db.collection('todos').doc(editingTodoId).delete().then(() => { window.closeConfirmModal(); window.closeAddTodoModal(); window.showToast('待辦已刪除'); }).catch(e => { console.error(e); window.showToast('刪除失敗'); });
+            } else if (deleteTarget === 'note' && noteToDelete) {
+                window.deleteNote(noteToDelete);
+                window.closeConfirmModal();
             }
         };
 window.openAddModal = function () {
@@ -1841,173 +1854,106 @@ window.openEditModal = function (id) {
     // === 加入這行 ===
     if (!window.checkRoleEnforcement()) return;
     // ===============
-    editingTodoId = null; 
-    document.getElementById('todo-modal-title').textContent = '新增待辦事項'; 
-    document.getElementById('todo-modal-btn').textContent = '新增'; 
-    document.getElementById('todo-input-title').value = ''; 
-    document.getElementById('input-date-todo').value = ''; 
-    document.getElementById('input-time-todo').value = ''; 
-    const dd = document.getElementById('display-date-todo'); 
-    dd.textContent = '請選擇'; 
-    dd.classList.add('dt-text-placeholder'); 
-    dd.classList.remove('dt-text-value');
-    const dt = document.getElementById('display-time-todo'); 
-    dt.textContent = '請選擇'; 
-    dt.classList.add('dt-text-placeholder'); 
-    dt.classList.remove('dt-text-value');
-    
-    document.getElementById('todo-check-joint').checked = false; 
-    // REMOVED: document.getElementById('todo-check-calendar').checked = false;
-    
-    const btn=document.getElementById('btn-delete-todo'); 
-    if(btn) btn.classList.add('hidden'); 
-    const m = document.getElementById('add-todo-modal'); 
-    m.classList.remove('hidden'); 
-    setTimeout(()=>m.classList.add('visible'),10); 
- };
+    editingTodoId = null; document.getElementById('todo-modal-title').textContent = '新增待辦事項'; document.getElementById('todo-modal-btn').textContent = '新增'; document.getElementById('todo-input-title').value = ''; document.getElementById('input-date-todo').value = ''; document.getElementById('input-time-todo').value = ''; 
+    const dd = document.getElementById('display-date-todo'); dd.textContent = '請選擇'; dd.classList.add('dt-text-placeholder'); dd.classList.remove('dt-text-value');
+    const dt = document.getElementById('display-time-todo'); dt.textContent = '請選擇'; dt.classList.add('dt-text-placeholder'); dt.classList.remove('dt-text-value');
+ document.getElementById('todo-check-joint').checked = false; document.getElementById('todo-check-calendar').checked = false; const btn=document.getElementById('btn-delete-todo'); if(btn) btn.classList.add('hidden'); const m = document.getElementById('add-todo-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); };
  window.closeAddModal = function() {
   window.__savingEvent = false; // 🔒 保險重置
   const m=document.getElementById('add-modal');
   m.classList.remove('visible');
   setTimeout(()=>m.classList.add('hidden'),200);
 };
-        window.openEditTodoModal = function(id) { 
-            editingTodoId = id; 
-            const todo = allTodosCache.find(t => t.id === id); 
-            if(!todo) return; 
-            document.getElementById('todo-modal-title').textContent = '編輯待辦事項'; 
-            document.getElementById('todo-modal-btn').textContent = '儲存'; 
-            document.getElementById('todo-input-title').value = todo.title; 
-            if(todo.dueDate) { 
-                document.getElementById('input-date-todo').value = todo.dueDate; 
-                window.updateDateDisplay('todo', todo.dueDate); 
-            } else { 
-                document.getElementById('input-date-todo').value = ''; 
-                window.updateDateDisplay('todo', ''); 
-            } 
-            if(todo.dueTime) { 
-                document.getElementById('input-time-todo').value = todo.dueTime; 
-                window.updateTimeDisplay('todo', todo.dueTime); 
-            } else { 
-                document.getElementById('input-time-todo').value = ''; 
-                window.updateTimeDisplay('todo', ''); 
-            } 
-            document.getElementById('todo-check-joint').checked = todo.isJoint; 
-            // REMOVED: document.getElementById('todo-check-calendar').checked = todo.addToCalendar;
-            
-            const btn=document.getElementById('btn-delete-todo'); 
-            if(btn) btn.classList.remove('hidden'); 
-            const m = document.getElementById('add-todo-modal'); 
-            m.classList.remove('hidden'); 
-            setTimeout(()=>m.classList.add('visible'),10); 
-        };
+        window.openEditTodoModal = function(id) { editingTodoId = id; const todo = allTodosCache.find(t => t.id === id); if(!todo) return; document.getElementById('todo-modal-title').textContent = '編輯待辦事項'; document.getElementById('todo-modal-btn').textContent = '儲存'; document.getElementById('todo-input-title').value = todo.title; if(todo.dueDate) { document.getElementById('input-date-todo').value = todo.dueDate; window.updateDateDisplay('todo', todo.dueDate); } else { document.getElementById('input-date-todo').value = ''; window.updateDateDisplay('todo', ''); } if(todo.dueTime) { document.getElementById('input-time-todo').value = todo.dueTime; window.updateTimeDisplay('todo', todo.dueTime); } else { document.getElementById('input-time-todo').value = ''; window.updateTimeDisplay('todo', ''); } document.getElementById('todo-check-joint').checked = todo.isJoint; document.getElementById('todo-check-calendar').checked = todo.addToCalendar; const btn=document.getElementById('btn-delete-todo'); if(btn) btn.classList.remove('hidden'); const m = document.getElementById('add-todo-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); };
         window.closeAddTodoModal = function() { const m = document.getElementById('add-todo-modal'); m.classList.remove('visible'); setTimeout(()=>m.classList.add('hidden'),200); };       
         // 4. 儲存待辦事項 (修復：清除日期後無法存檔的問題)
         window.isSavingTodo = false;
 
         window.saveTodoItem = function() {
-            // 0. 基本檢查
-            if (!db) {
-                window.showToast('資料庫尚未連線，請稍後再試');
-                return;
-            }
             if (window.isSavingTodo) return;
 
-            const titleInput = document.getElementById('todo-input-title');
-            const title = titleInput.value.trim();
-            
+            const title = document.getElementById('todo-input-title').value;
             if (!title) {
                 window.showToast('請輸入內容');
-                titleInput.focus();
                 return;
             }
 
-            // 1. 鎖定 UI
+            // 鎖定按鈕
             window.isSavingTodo = true;
             const btn = document.getElementById('todo-modal-btn');
             const originalText = btn ? btn.textContent : '儲存';
             if (btn) {
-                btn.textContent = '處理中...';
-                btn.classList.add('opacity-50', 'cursor-not-allowed');
-                btn.disabled = true;
+                btn.textContent = '儲存中...';
+                btn.style.opacity = '0.5';
             }
 
-            // 2. 收集資料
-            const date = document.getElementById('input-date-todo').value || null;
-            const time = document.getElementById('input-time-todo').value || null;
+            const date = document.getElementById('input-date-todo').value;
+            const time = document.getElementById('input-time-todo').value;
             const isJoint = document.getElementById('todo-check-joint').checked;
             
-            // 計算時間戳
-            let timestamp = null;
-            if (date) {
-                const tStr = time || "00:00";
-                try {
-                    timestamp = new Date(`${date}T${tStr}`).toISOString();
-                } catch (e) {
-                    console.warn("Date parse error", e);
-                }
-            }
+            // 若有日期則自動標記需同步
+            const addToCalendar = !!date; 
 
-            // 3. 準備寫入物件
-            // 預設值 (新增模式)
-            let baseData = {
-                title: title,
+            // === 修改重點 ===
+            // 我們必須「明確」設定日期欄位，即使是空的也要設為 null
+            // 這樣資料庫才會知道要把舊的日期刪掉
+            const todoData = {
+                title,
+                done: false,
+                creator: currentUserRole,
                 isJoint: isJoint,
-                addToCalendar: !!date, // 有日期就同步
-                dueDate: date,
-                dueTime: (date && time) ? time : null, // 只有當有日期時，時間才有意義
-                timestamp: timestamp,
-                // 下面這些如果是編輯模式，應該要用舊的
-                done: false, 
-                createdAt: new Date().toISOString(),
-                creator: currentUserRole
+                addToCalendar: addToCalendar,
+                // 如果 date 是空的，就設為 null；否則設為 date
+                dueDate: date || null,
+                // 如果 date 或 time 是空的，就設為 null
+                dueTime: (date && time) ? time : null,
+                // timestamp 也是一樣
+                timestamp: null,
+                // 注意：編輯時通常不更新 createdAt，以免順序亂掉，這裡我們維持原樣或可選擇不傳
+                createdAt: new Date().toISOString() 
             };
 
-            // 如果是編輯模式，嘗試保留舊資料
-            if (editingTodoId) {
-                const oldTodo = allTodosCache.find(t => t.id === editingTodoId);
-                if (oldTodo) {
-                    baseData.done = oldTodo.done;
-                    baseData.createdAt = oldTodo.createdAt; // 保持建立時間不變
-                    baseData.creator = oldTodo.creator; // 保持建立者不變 (通常不變)
-                }
+            // 計算 Timestamp (只有在有日期時才計算)
+            if (date) {
+                const tStr = time || "00:00";
+                todoData.timestamp = new Date(`${date}T${tStr}`).toISOString();
             }
 
-            // 4. 定義完成後的動作
-            const finish = (success, msg) => {
+            const onSuccess = (msg) => {
+                if (typeof window.closeAddTodoModal === 'function') {
+                    window.closeAddTodoModal();
+                } else {
+                    const m = document.getElementById('add-todo-modal');
+                    if(m) {
+                        m.classList.remove('visible');
+                        setTimeout(() => m.classList.add('hidden'), 200);
+                    }
+                    window.isSavingTodo = false;
+                }
+                window.showToast(msg);
+            };
+
+            const onError = (err) => {
+                console.error("Save Error:", err);
+                window.showToast('儲存失敗，請檢查網路');
                 window.isSavingTodo = false;
                 if (btn) {
                     btn.textContent = originalText;
-                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                    btn.disabled = false;
-                }
-                
-                if (success) {
-                    window.showToast(msg);
-                    if (window.closeAddTodoModal) window.closeAddTodoModal();
-                } else {
-                    window.showToast(msg || '儲存失敗');
+                    btn.style.opacity = '1';
                 }
             };
 
-            // 5. 執行 Firestore 操作
-            const collection = db.collection('todos');
-            
-            let promise;
+            // 執行寫入
             if (editingTodoId) {
-                // 使用 update 還是 set? update 比較安全，確保只更新存在的
-                // 但為了防止文檔意外消失導致報錯，我們可以 catch
-                promise = collection.doc(editingTodoId).update(baseData);
+                // 編輯模式：這裡傳送 null 會把資料庫裡的舊日期洗掉
+                db.collection('todos').doc(editingTodoId).update(todoData)
+                    .then(() => onSuccess('待辦事項已更新'))
+                    .catch(onError);
             } else {
-                promise = collection.add(baseData);
+                db.collection('todos').add(todoData)
+                    .then(() => onSuccess('待辦事項已新增'))
+                    .catch(onError);
             }
-
-            promise
-                .then(() => finish(true, editingTodoId ? '已更新待辦' : '已新增待辦'))
-                .catch(err => {
-                    console.error("Save Todo Error:", err);
-                    finish(false, '儲存失敗：' + (err.message || '未知錯誤'));
-                });
         };
 
         window.toggleTodo = function(id,s) { db.collection('todos').doc(id).update({done:s}); };
@@ -2021,9 +1967,9 @@ window.openEditModal = function (id) {
 
         // 1. 發送便利貼
         window.sendNote = function() {
-            // 身分檢查
+            // === 加入這行 ===
             if (!window.checkRoleEnforcement()) return;
-            
+            // ===============
             const input = document.getElementById('note-input');
             const text = input.value.trim();
 
@@ -2144,9 +2090,26 @@ window.openEditModal = function (id) {
             if(m) m.style.backgroundColor = roleColors.maomao;
         };
         
-        window.deleteNote = function(role) {
-            // 身分檢查
+        window.confirmDeleteNote = function(role) {
             if (!window.checkRoleEnforcement()) return;
+            
+            deleteTarget = 'note';
+            noteToDelete = role;
+            
+            // Update modal text for context
+            const m = document.getElementById('confirm-modal');
+            const title = m.querySelector('h3');
+            const desc = m.querySelector('p');
+            if(title) title.textContent = '刪除心情？';
+            if(desc) desc.textContent = '確定要刪除這則留言嗎？';
+            
+            window.confirmDelete();
+        };
+
+        window.deleteNote = function(role) {
+            // === 加入這行 ===
+            if (!window.checkRoleEnforcement()) return;
+            // ===============
             
             // === 關鍵修正：立即隱藏 (消除殘影與等待感) ===
             const bubbleEl = document.getElementById(`note-bubble-${role}`);
