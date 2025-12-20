@@ -452,7 +452,7 @@
                         <input type="text" id="note-input" maxlength="14" placeholder="說點什麼吧..." 
                             class="flex-1 bg-transparent border-none text-xs text-gray-600 placeholder-gray-300 focus:ring-0 px-1 outline-none text-left h-full tracking-wide">
 
-                        <!-- 發送按鈕 (移到右側) -->
+                        <!-- 發送按鈕 (移到右側，並加入 ID) -->
                         <button id="note-send-btn" onclick="window.sendNote()" class="w-7 h-7 flex items-center justify-center rounded-full text-white shadow-sm active:scale-90 transition ml-0.5 flex-shrink-0" style="background-color: #d1d5db;">
                             <i data-lucide="send" class="w-3.5 h-3.5 ml-0.5"></i>
                         </button>
@@ -603,7 +603,7 @@
                     </div>
                 </div>
             </div>
-            <div class="text-center text-xs text-gray-400 mt-4">Firebase Connected · Version 104.1 (Right Send Button)</div>
+            <div class="text-center text-xs text-gray-400 mt-4">Firebase Connected · Version 104.2 (Fixed Right Send Button)</div>
         </div>
     </main>
 
@@ -1083,7 +1083,7 @@
             const noteInput = document.getElementById('note-input');
             const noteSendBtn = document.getElementById('note-send-btn');
             
-            if (noteInput && noteSendBtn) {
+            if (noteInput) {
                 if (currentUserRole) {
                     const name = currentUserRole === 'haohao' ? '皓皓' : '毛毛';
                     const color = roleColors[currentUserRole];
@@ -1097,9 +1097,11 @@
                     }
                     
                     // 發送按鈕變色
-                    noteSendBtn.style.backgroundColor = color;
-                    noteSendBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
-                    noteSendBtn.disabled = false;
+                    if(noteSendBtn) {
+                        noteSendBtn.style.backgroundColor = color;
+                        noteSendBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
+                        noteSendBtn.disabled = false;
+                    }
 
                 } else {
                     noteInput.placeholder = '請先選擇身分...';
@@ -1109,9 +1111,11 @@
                         noteInput.parentElement.style.borderColor = '#e5e7eb';
                     }
                     
-                    noteSendBtn.style.backgroundColor = '#d1d5db'; // gray-300
-                    noteSendBtn.classList.add('cursor-not-allowed');
-                    noteSendBtn.disabled = true;
+                    if(noteSendBtn) {
+                        noteSendBtn.style.backgroundColor = '#d1d5db'; // gray-300
+                        noteSendBtn.classList.add('cursor-not-allowed');
+                        noteSendBtn.disabled = true;
+                    }
                 }
             }
             
