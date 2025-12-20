@@ -410,8 +410,9 @@
                                 <div class="absolute top-1/2 -translate-y-1/2 -left-1.5 w-3 h-3 bg-white transform rotate-45 border-b border-l border-gray-100 z-20 pointer-events-none"></div>
                                 <div class="relative bg-white border border-gray-100 px-2 py-2 rounded-2xl shadow-md text-xs text-gray-600 text-left leading-relaxed break-all whitespace-normal z-10 w-full group-hover:border-green-100 transition-colors">
                                     <span id="note-text-haohao">...</span>
-                                    <button onclick="window.deleteNote('haohao'); event.stopPropagation();" class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center shadow-sm hover:bg-red-500 hover:text-white transition opacity-0 group-hover:opacity-100 scale-90">
-                                        <i data-lucide="x" class="w-2.5 h-2.5"></i>
+                                    <!-- 刪除按鈕 (加大尺寸、永遠顯示、確保在最上層) -->
+                                    <button onclick="window.deleteNote('haohao'); event.stopPropagation();" class="absolute -top-3 -right-3 w-6 h-6 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center shadow-md hover:bg-red-500 hover:text-white transition scale-100 z-50">
+                                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
                                     </button>
                                 </div>
                             </div>
@@ -431,8 +432,9 @@
                                 <div class="absolute top-1/2 -translate-y-1/2 -right-1.5 w-3 h-3 bg-white transform rotate-45 border-t border-r border-gray-100 z-20 pointer-events-none"></div>
                                 <div class="relative bg-white border border-gray-100 px-2 py-2 rounded-2xl shadow-md text-xs text-gray-600 text-left leading-relaxed break-all whitespace-normal z-10 w-full group-hover:border-pink-100 transition-colors">
                                     <span id="note-text-maomao">...</span>
-                                    <button onclick="window.deleteNote('maomao'); event.stopPropagation();" class="absolute -top-1.5 -left-1.5 w-4 h-4 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center shadow-sm hover:bg-red-500 hover:text-white transition opacity-0 group-hover:opacity-100 scale-90">
-                                        <i data-lucide="x" class="w-2.5 h-2.5"></i>
+                                    <!-- 刪除按鈕 (加大尺寸、永遠顯示、確保在最上層) -->
+                                    <button onclick="window.deleteNote('maomao'); event.stopPropagation();" class="absolute -top-3 -left-3 w-6 h-6 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center shadow-md hover:bg-red-500 hover:text-white transition scale-100 z-50">
+                                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
                                     </button>
                                 </div>
                             </div>
@@ -1793,30 +1795,40 @@ window.openEditModal = function (id) {
            便利貼 (Status Note) 功能邏輯
            ========================================= */
 
-        // 1. 發送便利貼
+        // 1. 發送便利貼 (優化：樂觀 UI 更新，零延遲感)
         window.sendNote = function() {
-            // === 加入這行 ===
             if (!window.checkRoleEnforcement()) return;
-            // ===============
+            
             const input = document.getElementById('note-input');
             const text = input.value.trim();
 
             if (!text) return;
 
-            // 寫入資料庫 (collection: 'notes', docId: role)
-            // 這樣同一個人永遠只有一則最新的 note
-            db.collection('notes').doc(currentUserRole).set({
+            // === 1. 樂觀更新 (Optimistic UI) ===
+            // 不等資料庫回應，直接假裝成功，先顯示在畫面上
+            const fakeData = {
                 text: text,
                 timestamp: new Date().toISOString(),
                 creator: currentUserRole
-            }).then(() => {
-                window.showToast('心情已發送 💬');
-                input.value = ''; // 清空輸入框
-                input.blur(); // 收起鍵盤
-            }).catch(err => {
-                console.error(err);
-                window.showToast('發送失敗');
-            });
+            };
+            
+            // 立即渲染氣泡
+            window.renderNoteBubble(currentUserRole, fakeData);
+            
+            // 立即清空輸入框 & 收起鍵盤
+            input.value = ''; 
+            input.blur(); 
+
+            // === 2. 背景默默寫入資料庫 ===
+            db.collection('notes').doc(currentUserRole).set(fakeData)
+                .then(() => {
+                    // 資料庫寫入成功 (使用者無感，因為畫面早就更新了)
+                    console.log('Note saved to DB');
+                }).catch(err => {
+                    console.error(err);
+                    window.showToast('發送失敗，請檢查網路');
+                    // 萬一失敗，這裡可能需要復原 UI，但對於這種輕量功能，通常不需要太複雜的 rollback
+                });
         };
 
         // 2. 聚焦輸入框 (點擊頭像時觸發)
