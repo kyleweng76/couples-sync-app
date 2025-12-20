@@ -373,7 +373,8 @@
             
             <!-- 身分顯示膠囊 (移到這裡，放在綠燈左邊) -->
             <!-- 加上 cursor-pointer，點擊可以直接跳轉到設定頁切換身分，很方便 -->
-            <div id="header-role-badge" class="px-2.5 py-1 rounded-full text-xs text-white font-bold shadow-sm transition-colors duration-300 flex items-center gap-1.5 opacity-0 cursor-pointer hover:opacity-90 active:scale-95 transition-transform" onclick="window.switchTab('settings')">
+            <!-- 修改：onclick 改為開啟 Modal -->
+            <div id="header-role-badge" class="px-2.5 py-1 rounded-full text-xs text-white font-bold shadow-sm transition-colors duration-300 flex items-center gap-1.5 opacity-0 cursor-pointer hover:opacity-90 active:scale-95 transition-transform" onclick="window.openSettingsModal()">
                 <span id="header-role-name">載入中</span>
                 <i data-lucide="user" class="w-3.5 h-3.5"></i>
             </div>
@@ -574,37 +575,7 @@
             </div>
         </div>
 
-        <!-- Page 4: Settings -->
-        <div id="page-settings" class="page-content p-4 space-y-6">
-            <h2 class="text-lg font-bold text-gray-800 px-1">設定</h2>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <!-- 這裡加上 id="role-selection-section" 方便 JS 抓取 -->
-                <div id="role-selection-section" class="p-4 border-b border-gray-50 transition-all duration-300">
-                    <p class="text-sm text-gray-500 mb-3">我是誰？ (切換身分)</p>
-                    <div class="flex gap-2">
-                        <button id="role-haohao" onclick="window.setRole('haohao')" class="flex-1 py-3 rounded-lg text-sm font-medium border transition">皓皓</button>
-                        <button id="role-maomao" onclick="window.setRole('maomao')" class="flex-1 py-3 rounded-lg text-sm font-medium border transition">毛毛</button>
-                    </div>
-                </div>
-                
-                <div class="p-4 bg-gray-50 space-y-4">
-                    <p class="text-sm text-gray-500 mb-2">代表色設定</p>
-                    <div class="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200" onclick="window.openColorConfig('haohao')">
-                        <span class="text-sm text-gray-700">皓皓</span>
-                        <div id="setting-color-haohao" class="w-6 h-6 rounded-full border border-gray-300 shadow-sm"></div>
-                    </div>
-                    <div class="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200" onclick="window.openColorConfig('maomao')">
-                        <span class="text-sm text-gray-700">毛毛</span>
-                        <div id="setting-color-maomao" class="w-6 h-6 rounded-full border border-gray-300 shadow-sm"></div>
-                    </div>
-                    <div class="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200" onclick="window.openColorConfig('joint')">
-                        <span class="text-sm text-gray-700">共同行程</span>
-                        <div id="setting-color-joint" class="w-6 h-6 rounded-full border border-gray-300 shadow-sm"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="text-center text-xs text-gray-400 mt-4">Firebase Connected · Version 104.2 (Fixed Right Send Button)</div>
-        </div>
+        <!-- Page 4 REMOVED, replaced by Modal -->
     </main>
 
     <!-- Global Color Picker Modal -->
@@ -617,6 +588,52 @@
         </div>
     </div>
     
+    <!-- Settings Modal (New!) -->
+    <div id="settings-modal" class="fixed inset-0 z-[60] flex items-center justify-center hidden modal">
+        <div class="absolute inset-0 bg-black/20 backdrop-blur-[1px]" onclick="window.closeSettingsModal()"></div>
+        <div class="relative bg-white w-[320px] rounded-2xl shadow-xl overflow-hidden transform scale-100 transition-transform">
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="text-lg font-bold text-gray-800">設定</h3>
+                <button onclick="window.closeSettingsModal()" class="p-1 rounded-full hover:bg-gray-200 text-gray-400 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="p-5 space-y-6">
+                <!-- Role Selection -->
+                <div id="role-selection-section" class="space-y-3">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">我是誰？ (切換身分)</p>
+                    <div class="flex gap-3">
+                        <button id="role-haohao" onclick="window.setRole('haohao')" class="flex-1 py-3 rounded-xl text-sm font-bold border transition transform active:scale-95">皓皓</button>
+                        <button id="role-maomao" onclick="window.setRole('maomao')" class="flex-1 py-3 rounded-xl text-sm font-bold border transition transform active:scale-95">毛毛</button>
+                    </div>
+                </div>
+                
+                <!-- Color Settings -->
+                <div class="space-y-3">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">代表色設定</p>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-100 active:scale-98 transition cursor-pointer" onclick="window.openColorConfig('haohao')">
+                            <span class="text-sm font-medium text-gray-700">皓皓</span>
+                            <div id="setting-color-haohao" class="w-6 h-6 rounded-full border-2 border-white shadow-sm ring-1 ring-gray-200"></div>
+                        </div>
+                        <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-100 active:scale-98 transition cursor-pointer" onclick="window.openColorConfig('maomao')">
+                            <span class="text-sm font-medium text-gray-700">毛毛</span>
+                            <div id="setting-color-maomao" class="w-6 h-6 rounded-full border-2 border-white shadow-sm ring-1 ring-gray-200"></div>
+                        </div>
+                        <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-100 active:scale-98 transition cursor-pointer" onclick="window.openColorConfig('joint')">
+                            <span class="text-sm font-medium text-gray-700">共同行程</span>
+                            <div id="setting-color-joint" class="w-6 h-6 rounded-full border-2 border-white shadow-sm ring-1 ring-gray-200"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 p-3 text-center border-t border-gray-100">
+                <span class="text-[10px] text-gray-400">Firebase Connected · v105.0</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Confirm Modal -->
     <div id="confirm-modal" class="fixed inset-0 z-[80] flex items-center justify-center hidden modal">
         <div class="absolute inset-0 bg-black/20 backdrop-blur-[1px]" onclick="window.closeConfirmModal()"></div>
@@ -860,13 +877,12 @@
         </div>
     </div>
 
-    <!-- Bottom Nav -->
+    <!-- Bottom Nav (3 Items only) -->
         <nav class="bg-white border-t border-gray-100 fixed bottom-0 w-full px-6 pt-3 pb-6 pb-safe z-20 shadow-[0_-5px_15px_rgba(0,0,0,0.02)]">
         <div class="flex justify-between items-center max-w-md mx-auto">
             <button class="nav-item active flex flex-col items-center gap-1 text-gray-400 transition py-1" onclick="window.switchTab('dashboard')"><i data-lucide="layout-grid" class="w-6 h-6"></i><span class="text-[10px] font-medium">摘要</span></button>
             <button class="nav-item flex flex-col items-center gap-1 text-gray-400 transition py-1" onclick="window.switchTab('calendar')"><i data-lucide="calendar" class="w-6 h-6"></i><span class="text-[10px] font-medium">行事曆</span></button>
             <button class="nav-item flex flex-col items-center gap-1 text-gray-400 transition py-1" onclick="window.switchTab('todo')"><i data-lucide="list-checks" class="w-6 h-6"></i><span class="text-[10px] font-medium">清單</span></button>
-            <button class="nav-item flex flex-col items-center gap-1 text-gray-400 transition py-1" onclick="window.switchTab('settings')"><i data-lucide="settings" class="w-6 h-6"></i><span class="text-[10px] font-medium">設定</span></button>
         </div>
     </nav>
 
@@ -936,8 +952,8 @@
            ========================================= */
         window.checkRoleEnforcement = function() {
             if (!currentUserRole) {
-                // 1. 強制切換到設定頁
-                window.switchTab('settings');
+                // 1. 強制切換到設定頁 (開啟 Modal)
+                window.openSettingsModal();
                 
                 // 2. 跳出提示
                 window.showToast('👋 請先告訴我您是誰？');
@@ -952,6 +968,29 @@
                 return false; // 阻擋後續操作
             }
             return true; // 通行
+        };
+        
+        window.openSettingsModal = function() {
+            const m = document.getElementById('settings-modal');
+            m.classList.remove('hidden');
+            setTimeout(() => m.classList.add('visible'), 10);
+        };
+
+        window.closeSettingsModal = function() {
+            // 如果沒選身分，不准關閉
+            if (!currentUserRole) {
+                window.showToast('請先選擇一個身分 🙏');
+                const roleSection = document.getElementById('role-selection-section');
+                if(roleSection) {
+                    roleSection.classList.add('animate-pulse');
+                    setTimeout(() => roleSection.classList.remove('animate-pulse'), 500);
+                }
+                return;
+            }
+            
+            const m = document.getElementById('settings-modal');
+            m.classList.remove('visible');
+            setTimeout(() => m.classList.add('hidden'), 200);
         };
         
         window.updateDateDisplay = function(type, dateStr) {
@@ -1040,8 +1079,8 @@
             const btnMaomao = document.getElementById('role-maomao');
             
             if (btnHaohao) {
-                const activeClass = "flex-1 py-3 rounded-lg text-sm font-bold border border-ttgreen bg-green-50 text-ttgreen transition shadow-sm";
-                const inactiveClass = "flex-1 py-3 rounded-lg text-sm font-medium border border-gray-200 text-gray-400 bg-white transition";
+                const activeClass = "flex-1 py-3 rounded-xl text-sm font-bold border-2 border-ttgreen bg-green-50 text-ttgreen transition shadow-sm";
+                const inactiveClass = "flex-1 py-3 rounded-xl text-sm font-medium border border-gray-200 text-gray-400 bg-white transition";
                 
                 if (currentUserRole === 'haohao') {
                     btnHaohao.className = activeClass;
