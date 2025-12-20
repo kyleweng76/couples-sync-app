@@ -442,13 +442,17 @@
 
                 <!-- B. 輸入框 -->
                 <div class="relative z-20 h-9 w-[270px]">
-                    <div class="flex items-center bg-white rounded-full px-1 py-0.5 shadow-sm border border-gray-200 focus-within:ring-2 focus-within:ring-green-100 focus-within:border-green-300 transition-all h-full">
+                    <div class="flex items-center bg-white rounded-full px-1 py-0.5 shadow-sm border border-gray-200 focus-within:ring-2 focus-within:ring-opacity-50 transition-all h-full">
+                        <!-- 左側 Icon (恢復) -->
                         <div class="w-8 h-8 flex items-center justify-center text-gray-300 flex-shrink-0">
                             <i data-lucide="message-circle" class="w-4 h-4"></i>
                         </div>
+                        
                         <input type="text" id="note-input" maxlength="14" placeholder="說點什麼吧..." 
-                            class="flex-1 bg-transparent border-none text-xs text-gray-600 placeholder-gray-300 focus:ring-0 pl-2 outline-none text-left h-full tracking-wide">
-                        <button onclick="window.sendNote()" class="w-7 h-7 flex items-center justify-center bg-gray-50 text-ttgreen rounded-full hover:bg-green-50 active:scale-90 transition mr-0.5 flex-shrink-0">
+                            class="flex-1 bg-transparent border-none text-xs text-gray-600 placeholder-gray-300 focus:ring-0 px-1 outline-none text-left h-full tracking-wide">
+
+                        <!-- 發送按鈕 (移到右側) -->
+                        <button id="note-send-btn" onclick="window.sendNote()" class="w-7 h-7 flex items-center justify-center rounded-full text-white shadow-sm active:scale-90 transition ml-0.5 flex-shrink-0" style="background-color: #d1d5db;">
                             <i data-lucide="send" class="w-3.5 h-3.5 ml-0.5"></i>
                         </button>
                     </div>
@@ -598,7 +602,7 @@
                     </div>
                 </div>
             </div>
-            <div class="text-center text-xs text-gray-400 mt-4">Firebase Connected · Version 103.0 (Role Enforcement)</div>
+            <div class="text-center text-xs text-gray-400 mt-4">Firebase Connected · Version 104.1 (Right Send Button)</div>
         </div>
     </main>
 
@@ -1027,6 +1031,7 @@
         };
         window.checkEndDateValidity = function() { const sD = document.getElementById('input-date-start').value; const sT = document.getElementById('input-time-start').value; const eD = document.getElementById('input-date-end').value; const eT = document.getElementById('input-time-end').value; if(new Date(`${eD}T${eT}`) < new Date(`${sD}T${sT}`)) { window.autoUpdateEnd(); } else { window.checkRecurValidity(); } };
         window.setNowToInputs = function() { const now = new Date(); const dStr = now.toISOString().split('T')[0]; let h = now.getHours(), m = now.getMinutes(); if(m < 30) { m = 30; } else { m = 0; h += 1; } if(h > 23) h = 0; const tStr = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`; const startEl = document.getElementById('input-date-start'); if(startEl) { startEl.value = dStr; document.getElementById('input-time-start').value = tStr; window.updateDateDisplay('start', dStr); window.updateTimeDisplay('start', tStr); const endD = document.getElementById('input-date-end'); if(endD) endD.value = dStr; const endT = document.getElementById('input-time-end'); if(endT) endT.value = tStr; window.updateDateDisplay('end', dStr); window.updateTimeDisplay('end', tStr); } };
+        
         // 修改：身分切換時，全面更新 UI 提示
         window.updateRoleUI = function() {
             // 1. 設定頁按鈕狀態
@@ -1073,19 +1078,39 @@
                 }
             }
 
-            // 3. 便利貼輸入框提示
+            // 3. 便利貼輸入框提示 & 發送按鈕顏色同步
             const noteInput = document.getElementById('note-input');
-            if (noteInput) {
+            const noteSendBtn = document.getElementById('note-send-btn');
+            
+            if (noteInput && noteSendBtn) {
                 if (currentUserRole) {
                     const name = currentUserRole === 'haohao' ? '皓皓' : '毛毛';
-                    noteInput.placeholder = `${name}，說點什麼吧...`;
-                    noteInput.parentElement.style.borderColor = roleColors[currentUserRole];
+                    const color = roleColors[currentUserRole];
+                    
+                    noteInput.placeholder = `${name}，說點什麼...`;
                     noteInput.disabled = false;
+                    
+                    // 輸入框外框變色 (border color)
+                    if(noteInput.parentElement) {
+                        noteInput.parentElement.style.borderColor = color;
+                    }
+                    
+                    // 發送按鈕變色
+                    noteSendBtn.style.backgroundColor = color;
+                    noteSendBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
+                    noteSendBtn.disabled = false;
+
                 } else {
                     noteInput.placeholder = '請先選擇身分...';
-                    noteInput.parentElement.style.borderColor = '#e5e7eb';
-                    // 沒身分時鎖住輸入框，強迫去設定
                     noteInput.disabled = true;
+                    
+                    if(noteInput.parentElement) {
+                        noteInput.parentElement.style.borderColor = '#e5e7eb';
+                    }
+                    
+                    noteSendBtn.style.backgroundColor = '#d1d5db'; // gray-300
+                    noteSendBtn.classList.add('cursor-not-allowed');
+                    noteSendBtn.disabled = true;
                 }
             }
             
