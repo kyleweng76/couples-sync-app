@@ -2086,12 +2086,16 @@ window.openEditModal = function (id) {
 
             if (diffHours < 24) {
                 textEl.textContent = data.text;
-                if(timeEl) timeEl.textContent = window.getRelativeTimeStr(data.timestamp);
+                if(timeEl) {
+                    timeEl.textContent = window.getRelativeTimeStr(data.timestamp);
+                    // FIX: 確保移除 hidden，否則之前刪除或初始隱藏後會顯示不出來
+                    timeEl.classList.remove('hidden');
+                    timeEl.classList.remove('opacity-0');
+                }
                 
                 // 顯示
                 bubbleEl.classList.remove('hidden');
                 if(dotEl) dotEl.classList.remove('hidden');
-                if(timeEl) timeEl.classList.remove('opacity-0'); // 顯示時間
                 
                 // 動畫：左右滑入
                 requestAnimationFrame(() => {
