@@ -52,12 +52,13 @@
         }
         .page-content.active { display: block; }
         
+        /* 修改：Padding Top 統一為 70px，避免切換時跳動 */
         #page-calendar.active {
             display: flex;
             flex-direction: column;
             padding: 0;
             overflow: hidden;
-            padding-top: 60px; 
+            padding-top: 70px; 
             padding-bottom: 70px;
         }
         
@@ -497,15 +498,16 @@
 
         <!-- Page 2: Calendar -->
         <div id="page-calendar" class="page-content">
-            <div class="flex-none bg-white z-10 border-b border-gray-200 px-4 py-3 flex items-center justify-center relative">
+            <!-- 修正 Header：高度固定 60px，按鈕絕對定位 -->
+            <div class="flex-none bg-white z-10 border-b border-gray-200 px-4 flex items-center justify-center h-[60px] relative">
                  <!-- 中間：視圖切換 (置中 + 固定寬度) -->
                  <div class="flex bg-gray-100 p-1 rounded-lg">
                     <button onclick="window.switchCalendarView('list')" id="btn-view-list" class="w-16 py-1.5 text-xs font-bold rounded-md bg-white shadow-sm text-ttgreen transition-all">列表</button>
                     <button onclick="window.switchCalendarView('month')" id="btn-view-month" class="w-16 py-1.5 text-xs font-medium rounded-md text-gray-500 transition-all">月曆</button>
                 </div>
                 
-                <!-- 右側：新增按鈕 (絕對定位 + 與待辦頁面一致的樣式) -->
-                <button onclick="window.openAddModal()" class="absolute right-4 bg-ttgreen text-white p-2 rounded-lg shadow-sm active:scale-95 transition">
+                <!-- 右側：新增按鈕 (絕對定位 + 垂直置中) -->
+                <button onclick="window.openAddModal()" class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-ttgreen text-white p-2 rounded-lg shadow-sm active:scale-95 transition">
                     <i data-lucide="plus" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -541,9 +543,12 @@
 
         <!-- Page 3: Todo -->
         <div id="page-todo" class="page-content">
-            <div class="sticky top-0 bg-white z-10 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+            <!-- 修正 Header：高度固定 60px，按鈕絕對定位 -->
+            <div class="sticky top-0 bg-white z-10 border-b border-gray-200 px-4 flex items-center h-[60px] relative">
                 <h2 class="text-xl font-bold text-gray-800">待辦清單</h2>
-                 <button onclick="window.openAddTodoModal()" class="bg-ttgreen text-white p-2 rounded-lg shadow-sm active:scale-95 transition">
+                 
+                 <!-- 右側：新增按鈕 (絕對定位 + 垂直置中) -->
+                 <button onclick="window.openAddTodoModal()" class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-ttgreen text-white p-2 rounded-lg shadow-sm active:scale-95 transition">
                     <i data-lucide="plus" class="w-5 h-5"></i>
                 </button>
             </div>
