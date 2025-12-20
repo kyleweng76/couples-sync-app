@@ -445,7 +445,8 @@
 
                 <!-- B. 輸入框 -->
                 <div class="relative z-20 h-9 w-[270px]">
-                    <div class="flex items-center bg-white rounded-full px-1 py-0.5 shadow-sm border border-gray-200 focus-within:ring-2 focus-within:ring-opacity-50 transition-all h-full">
+                    <!-- Added overflow-hidden to clip the button if it tries to escape, and flex-nowrap -->
+                    <div class="flex flex-nowrap items-center bg-white rounded-full px-1 py-0.5 shadow-sm border border-gray-200 focus-within:ring-2 focus-within:ring-opacity-50 transition-all h-full overflow-hidden">
                         <!-- 左側 Icon (恢復) -->
                         <div class="w-8 h-8 flex items-center justify-center text-gray-300 flex-shrink-0">
                             <i data-lucide="message-circle" class="w-4 h-4"></i>
@@ -453,7 +454,7 @@
                         
                         <!-- 輸入框 -->
                         <input type="text" id="note-input" maxlength="14" placeholder="說點什麼吧..." 
-                            class="flex-1 bg-transparent border-none text-xs text-gray-600 placeholder-gray-300 focus:ring-0 px-1 outline-none text-left h-full tracking-wide">
+                            class="flex-1 min-w-0 bg-transparent border-none text-xs text-gray-600 placeholder-gray-300 focus:ring-0 px-1 outline-none text-left h-full tracking-wide">
 
                         <!-- 發送按鈕 (移到右側，並加入 ID) -->
                         <button id="note-send-btn" onclick="window.sendNote()" class="w-7 h-7 flex items-center justify-center rounded-full text-white shadow-sm active:scale-90 transition ml-0.5 flex-shrink-0" style="background-color: #d1d5db;">
@@ -1795,40 +1796,30 @@ window.openEditModal = function (id) {
            便利貼 (Status Note) 功能邏輯
            ========================================= */
 
-        // 1. 發送便利貼 (優化：樂觀 UI 更新，零延遲感)
+        // 1. 發送便利貼
         window.sendNote = function() {
+            // === 加入這行 ===
             if (!window.checkRoleEnforcement()) return;
-            
+            // ===============
             const input = document.getElementById('note-input');
             const text = input.value.trim();
 
             if (!text) return;
 
-            // === 1. 樂觀更新 (Optimistic UI) ===
-            // 不等資料庫回應，直接假裝成功，先顯示在畫面上
-            const fakeData = {
+            // 寫入資料庫 (collection: 'notes', docId: role)
+            // 這樣同一個人永遠只有一則最新的 note
+            db.collection('notes').doc(currentUserRole).set({
                 text: text,
                 timestamp: new Date().toISOString(),
                 creator: currentUserRole
-            };
-            
-            // 立即渲染氣泡
-            window.renderNoteBubble(currentUserRole, fakeData);
-            
-            // 立即清空輸入框 & 收起鍵盤
-            input.value = ''; 
-            input.blur(); 
-
-            // === 2. 背景默默寫入資料庫 ===
-            db.collection('notes').doc(currentUserRole).set(fakeData)
-                .then(() => {
-                    // 資料庫寫入成功 (使用者無感，因為畫面早就更新了)
-                    console.log('Note saved to DB');
-                }).catch(err => {
-                    console.error(err);
-                    window.showToast('發送失敗，請檢查網路');
-                    // 萬一失敗，這裡可能需要復原 UI，但對於這種輕量功能，通常不需要太複雜的 rollback
-                });
+            }).then(() => {
+                window.showToast('心情已發送 💬');
+                input.value = ''; // 清空輸入框
+                input.blur(); // 收起鍵盤
+            }).catch(err => {
+                console.error(err);
+                window.showToast('發送失敗');
+            });
         };
 
         // 2. 聚焦輸入框 (點擊頭像時觸發)
@@ -1907,7 +1898,8 @@ window.openEditModal = function (id) {
             }
             
             if(dotEl) dotEl.classList.add('hidden');
-            if(timeEl) timeEl.classList.add('opacity-0'); // 隱藏時間
+            // 也把時間隱藏
+            if(timeEl) timeEl.classList.add('opacity-0', 'hidden'); 
             
             setTimeout(() => {
                 bubbleEl.classList.add('hidden');
@@ -1937,7 +1929,7 @@ window.openEditModal = function (id) {
                     
                     if (bubbleEl) bubbleEl.classList.add('opacity-0', 'hidden');
                     if (dotEl) dotEl.classList.add('hidden');
-                    if (timeEl) timeEl.classList.add('opacity-0');
+                    if (timeEl) timeEl.classList.add('opacity-0', 'hidden');
                     
                     window.showToast('心情已刪除 💨');
                 })
