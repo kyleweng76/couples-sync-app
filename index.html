@@ -1706,6 +1706,16 @@ function initApp(db) {
     conn.className = "w-2 h-2 rounded-full bg-ttgreen shadow-[0_0_8px_#2cc998]";
   }
 
+/* ===== STABLE PATCH: Notes Listener (便利貼) ===== */
+  db.collection('notes').onSnapshot(snapshot => {
+      snapshot.forEach(doc => {
+          // doc.id 會是 'haohao' 或 'maomao'
+          window.renderNoteBubble(doc.id, doc.data());
+      });
+      // 順便同步一下頭像顏色
+      window.syncNoteAvatarColors();
+  });
+
   /* ===== STABLE PATCH: Events Snapshot ===== */
   bindSnapshot(
     db.collection('events').orderBy('timestamp', 'asc'),
@@ -1990,6 +2000,10 @@ window.switchTab = function(tabId) {
     if(tabId === 'settings') {
         window.updateSettingsColorUI();
     }
+    // 在 window.switchTab 函式內加入：
+if(tabId === 'dashboard') {
+    window.syncNoteAvatarColors?.();
+}
 };
 
 window.switchCalendarView = function(mode) {
