@@ -384,48 +384,58 @@
     <div class="flex flex-col items-center w-full mb-6">
         
         <!-- A. 頭像與對話氣泡列 -->
-        <div class="w-full flex justify-between items-center px-5 mb-5 relative z-10">
+        <div class="w-full flex justify-between items-start px-5 mb-2 relative z-10">
             
-            <!-- 左邊：皓皓 (氣泡向右) -->
-            <div class="relative flex items-center group" onclick="window.setNoteInputFocus()">
-                <div id="avatar-note-haohao" class="w-14 h-14 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xl font-bold ring-4 ring-white shadow-md z-20 cursor-pointer transition-transform active:scale-95" style="background-color: #2cc998;">
-                    皓
-                    <div id="status-dot-haohao" class="hidden absolute top-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
-                </div>
+            <!-- 左邊：皓皓 (垂直堆疊：上=頭像/氣泡，下=時間) -->
+            <div class="flex flex-col items-center gap-1">
+                <!-- 頭像組 -->
+                <div class="relative flex items-center group" onclick="window.setNoteInputFocus()">
+                    <!-- 頭像 -->
+                    <div id="avatar-note-haohao" class="w-14 h-14 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xl font-bold ring-4 ring-white shadow-md z-20 cursor-pointer transition-transform active:scale-95" style="background-color: #2cc998;">
+                        皓
+                        <div id="status-dot-haohao" class="hidden absolute top-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
+                    </div>
 
-                <!-- 氣泡：鎖定寬度 w-[100px] 強制換行 -->
-                <div id="note-bubble-haohao" class="hidden absolute left-[64px] top-1/2 transform -translate-y-1/2 opacity-0 -translate-x-2 transition-all duration-300 z-10 w-[100px] flex flex-col items-start">
-                    <div class="absolute top-1/2 -translate-y-1/2 -left-1.5 w-3 h-3 bg-white transform rotate-45 border-b border-l border-gray-100 z-20 pointer-events-none"></div>
-                    
-                    <div class="relative bg-white border border-gray-100 px-2 py-2 rounded-2xl shadow-md text-xs text-gray-600 text-left leading-relaxed break-all whitespace-normal z-10 w-full group-hover:border-green-100 transition-colors">
-                        <span id="note-text-haohao">...</span>
-                        <!-- 刪除按鈕 -->
-                        <button onclick="window.deleteNote('haohao'); event.stopPropagation();" class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center shadow-sm hover:bg-red-500 hover:text-white transition opacity-0 group-hover:opacity-100 scale-90">
-                            <i data-lucide="x" class="w-2.5 h-2.5"></i>
-                        </button>
+                    <!-- 氣泡：設定 w-[110px] 讓它剛好 7 個字一行 -->
+                    <div id="note-bubble-haohao" class="hidden absolute left-[64px] top-1/2 transform -translate-y-1/2 opacity-0 -translate-x-2 transition-all duration-300 z-10 w-[110px] flex flex-col items-start">
+                        <div class="absolute top-1/2 -translate-y-1/2 -left-1.5 w-3 h-3 bg-white transform rotate-45 border-b border-l border-gray-100 z-20 pointer-events-none"></div>
+                        
+                        <div class="relative bg-white border border-gray-100 px-2 py-2 rounded-2xl shadow-md text-xs text-gray-600 text-left leading-relaxed break-all whitespace-normal z-10 w-full group-hover:border-green-100 transition-colors">
+                            <span id="note-text-haohao">...</span>
+                            <!-- 刪除按鈕 -->
+                            <button onclick="window.deleteNote('haohao'); event.stopPropagation();" class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center shadow-sm hover:bg-red-500 hover:text-white transition opacity-0 group-hover:opacity-100 scale-90">
+                                <i data-lucide="x" class="w-2.5 h-2.5"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
+                <!-- 時間標籤 -->
+                <span id="note-time-haohao" class="text-[10px] text-gray-300 h-4 transition-opacity duration-300 opacity-0"></span>
             </div>
 
-            <!-- 右邊：毛毛 (氣泡向左) -->
-            <div class="relative flex flex-row-reverse items-center group" onclick="window.setNoteInputFocus()">
-                <div id="avatar-note-maomao" class="w-14 h-14 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xl font-bold ring-4 ring-white shadow-md z-20 cursor-pointer transition-transform active:scale-95" style="background-color: #e6688d;">
-                    毛
-                    <div id="status-dot-maomao" class="hidden absolute top-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
-                </div>
+            <!-- 右邊：毛毛 (垂直堆疊) -->
+            <div class="flex flex-col items-center gap-1">
+                <div class="relative flex flex-row-reverse items-center group" onclick="window.setNoteInputFocus()">
+                    <div id="avatar-note-maomao" class="w-14 h-14 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xl font-bold ring-4 ring-white shadow-md z-20 cursor-pointer transition-transform active:scale-95" style="background-color: #e6688d;">
+                        毛
+                        <div id="status-dot-maomao" class="hidden absolute top-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
+                    </div>
 
-                <!-- 氣泡：鎖定寬度 w-[100px] 強制換行 -->
-                <div id="note-bubble-maomao" class="hidden absolute right-[64px] top-1/2 transform -translate-y-1/2 opacity-0 translate-x-2 transition-all duration-300 z-10 w-[100px] flex flex-col items-end">
-                    <div class="absolute top-1/2 -translate-y-1/2 -right-1.5 w-3 h-3 bg-white transform rotate-45 border-t border-r border-gray-100 z-20 pointer-events-none"></div>
-                    
-                    <div class="relative bg-white border border-gray-100 px-2 py-2 rounded-2xl shadow-md text-xs text-gray-600 text-left leading-relaxed break-all whitespace-normal z-10 w-full group-hover:border-pink-100 transition-colors">
-                        <span id="note-text-maomao">...</span>
-                        <!-- 刪除按鈕 -->
-                        <button onclick="window.deleteNote('maomao'); event.stopPropagation();" class="absolute -top-1.5 -left-1.5 w-4 h-4 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center shadow-sm hover:bg-red-500 hover:text-white transition opacity-0 group-hover:opacity-100 scale-90">
-                            <i data-lucide="x" class="w-2.5 h-2.5"></i>
-                        </button>
+                    <!-- 氣泡：設定 w-[110px] -->
+                    <div id="note-bubble-maomao" class="hidden absolute right-[64px] top-1/2 transform -translate-y-1/2 opacity-0 translate-x-2 transition-all duration-300 z-10 w-[110px] flex flex-col items-end">
+                        <div class="absolute top-1/2 -translate-y-1/2 -right-1.5 w-3 h-3 bg-white transform rotate-45 border-t border-r border-gray-100 z-20 pointer-events-none"></div>
+                        
+                        <div class="relative bg-white border border-gray-100 px-2 py-2 rounded-2xl shadow-md text-xs text-gray-600 text-left leading-relaxed break-all whitespace-normal z-10 w-full group-hover:border-pink-100 transition-colors">
+                            <span id="note-text-maomao">...</span>
+                            <!-- 刪除按鈕 -->
+                            <button onclick="window.deleteNote('maomao'); event.stopPropagation();" class="absolute -top-1.5 -left-1.5 w-4 h-4 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center shadow-sm hover:bg-red-500 hover:text-white transition opacity-0 group-hover:opacity-100 scale-90">
+                                <i data-lucide="x" class="w-2.5 h-2.5"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
+                 <!-- 時間標籤 -->
+                 <span id="note-time-maomao" class="text-[10px] text-gray-300 h-4 transition-opacity duration-300 opacity-0"></span>
             </div>
         </div>
 
@@ -436,7 +446,6 @@
                     <i data-lucide="message-circle" class="w-4 h-4"></i>
                 </div>
                 
-                <!-- 輸入欄位：text-left (靠左), pl-2 (左距), placeholder 更新 -->
                 <input type="text" id="note-input" maxlength="14" placeholder="說點什麼吧..." 
                     class="flex-1 bg-transparent border-none text-xs text-gray-600 placeholder-gray-300 focus:ring-0 pl-2 outline-none text-left h-full tracking-wide">
                 
@@ -447,6 +456,44 @@
         </div>
 
     </div>
+
+    <!-- 3. Next Up Card -->
+    <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 mx-4">
+        <div class="bg-ttgreen px-4 py-2 flex justify-between items-center">
+            <span class="text-white text-xs font-bold tracking-wider">NEXT 7 DAYS</span>
+            <span id="dashboard-countdown" class="text-white text-xs bg-white/20 px-2 py-0.5 rounded-full">...</span>
+        </div>
+        <div id="dashboard-next-list" class="divide-y divide-gray-100 min-h-[100px]">
+            <div class="text-center py-8 text-gray-400 text-sm">載入中...</div>
+        </div>
+    </div>
+
+    <!-- 4. 待辦清單摘要 -->
+    <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 p-4 mx-4 mt-4">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2">
+                <i data-lucide="check-square" class="w-4 h-4 text-ttgreen"></i> 待辦清單
+            </h3>
+            <button onclick="window.switchTab('todo')" class="text-xs text-ttgreen font-medium">查看全部</button>
+        </div>
+        <div id="dashboard-todo-list" class="space-y-2">
+            <p class="text-xs text-gray-400 text-center py-2">載入中...</p>
+        </div>
+    </div>
+    
+    <!-- 5. 底部按鈕 -->
+    <div class="px-4 mt-4 flex gap-3 pb-6">
+        <button onclick="window.openAddModal()" class="flex-1 bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-gray-600 flex items-center justify-center gap-2 active:bg-gray-50 transition">
+            <i data-lucide="calendar-plus" class="w-5 h-5 text-ttgreen"></i>
+            <span class="text-sm font-bold">新增行程</span>
+        </button>
+        
+        <button onclick="window.openAddTodoModal()" class="flex-1 bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-gray-600 flex items-center justify-center gap-2 active:bg-gray-50 transition">
+            <i data-lucide="check-square" class="w-5 h-5 text-blue-400"></i>
+            <span class="text-sm font-bold">新增待辦</span>
+        </button>
+    </div>
+</div>
 
     <!-- 3. Next Up Card -->
     <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 mx-4">
@@ -2310,19 +2357,36 @@ window.setNoteInputFocus = function() {
 
 // 3. 渲染便利貼 (修正：橫向對話氣泡)
 // 3. 渲染便利貼 (修正：垂直置中動畫)
+// 新增：計算相對時間的輔助函式
+window.getRelativeTimeStr = function(timestamp) {
+    const now = new Date();
+    const date = new Date(timestamp);
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+    if (diffMins < 1) return '剛剛';
+    if (diffMins < 60) return `${diffMins}分鐘前`;
+    if (diffHours < 24) return `${diffHours}小時前`;
+    return '1天前';
+};
+
+// 3. 渲染便利貼 (更新：加入時間顯示與 7字寬度控制)
 window.renderNoteBubble = function(role, data) {
     const bubbleId = `note-bubble-${role}`;
     const textId = `note-text-${role}`;
     const dotId = `status-dot-${role}`;
+    const timeId = `note-time-${role}`; // 新增時間 ID
     
     const bubbleEl = document.getElementById(bubbleId);
     const textEl = document.getElementById(textId);
     const dotEl = document.getElementById(dotId);
+    const timeEl = document.getElementById(timeId);
 
     if (!bubbleEl || !textEl) return;
 
     if (!data || !data.text || !data.timestamp) {
-        hideBubble(bubbleEl, dotEl, role);
+        hideBubble(bubbleEl, dotEl, timeEl, role);
         return;
     }
 
@@ -2332,15 +2396,16 @@ window.renderNoteBubble = function(role, data) {
 
     if (diffHours < 24) {
         textEl.textContent = data.text;
+        if(timeEl) timeEl.textContent = window.getRelativeTimeStr(data.timestamp);
         
         // 顯示
         bubbleEl.classList.remove('hidden');
         if(dotEl) dotEl.classList.remove('hidden');
+        if(timeEl) timeEl.classList.remove('opacity-0'); // 顯示時間
         
-        // 動畫：左右滑入 (保留垂直置中)
+        // 動畫：左右滑入
         requestAnimationFrame(() => {
             bubbleEl.classList.remove('opacity-0');
-            // 我們只移除 X 軸的偏移，Y 軸的偏移 (-translate-y-1/2) 寫在 class 裡，不會被這個操作影響
             if (role === 'haohao') {
                 bubbleEl.classList.remove('-translate-x-2'); 
             } else {
@@ -2348,13 +2413,13 @@ window.renderNoteBubble = function(role, data) {
             }
         });
     } else {
-        hideBubble(bubbleEl, dotEl, role);
+        hideBubble(bubbleEl, dotEl, timeEl, role);
     }
 };
 
-function hideBubble(bubbleEl, dotEl, role) {
+// 更新隱藏函式，加入時間標籤的處理
+function hideBubble(bubbleEl, dotEl, timeEl, role) {
     bubbleEl.classList.add('opacity-0');
-    // 隱藏時推開
     if (role === 'haohao') {
         bubbleEl.classList.add('-translate-x-2');
     } else {
@@ -2362,11 +2427,35 @@ function hideBubble(bubbleEl, dotEl, role) {
     }
     
     if(dotEl) dotEl.classList.add('hidden');
+    if(timeEl) timeEl.classList.add('opacity-0'); // 隱藏時間
     
     setTimeout(() => {
         bubbleEl.classList.add('hidden');
     }, 300);
 }
+
+// 另外別忘了更新刪除函式，也要順便隱藏時間
+window.deleteNote = function(role) {
+    db.collection('notes').doc(role).delete()
+        .then(() => {
+            const bubbleId = `note-bubble-${role}`;
+            const bubbleEl = document.getElementById(bubbleId);
+            const dotId = `status-dot-${role}`;
+            const dotEl = document.getElementById(dotId);
+            const timeId = `note-time-${role}`;
+            const timeEl = document.getElementById(timeId);
+            
+            if (bubbleEl) bubbleEl.classList.add('opacity-0', 'hidden');
+            if (dotEl) dotEl.classList.add('hidden');
+            if (timeEl) timeEl.classList.add('opacity-0');
+            
+            window.showToast('心情已刪除 💨');
+        })
+        .catch(err => {
+            console.error(err);
+            window.showToast('刪除失敗');
+        });
+};
 
 // 4. 更新頭像顏色 (配合設定頁面的顏色)
 window.syncNoteAvatarColors = function() {
