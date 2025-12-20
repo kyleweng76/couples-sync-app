@@ -358,29 +358,29 @@
 </head>
 <body class="text-gray-700 h-screen flex flex-col overflow-hidden bg-white">
 
-    <!-- Header -->
+    <!-- Header (修正版：標題放大，身分標籤移至右側) -->
     <header class="bg-white border-b border-gray-100 p-4 fixed top-0 w-full z-40 safe-top flex justify-between items-center shadow-sm">
-        <!-- 左側：Logo + 標題 + 身分標籤 -->
-        <div class="flex items-center gap-2">
-            <img src="icon.png" alt="Logo" class="w-8 h-8 rounded-lg shadow-sm">
-            
-            <div class="flex flex-col">
-                <h1 class="text-sm font-bold text-gray-800 tracking-wide leading-none">
-                    小時光 <span class="text-[10px] text-gray-400 font-normal">for us</span>
-                </h1>
-                
-                <!-- === 新增：身分顯示膠囊 === -->
-                <!-- 預設隱藏，由 JS 控制顯示 -->
-                <div id="header-role-badge" class="mt-1 self-start px-2 py-0.5 rounded-full text-[10px] text-white font-bold shadow-sm transition-colors duration-300 flex items-center gap-1 opacity-0">
-                    <span id="header-role-name">載入中</span>
-                    <i data-lucide="user" class="w-3 h-3"></i>
-                </div>
-            </div>
+        
+        <!-- 左側：Logo + 標題 (恢復大字體與間距) -->
+        <div class="flex items-center gap-3">
+            <img src="icon.png" alt="Logo" class="w-9 h-9 rounded-xl shadow-sm">
+            <h1 class="text-lg font-bold text-gray-800 tracking-wide">
+                小時光 <span class="text-xs text-gray-400 font-normal ml-0.5">for us</span>
+            </h1>
         </div>
 
-        <!-- 右側：連線狀態燈 -->
-        <div class="flex items-center gap-2">
-            <div id="connection-status" class="w-2 h-2 rounded-full bg-red-400"></div>
+        <!-- 右側：身分標籤 + 連線狀態燈 -->
+        <div class="flex items-center gap-3">
+            
+            <!-- 身分顯示膠囊 (移到這裡，放在綠燈左邊) -->
+            <!-- 加上 cursor-pointer，點擊可以直接跳轉到設定頁切換身分，很方便 -->
+            <div id="header-role-badge" class="px-2.5 py-1 rounded-full text-xs text-white font-bold shadow-sm transition-colors duration-300 flex items-center gap-1.5 opacity-0 cursor-pointer hover:opacity-90 active:scale-95 transition-transform" onclick="window.switchTab('settings')">
+                <span id="header-role-name">載入中</span>
+                <i data-lucide="user" class="w-3.5 h-3.5"></i>
+            </div>
+
+            <!-- 連線狀態 -->
+            <div id="connection-status" class="w-2.5 h-2.5 rounded-full bg-red-400 ring-2 ring-white shadow-sm"></div>
         </div>
     </header>
     <!-- Main Content -->
@@ -1110,6 +1110,8 @@ window.updateRoleUI = function() {
         '--active-tab-color',
         roleColors[currentUserRole]
     );
+    // 補上這行，確保 Header 裡面的 user icon 重新渲染
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 };        window.updateSettingsColorUI = function() { const h = document.getElementById('setting-color-haohao'); if(h) { h.style.backgroundColor = roleColors.haohao; document.getElementById('setting-color-maomao').style.backgroundColor = roleColors.maomao; document.getElementById('setting-color-joint').style.backgroundColor = roleColors.joint; } };
         window.setStatus = function(s) { document.getElementById('input-status').value = s; document.querySelectorAll('.status-btn').forEach(b=>{ if(b.dataset.status===s) b.classList.add('active'); else b.classList.remove('active'); }); };
         window.showToast = function(msg) { const t = document.getElementById('toast-container'); const m = document.getElementById('toast-message'); m.textContent = msg; t.classList.add('visible'); setTimeout(() => t.classList.remove('visible'), 2000); };
