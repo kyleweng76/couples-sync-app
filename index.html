@@ -1164,7 +1164,7 @@ window.renderDashboardNextUp = function(items) {
     const now = new Date();
     const next7Days = new Date();
     next7Days.setDate(now.getDate() + 7);
-
+    
     const upcoming = items.filter(item => {
         const t = new Date(item.timestamp);
         if (item.isTodo && item.done) return false;
@@ -1203,28 +1203,24 @@ window.renderDashboardNextUp = function(items) {
                 weekday: 'short'
             });
 
-            let color = '#2cc998';
-            if (item.isTodo) {
-                color = item.isJoint ? roleColors.joint : (item.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
+            // === 修改處：強制顏色邏輯 ===
+            // 1. 如果是共同行程 -> 用 joint 顏色
+            // 2. 否則 -> 用建立者的顏色 (皓皓/毛毛)
+            let color;
+            if (item.isJoint) {
+                color = roleColors.joint;
             } else {
-                color = item.color;
+                color = (item.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
             }
+            // ===========================
 
-            // === 修改處：增加狀態標籤邏輯 ===
-            let tagHtml = '';
+            let tagHtml = item.isTodo ? `<span class="ml-2 text-[10px] border border-gray-200 text-gray-400 px-1 rounded flex-shrink-0">待辦</span>` : '';
             
-            if (item.isTodo) {
-                // 待辦標籤
-                tagHtml = `<span class="ml-2 text-[10px] border border-gray-200 text-gray-400 px-1 rounded flex-shrink-0">待辦</span>`;
-            } else {
-                // 行程狀態標籤 (TBC / TBD)
-                if (item.status === 'tbc') {
-                    tagHtml = `<span class="ml-2 status-tag tbc">TBC</span>`;
-                } else if (item.status === 'tbd') {
-                    tagHtml = `<span class="ml-2 status-tag tbd">TBD</span>`;
-                }
+            // 補上 TBC/TBD 標籤
+            if (!item.isTodo) {
+                 if (item.status === 'tbc') tagHtml = `<span class="ml-2 status-tag tbc">TBC</span>`;
+                 else if (item.status === 'tbd') tagHtml = `<span class="ml-2 status-tag tbd">TBD</span>`;
             }
-            // ==============================
 
             let clickAction = item.isTodo ? `window.openEditTodoModal('${item.id}')` : `window.openEditModal('${item.id}')`;
             
@@ -1255,22 +1251,29 @@ window.renderEventListItems = function(items, container) {
             hour12: false
         });
 
+        // === 修改處：統一計算顏色邏輯 ===
+        // 優先判斷是否為共同行程，是則強制使用 joint 顏色
+        let displayColor;
+        if (e.isJoint) {
+            displayColor = roleColors.joint;
+        } else {
+            displayColor = (e.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
+        }
+        // ============================
+
         if (e.isTodo) {
-            // === 待辦事項 (Todo) ===
+            // === 待辦事項 ===
             const statusClass = e.done ? "line-through text-gray-400" : "text-gray-800";
             const checkIcon = e.done ? '<i data-lucide="check-square" class="w-5 h-5 text-green-500"></i>' : '<i data-lucide="square" class="w-5 h-5 text-gray-400"></i>';
-            let dotColor = e.isJoint ? roleColors.joint : (e.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
-
-            // 修改處：
-            // 1. 移除了 flex 容器上的 gap-2
-            // 2. 待辦標籤加上了 ml-2 (左邊距) 和 text-[10px] (縮小字體)，與摘要頁一致
+            
             html += `
             <div class="flex p-4 items-center gap-4 hover:bg-gray-50 transition cursor-pointer">
                 <div class="flex flex-col items-center w-10">
                     <span class="text-xs text-gray-400 font-medium uppercase">${date.toLocaleDateString('en-US',{weekday:'short'})}</span>
                     <span class="text-xl font-bold text-gray-800 leading-none">${date.getDate()}</span>
                 </div>
-                <div class="w-1 self-stretch rounded-full" style="background-color: ${dotColor}"></div>
+                <!-- 使用計算好的顏色 -->
+                <div class="w-1 self-stretch rounded-full" style="background-color: ${displayColor}"></div>
                 <div class="flex-1 min-w-0 flex items-center justify-between" onclick="window.openEditTodoModal('${e.id}')">
                     <div>
                         <div class="flex items-center ${statusClass}">
@@ -1285,32 +1288,36 @@ window.renderEventListItems = function(items, container) {
                 </div>
             </div>`;
         } else {
-            // === 一般行程 (Event) ===
+            // === 一般行程 ===
             let ic = '';
             if (e.category === 'travel') ic = 'plane';
             else if (e.category === 'appointment') ic = 'scissors';
             else if (e.category === 'gathering') ic = 'users';
             else if (e.category === 'vacation') ic = 'palmtree';
 
-            // 修改處：icon 加上 mr-1 (右邊距) 來與標題隔開
             let ico = ic ? `<i data-lucide="${ic}" class="w-3 h-3 text-gray-400 mr-1"></i>` : '';
 
-            // 修改處：狀態標籤加上 ml-2 (左邊距)
             let st = '';
             if (e.status === 'tbc') st = `<span class="ml-2 status-tag tbc">TBC</span>`;
             else if (e.status === 'tbd') st = `<span class="ml-2 status-tag tbd">TBD</span>`;
 
+            // 小頭像邏輯 (如果是共同行程，顯示兩個頭像)
             let av = `<div class="avatar-sm z-20" style="background-color:${roleColors[e.creator]||'#2cc998'}">${e.creator==='haohao'?'皓':'毛'}</div>`;
-            if (e.isJoint) av += `<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[e.creator==='haohao'?'maomao':'haohao']||'#e6688d'}">${e.creator==='haohao'?'皓':'毛'}</div>`;
+            if (e.isJoint) {
+                const partner = e.creator === 'haohao' ? 'maomao' : 'haohao';
+                const partnerName = partner === 'haohao' ? '皓' : '毛';
+                av += `<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[partner]}">${partnerName}</div>`;
+            }
 
-            // 修改處：移除了 flex 容器上的 gap-1，改用元件自己的 margin 來控制
             html += `
             <div class="flex p-4 items-start gap-4 hover:bg-gray-50 transition cursor-pointer card-press" onclick="window.openEditModal('${e.id}')">
                 <div class="flex flex-col items-center w-10 pt-1">
                     <span class="text-xs text-gray-400 font-medium uppercase">${date.toLocaleDateString('en-US',{weekday:'short'})}</span>
-                    <span class="text-xl font-bold text-gray-800 leading-none" style="color:${e.color}">${date.getDate()}</span>
+                    <!-- 日期數字顏色也跟著變 -->
+                    <span class="text-xl font-bold leading-none" style="color:${displayColor}">${date.getDate()}</span>
                 </div>
-                <div class="w-1 self-stretch rounded-full" style="background-color:${e.color}"></div>
+                <!-- 側邊條顏色 -->
+                <div class="w-1 self-stretch rounded-full" style="background-color:${displayColor}"></div>
                 <div class="flex-1 min-w-0 pt-1">
                     <div class="flex items-center">
                         ${ico}
@@ -2160,8 +2167,15 @@ window.renderBigCalendar = function() {
         // Bars HTML
         let bars = '';
         dayEvents.slice(0, 3).forEach(e => {
-            let bg = e.color || '#2cc998';
-            if(e.isTodo) bg = e.isJoint ? roleColors.joint : (e.creator==='haohao'?roleColors.haohao:roleColors.maomao);
+            // === 修改處：強制顏色邏輯 ===
+            let bg;
+            if (e.isJoint) {
+                bg = roleColors.joint;
+            } else {
+                bg = (e.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
+            }
+            // =========================
+
             bars += `<div class="event-bar ${e.isTodo&&e.done?'done':''}" style="background-color:${bg}">${e.title}</div>`;
         });
         if(dayEvents.length > 3) {
