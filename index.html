@@ -1865,14 +1865,49 @@ window.openEditModal = function (id) {
     editingTodoId = null; document.getElementById('todo-modal-title').textContent = '新增待辦事項'; document.getElementById('todo-modal-btn').textContent = '新增'; document.getElementById('todo-input-title').value = ''; document.getElementById('input-date-todo').value = ''; document.getElementById('input-time-todo').value = ''; 
     const dd = document.getElementById('display-date-todo'); dd.textContent = '請選擇'; dd.classList.add('dt-text-placeholder'); dd.classList.remove('dt-text-value');
     const dt = document.getElementById('display-time-todo'); dt.textContent = '請選擇'; dt.classList.add('dt-text-placeholder'); dt.classList.remove('dt-text-value');
- document.getElementById('todo-check-joint').checked = false; document.getElementById('todo-check-calendar').checked = false; const btn=document.getElementById('btn-delete-todo'); if(btn) btn.classList.add('hidden'); const m = document.getElementById('add-todo-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); };
+    
+    // FIX: 移除了對不存在元素 'todo-check-calendar' 的引用
+    document.getElementById('todo-check-joint').checked = false; 
+    
+    const btn=document.getElementById('btn-delete-todo'); if(btn) btn.classList.add('hidden'); const m = document.getElementById('add-todo-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); 
+ };
  window.closeAddModal = function() {
   window.__savingEvent = false; // 🔒 保險重置
   const m=document.getElementById('add-modal');
   m.classList.remove('visible');
   setTimeout(()=>m.classList.add('hidden'),200);
 };
-        window.openEditTodoModal = function(id) { editingTodoId = id; const todo = allTodosCache.find(t => t.id === id); if(!todo) return; document.getElementById('todo-modal-title').textContent = '編輯待辦事項'; document.getElementById('todo-modal-btn').textContent = '儲存'; document.getElementById('todo-input-title').value = todo.title; if(todo.dueDate) { document.getElementById('input-date-todo').value = todo.dueDate; window.updateDateDisplay('todo', todo.dueDate); } else { document.getElementById('input-date-todo').value = ''; window.updateDateDisplay('todo', ''); } if(todo.dueTime) { document.getElementById('input-time-todo').value = todo.dueTime; window.updateTimeDisplay('todo', todo.dueTime); } else { document.getElementById('input-time-todo').value = ''; window.updateTimeDisplay('todo', ''); } document.getElementById('todo-check-joint').checked = todo.isJoint; document.getElementById('todo-check-calendar').checked = todo.addToCalendar; const btn=document.getElementById('btn-delete-todo'); if(btn) btn.classList.remove('hidden'); const m = document.getElementById('add-todo-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); };
+        window.openEditTodoModal = function(id) { 
+            editingTodoId = id; 
+            const todo = allTodosCache.find(t => t.id === id); 
+            if(!todo) return; 
+            document.getElementById('todo-modal-title').textContent = '編輯待辦事項'; 
+            document.getElementById('todo-modal-btn').textContent = '儲存'; 
+            document.getElementById('todo-input-title').value = todo.title; 
+            if(todo.dueDate) { 
+                document.getElementById('input-date-todo').value = todo.dueDate; 
+                window.updateDateDisplay('todo', todo.dueDate); 
+            } else { 
+                document.getElementById('input-date-todo').value = ''; 
+                window.updateDateDisplay('todo', ''); 
+            } 
+            if(todo.dueTime) { 
+                document.getElementById('input-time-todo').value = todo.dueTime; 
+                window.updateTimeDisplay('todo', todo.dueTime); 
+            } else { 
+                document.getElementById('input-time-todo').value = ''; 
+                window.updateTimeDisplay('todo', ''); 
+            } 
+            document.getElementById('todo-check-joint').checked = todo.isJoint; 
+            
+            // FIX: 移除了對不存在元素 'todo-check-calendar' 的引用
+            
+            const btn=document.getElementById('btn-delete-todo'); 
+            if(btn) btn.classList.remove('hidden'); 
+            const m = document.getElementById('add-todo-modal'); 
+            m.classList.remove('hidden'); 
+            setTimeout(()=>m.classList.add('visible'),10); 
+        };
         window.closeAddTodoModal = function() { const m = document.getElementById('add-todo-modal'); m.classList.remove('visible'); setTimeout(()=>m.classList.add('hidden'),200); };       
         // 4. 儲存待辦事項 (修復：清除日期後無法存檔的問題)
         window.isSavingTodo = false;
