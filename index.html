@@ -410,9 +410,9 @@
                                 <div class="absolute top-1/2 -translate-y-1/2 -left-1.5 w-3 h-3 bg-white transform rotate-45 border-b border-l border-gray-100 z-20 pointer-events-none"></div>
                                 <div class="relative bg-white border border-gray-100 px-2 py-2 rounded-2xl shadow-md text-xs text-gray-600 text-left leading-relaxed break-all whitespace-normal z-10 w-full group-hover:border-green-100 transition-colors">
                                     <span id="note-text-haohao">...</span>
-                                    <!-- 刪除按鈕 (加大尺寸、永遠顯示、確保在最上層) -->
-                                    <button onclick="window.deleteNote('haohao'); event.stopPropagation();" class="absolute -top-3 -right-3 w-6 h-6 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center shadow-md hover:bg-red-500 hover:text-white transition scale-100 z-50">
-                                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                                    <!-- 刪除按鈕 (加大尺寸 w-8 h-8、改用 active 避免殘留) -->
+                                    <button onclick="window.deleteNote('haohao'); event.stopPropagation();" class="absolute -top-4 -right-4 w-8 h-8 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center shadow-md active:bg-red-500 active:text-white transition scale-100 z-50 cursor-pointer">
+                                        <i data-lucide="x" class="w-4 h-4"></i>
                                     </button>
                                 </div>
                             </div>
@@ -432,9 +432,9 @@
                                 <div class="absolute top-1/2 -translate-y-1/2 -right-1.5 w-3 h-3 bg-white transform rotate-45 border-t border-r border-gray-100 z-20 pointer-events-none"></div>
                                 <div class="relative bg-white border border-gray-100 px-2 py-2 rounded-2xl shadow-md text-xs text-gray-600 text-left leading-relaxed break-all whitespace-normal z-10 w-full group-hover:border-pink-100 transition-colors">
                                     <span id="note-text-maomao">...</span>
-                                    <!-- 刪除按鈕 (加大尺寸、永遠顯示、確保在最上層) -->
-                                    <button onclick="window.deleteNote('maomao'); event.stopPropagation();" class="absolute -top-3 -left-3 w-6 h-6 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center shadow-md hover:bg-red-500 hover:text-white transition scale-100 z-50">
-                                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                                    <!-- 刪除按鈕 (加大尺寸 w-8 h-8、改用 active 避免殘留) -->
+                                    <button onclick="window.deleteNote('maomao'); event.stopPropagation();" class="absolute -top-4 -left-4 w-8 h-8 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center shadow-md active:bg-red-500 active:text-white transition scale-100 z-50 cursor-pointer">
+                                        <i data-lucide="x" class="w-4 h-4"></i>
                                     </button>
                                 </div>
                             </div>
@@ -2021,24 +2021,31 @@ window.openEditModal = function (id) {
 
         // 1. 發送便利貼
         window.sendNote = function() {
-            // === 加入這行 ===
+            // 身分檢查
             if (!window.checkRoleEnforcement()) return;
-            // ===============
+            
             const input = document.getElementById('note-input');
             const text = input.value.trim();
 
             if (!text) return;
 
-            // 寫入資料庫 (collection: 'notes', docId: role)
-            // 這樣同一個人永遠只有一則最新的 note
-            db.collection('notes').doc(currentUserRole).set({
+            // === 關鍵修正：樂觀更新 (Optimistic UI) ===
+            // 1. 先清空輸入框，讓使用者感覺「已送出」
+            input.value = ''; 
+            input.blur(); 
+
+            // 2. 先手動更新畫面 (不用等資料庫回傳)
+            const mockData = {
                 text: text,
                 timestamp: new Date().toISOString(),
                 creator: currentUserRole
-            }).then(() => {
+            };
+            window.renderNoteBubble(currentUserRole, mockData);
+
+            // 3. 背景執行資料庫寫入
+            db.collection('notes').doc(currentUserRole).set(mockData)
+            .then(() => {
                 window.showToast('心情已發送 💬');
-                input.value = ''; // 清空輸入框
-                input.blur(); // 收起鍵盤
             }).catch(err => {
                 console.error(err);
                 window.showToast('發送失敗');
@@ -2138,22 +2145,25 @@ window.openEditModal = function (id) {
         };
         
         window.deleteNote = function(role) {
-            // === 加入這行 ===
+            // 身分檢查
             if (!window.checkRoleEnforcement()) return;
-            // ===============
+            
+            // === 關鍵修正：立即隱藏 (消除殘影與等待感) ===
+            const bubbleEl = document.getElementById(`note-bubble-${role}`);
+            if(bubbleEl) {
+                // 直接隱藏，不要等待動畫淡出，避免按鈕紅色狀態殘留
+                bubbleEl.classList.add('hidden');
+            }
+            
+            const dotEl = document.getElementById(`status-dot-${role}`);
+            if(dotEl) dotEl.classList.add('hidden');
+            
+            const timeEl = document.getElementById(`note-time-${role}`);
+            if(timeEl) timeEl.classList.add('hidden');
+
+            // 背景刪除資料庫
             db.collection('notes').doc(role).delete()
                 .then(() => {
-                    const bubbleId = `note-bubble-${role}`;
-                    const bubbleEl = document.getElementById(bubbleId);
-                    const dotId = `status-dot-${role}`;
-                    const dotEl = document.getElementById(dotId);
-                    const timeId = `note-time-${role}`;
-                    const timeEl = document.getElementById(timeId);
-                    
-                    if (bubbleEl) bubbleEl.classList.add('opacity-0', 'hidden');
-                    if (dotEl) dotEl.classList.add('hidden');
-                    if (timeEl) timeEl.classList.add('opacity-0', 'hidden');
-                    
                     window.showToast('心情已刪除 💨');
                 })
                 .catch(err => {
