@@ -374,45 +374,70 @@
     </header>
     <!-- Main Content -->
     <main id="main-container">
-        <!-- Page 1: Dashboard -->
+            <!-- Page 1: Dashboard -->
 <div id="page-dashboard" class="page-content active">
     
+    <!-- 1. 頂部間距 (稍微縮小，因為橫向佈局不需要那麼多空間了) -->
     <div class="mt-6"></div>
 
+    <!-- 2. 對話式便利貼區 -->
     <div class="flex flex-col items-center w-full mb-6">
         
-        <div class="w-full flex justify-between items-start px-10 mb-20 relative z-10">
+        <!-- A. 頭像與對話氣泡列 
+             - items-start: 靠上對齊
+             - px-6: 左右邊距
+             - mb-6: 底部留白 (現在不用留那麼多了，因為氣泡是橫著長)
+        -->
+        <div class="w-full flex justify-between items-start px-6 mb-6 relative z-10">
             
-            <div class="relative flex flex-col items-center group cursor-pointer" onclick="window.setNoteInputFocus()">
-                <div id="avatar-note-haohao" class="w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl font-bold ring-4 ring-white shadow-md z-20 transition-transform active:scale-95" style="background-color: #2cc998;">
+            <!-- 左邊：皓皓 (氣泡向右展開) -->
+            <!-- relative: 讓氣泡以此為基準定位 -->
+            <div class="relative flex items-start group cursor-pointer" onclick="window.setNoteInputFocus()">
+                <!-- 頭像 -->
+                <div id="avatar-note-haohao" class="w-14 h-14 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xl font-bold ring-4 ring-white shadow-md z-20 transition-transform active:scale-95" style="background-color: #2cc998;">
                     皓
-                    <div id="status-dot-haohao" class="hidden absolute top-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                    <div id="status-dot-haohao" class="hidden absolute top-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
                 </div>
 
-                <div id="note-bubble-haohao" class="hidden absolute top-16 left-1/2 -translate-x-[40%] opacity-0 transform -translate-y-2 transition-all duration-300 z-30 max-w-[140px] w-max flex flex-col items-center pointer-events-none">
-                    <div class="w-3 h-3 bg-white transform rotate-45 -mb-1.5 border-t border-l border-gray-100 relative z-20"></div>
-                    <div class="relative bg-white border border-gray-100 px-3 py-2 rounded-2xl rounded-tl-none shadow-xl text-xs text-gray-600 text-center leading-relaxed break-words z-10 min-w-[60px]">
+                <!-- 氣泡 (Left -> Right) 
+                     - left-[68px]: 位於頭像右側 (56px頭像 + 12px間距)
+                     - rounded-tl-none: 左上角尖尖的，指向頭像
+                -->
+                <div id="note-bubble-haohao" class="hidden absolute left-[68px] top-2 opacity-0 transform -translate-x-2 transition-all duration-300 z-10 max-w-[120px] w-max flex flex-col items-start pointer-events-none">
+                    <!-- 小箭頭 (指向左) -->
+                    <div class="absolute top-3 -left-1.5 w-3 h-3 bg-white transform rotate-45 border-b border-l border-gray-100 z-20"></div>
+                    <!-- 文字框 -->
+                    <div class="relative bg-white border border-gray-100 px-3 py-2 rounded-2xl rounded-tl-none shadow-md text-xs text-gray-600 text-left leading-relaxed break-words z-10 min-w-[40px]">
                         <span id="note-text-haohao">...</span>
                     </div>
                 </div>
             </div>
 
-            <div class="relative flex flex-col items-center group cursor-pointer" onclick="window.setNoteInputFocus()">
-                <div id="avatar-note-maomao" class="w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl font-bold ring-4 ring-white shadow-md z-20 transition-transform active:scale-95" style="background-color: #e6688d;">
+            <!-- 右邊：毛毛 (氣泡向左展開) -->
+            <div class="relative flex flex-row-reverse items-start group cursor-pointer" onclick="window.setNoteInputFocus()">
+                <!-- 頭像 -->
+                <div id="avatar-note-maomao" class="w-14 h-14 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xl font-bold ring-4 ring-white shadow-md z-20 transition-transform active:scale-95" style="background-color: #e6688d;">
                     毛
-                    <div id="status-dot-maomao" class="hidden absolute top-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                    <div id="status-dot-maomao" class="hidden absolute top-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
                 </div>
 
-                <div id="note-bubble-maomao" class="hidden absolute top-16 left-1/2 -translate-x-[60%] opacity-0 transform -translate-y-2 transition-all duration-300 z-30 max-w-[140px] w-max flex flex-col items-center pointer-events-none">
-                    <div class="w-3 h-3 bg-white transform rotate-45 -mb-1.5 border-t border-l border-gray-100 relative z-20"></div>
-                    <div class="relative bg-white border border-gray-100 px-3 py-2 rounded-2xl rounded-tr-none shadow-xl text-xs text-gray-600 text-center leading-relaxed break-words z-10 min-w-[60px]">
+                <!-- 氣泡 (Right -> Left)
+                     - right-[68px]: 位於頭像左側
+                     - rounded-tr-none: 右上角尖尖的
+                -->
+                <div id="note-bubble-maomao" class="hidden absolute right-[68px] top-2 opacity-0 transform translate-x-2 transition-all duration-300 z-10 max-w-[120px] w-max flex flex-col items-end pointer-events-none">
+                    <!-- 小箭頭 (指向右) -->
+                    <div class="absolute top-3 -right-1.5 w-3 h-3 bg-white transform rotate-45 border-t border-r border-gray-100 z-20"></div>
+                    <!-- 文字框 -->
+                    <div class="relative bg-white border border-gray-100 px-3 py-2 rounded-2xl rounded-tr-none shadow-md text-xs text-gray-600 text-left leading-relaxed break-words z-10 min-w-[40px]">
                         <span id="note-text-maomao">...</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="relative w-full max-w-[260px] z-20 h-10">
+        <!-- B. 輸入框 (稍微縮小高度，看起來更精緻) -->
+        <div class="relative w-full max-w-[260px] z-20 h-9">
             <div class="flex items-center bg-white rounded-full px-1 py-0.5 shadow-sm border border-gray-200 focus-within:ring-2 focus-within:ring-green-100 focus-within:border-green-300 transition-all h-full">
                 <div class="w-8 h-8 flex items-center justify-center text-gray-300 flex-shrink-0">
                     <i data-lucide="message-circle" class="w-4 h-4"></i>
@@ -427,6 +452,7 @@
 
     </div>
 
+    <!-- 3. Next Up Card -->
     <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 mx-4">
         <div class="bg-ttgreen px-4 py-2 flex justify-between items-center">
             <span class="text-white text-xs font-bold tracking-wider">NEXT 7 DAYS</span>
@@ -437,6 +463,7 @@
         </div>
     </div>
 
+    <!-- 4. 待辦清單摘要 -->
     <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 p-4 mx-4 mt-4">
         <div class="flex justify-between items-center mb-3">
             <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2">
@@ -449,6 +476,7 @@
         </div>
     </div>
     
+    <!-- 5. 底部按鈕 -->
     <div class="px-4 mt-4 flex gap-3 pb-6">
         <button onclick="window.openAddModal()" class="flex-1 bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-gray-600 flex items-center justify-center gap-2 active:bg-gray-50 transition">
             <i data-lucide="calendar-plus" class="w-5 h-5 text-ttgreen"></i>
@@ -2218,8 +2246,7 @@ window.setNoteInputFocus = function() {
     input.focus();
 };
 
-// 3. 渲染便利貼 (核心邏輯：檢查 24小時)
-// 3. 渲染便利貼 (修正：氣泡往下顯示)
+// 3. 渲染便利貼 (修正：橫向對話氣泡)
 window.renderNoteBubble = function(role, data) {
     const bubbleId = `note-bubble-${role}`;
     const textId = `note-text-${role}`;
@@ -2232,7 +2259,7 @@ window.renderNoteBubble = function(role, data) {
     if (!bubbleEl || !textEl) return;
 
     if (!data || !data.text || !data.timestamp) {
-        hideBubble(bubbleEl, dotEl);
+        hideBubble(bubbleEl, dotEl, role);
         return;
     }
 
@@ -2247,18 +2274,30 @@ window.renderNoteBubble = function(role, data) {
         bubbleEl.classList.remove('hidden');
         if(dotEl) dotEl.classList.remove('hidden');
         
-        // 動畫：從上方滑下來 (-translate-y-2 -> 0)
+        // 動畫：左右滑入
         requestAnimationFrame(() => {
-            bubbleEl.classList.remove('opacity-0', '-translate-y-2');
+            // 移除透明度與位移 class，讓它滑回原位 (transform: none)
+            bubbleEl.classList.remove('opacity-0');
+            if (role === 'haohao') {
+                bubbleEl.classList.remove('-translate-x-2'); // 皓皓從左邊滑出來
+            } else {
+                bubbleEl.classList.remove('translate-x-2'); // 毛毛從右邊滑出來
+            }
         });
     } else {
-        hideBubble(bubbleEl, dotEl);
+        hideBubble(bubbleEl, dotEl, role);
     }
 };
 
-function hideBubble(bubbleEl, dotEl) {
-    // 隱藏動畫
-    bubbleEl.classList.add('opacity-0', '-translate-y-2');
+function hideBubble(bubbleEl, dotEl, role) {
+    // 隱藏動畫：滑回去
+    bubbleEl.classList.add('opacity-0');
+    if (role === 'haohao') {
+        bubbleEl.classList.add('-translate-x-2');
+    } else {
+        bubbleEl.classList.add('translate-x-2');
+    }
+    
     if(dotEl) dotEl.classList.add('hidden');
     
     setTimeout(() => {
