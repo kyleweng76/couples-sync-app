@@ -894,6 +894,35 @@
     </nav>
 
     <script>
+      /* =========================================
+   便利貼刪除功能
+   ========================================= */
+window.deleteNote = function(role) {
+    // 簡單的確認 (可選)
+    // if(!confirm('要刪除這則心情嗎？')) return;
+
+    // 從資料庫刪除
+    db.collection('notes').doc(role).delete()
+        .then(() => {
+            // 視覺上立刻隱藏氣泡 (不用等資料庫 callback，體驗較快)
+            const bubbleId = `note-bubble-${role}`;
+            const bubbleEl = document.getElementById(bubbleId);
+            const dotId = `status-dot-${role}`;
+            const dotEl = document.getElementById(dotId);
+            
+            if (bubbleEl) {
+                bubbleEl.classList.add('opacity-0', 'hidden');
+            }
+            if (dotEl) {
+                dotEl.classList.add('hidden');
+            }
+            window.showToast('心情已刪除 💨');
+        })
+        .catch(err => {
+            console.error(err);
+            window.showToast('刪除失敗');
+        });
+};
        /* ===== STABLE PATCH: SafeRun Helper ===== */
         window.safeRun = function (fn, label = 'unknown') {
         try {
