@@ -358,16 +358,24 @@
 </head>
 <body class="text-gray-700 h-screen flex flex-col overflow-hidden bg-white">
 
-    <!-- Header 
-         修改處：將 z-10 改為 z-40
-         原因：內容區的便利貼層級用到了 z-30，所以 Header 必須比它高才能蓋住它 -->
+    <!-- Header -->
     <header class="bg-white border-b border-gray-100 p-4 fixed top-0 w-full z-40 safe-top flex justify-between items-center shadow-sm">
-        <!-- 左側：Logo + 標題 -->
+        <!-- 左側：Logo + 標題 + 身分標籤 -->
         <div class="flex items-center gap-2">
             <img src="icon.png" alt="Logo" class="w-8 h-8 rounded-lg shadow-sm">
-            <h1 class="text-lg font-bold text-gray-800 tracking-wide">
-                小時光 <span class="text-xs text-gray-400 font-normal">for us</span>
-            </h1>
+            
+            <div class="flex flex-col">
+                <h1 class="text-sm font-bold text-gray-800 tracking-wide leading-none">
+                    小時光 <span class="text-[10px] text-gray-400 font-normal">for us</span>
+                </h1>
+                
+                <!-- === 新增：身分顯示膠囊 === -->
+                <!-- 預設隱藏，由 JS 控制顯示 -->
+                <div id="header-role-badge" class="mt-1 self-start px-2 py-0.5 rounded-full text-[10px] text-white font-bold shadow-sm transition-colors duration-300 flex items-center gap-1 opacity-0">
+                    <span id="header-role-name">載入中</span>
+                    <i data-lucide="user" class="w-3 h-3"></i>
+                </div>
+            </div>
         </div>
 
         <!-- 右側：連線狀態燈 -->
@@ -1052,8 +1060,57 @@ let roleColors = {
         };
         window.checkEndDateValidity = function() { const sD = document.getElementById('input-date-start').value; const sT = document.getElementById('input-time-start').value; const eD = document.getElementById('input-date-end').value; const eT = document.getElementById('input-time-end').value; if(new Date(`${eD}T${eT}`) < new Date(`${sD}T${sT}`)) { window.autoUpdateEnd(); } else { window.checkRecurValidity(); } };
         window.setNowToInputs = function() { const now = new Date(); const dStr = now.toISOString().split('T')[0]; let h = now.getHours(), m = now.getMinutes(); if(m < 30) { m = 30; } else { m = 0; h += 1; } if(h > 23) h = 0; const tStr = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`; const startEl = document.getElementById('input-date-start'); if(startEl) { startEl.value = dStr; document.getElementById('input-time-start').value = tStr; window.updateDateDisplay('start', dStr); window.updateTimeDisplay('start', tStr); const endD = document.getElementById('input-date-end'); if(endD) endD.value = dStr; const endT = document.getElementById('input-time-end'); if(endT) endT.value = tStr; window.updateDateDisplay('end', dStr); window.updateTimeDisplay('end', tStr); } };
-        window.updateRoleUI = function() { const btnHaohao = document.getElementById('role-haohao'); const btnMaomao = document.getElementById('role-maomao'); if(!btnHaohao) return; const activeClass = "flex-1 py-3 rounded-lg text-sm font-bold border border-ttgreen bg-green-50 text-ttgreen transition shadow-sm"; const inactiveClass = "flex-1 py-3 rounded-lg text-sm font-medium border border-gray-200 text-gray-400 bg-white transition"; if(currentUserRole === 'haohao') { btnHaohao.className = activeClass; btnMaomao.className = inactiveClass; } else { btnHaohao.className = inactiveClass; btnMaomao.className = activeClass; } const ptText = document.getElementById('partner-toggle-text'); if(ptText) ptText.textContent = (currentUserRole === 'haohao' ? '與毛毛一起' : '與皓皓一起'); };
-        window.updateSettingsColorUI = function() { const h = document.getElementById('setting-color-haohao'); if(h) { h.style.backgroundColor = roleColors.haohao; document.getElementById('setting-color-maomao').style.backgroundColor = roleColors.maomao; document.getElementById('setting-color-joint').style.backgroundColor = roleColors.joint; } };
+// 修改：身分切換時，全面更新 UI 提示
+window.updateRoleUI = function() {
+    // 1. 設定頁面的按鈕樣式 (維持原樣)
+    const btnHaohao = document.getElementById('role-haohao');
+    const btnMaomao = document.getElementById('role-maomao');
+    if (btnHaohao) {
+        const activeClass = "flex-1 py-3 rounded-lg text-sm font-bold border border-ttgreen bg-green-50 text-ttgreen transition shadow-sm";
+        const inactiveClass = "flex-1 py-3 rounded-lg text-sm font-medium border border-gray-200 text-gray-400 bg-white transition";
+        if (currentUserRole === 'haohao') {
+            btnHaohao.className = activeClass;
+            btnMaomao.className = inactiveClass;
+        } else {
+            btnHaohao.className = inactiveClass;
+            btnMaomao.className = activeClass;
+        }
+        const ptText = document.getElementById('partner-toggle-text');
+        if (ptText) ptText.textContent = (currentUserRole === 'haohao' ? '與毛毛一起' : '與皓皓一起');
+    }
+
+    // === 新增 2. 更新 Header 身分膠囊 ===
+    const badge = document.getElementById('header-role-badge');
+    const badgeName = document.getElementById('header-role-name');
+    if (badge && badgeName) {
+        const name = currentUserRole === 'haohao' ? '皓皓' : '毛毛';
+        const color = roleColors[currentUserRole];
+        
+        badgeName.textContent = name;
+        badge.style.backgroundColor = color;
+        badge.classList.remove('opacity-0'); // 顯示出來
+        
+        // 確保 icon 顏色正確 (白色)
+        // Lucide icon 需要重繪嗎？通常不用，因為它是 SVG 繼承顏色，但若有需要可加
+    }
+
+    // === 新增 3. 更新便利貼輸入框提示 ===
+    const noteInput = document.getElementById('note-input');
+    if (noteInput) {
+        const name = currentUserRole === 'haohao' ? '皓皓' : '毛毛';
+        noteInput.placeholder = `${name}，說點什麼...`; // 直接叫名字
+        
+        // 讓輸入框的外框顏色也跟著變 (透過 CSS 變數或直接改 style)
+        // 這裡我們簡單地用 border color
+        noteInput.parentElement.style.borderColor = roleColors[currentUserRole];
+    }
+    
+    // 4. 同步 Active Tab 顏色 (維持原樣)
+    document.documentElement.style.setProperty(
+        '--active-tab-color',
+        roleColors[currentUserRole]
+    );
+};        window.updateSettingsColorUI = function() { const h = document.getElementById('setting-color-haohao'); if(h) { h.style.backgroundColor = roleColors.haohao; document.getElementById('setting-color-maomao').style.backgroundColor = roleColors.maomao; document.getElementById('setting-color-joint').style.backgroundColor = roleColors.joint; } };
         window.setStatus = function(s) { document.getElementById('input-status').value = s; document.querySelectorAll('.status-btn').forEach(b=>{ if(b.dataset.status===s) b.classList.add('active'); else b.classList.remove('active'); }); };
         window.showToast = function(msg) { const t = document.getElementById('toast-container'); const m = document.getElementById('toast-message'); m.textContent = msg; t.classList.add('visible'); setTimeout(() => t.classList.remove('visible'), 2000); };
         window.updateParticipantsPreview = function() { const container = document.getElementById('participants-preview'); const isP = document.getElementById('check-partner').checked; let html = ''; html += `<div class="avatar-sm z-20" style="background-color:${roleColors[currentUserRole]}">${currentUserRole==='haohao'?'皓':'毛'}</div>`; if(isP) { const p = currentUserRole==='haohao'?'maomao':'haohao'; html += `<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[p]}">${p==='haohao'?'皓':'毛'}</div>`; } container.innerHTML = html; };
