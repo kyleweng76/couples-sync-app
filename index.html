@@ -2237,6 +2237,28 @@ window.openEditModal = function (id) {
         };
         
         window.selectBigCalendarDate = function(y,m,d) { document.querySelectorAll('.big-cal-cell.selected').forEach(e=>e.classList.remove('selected')); if(m===bigCalDate.getMonth()) { const el=document.getElementById(`big-cal-day-${d}`); if(el) el.classList.add('selected'); } document.getElementById('selected-date-label').textContent = `${y}年${m+1}月${d}日`; const listEl = document.getElementById('month-event-list'); if(!listEl) return; const items = window.getCalendarItems(); const ds=new Date(y, m, d), de=new Date(y, m, d, 23,59,59); const dayEvents = items.filter(e => { const t = new Date(e.timestamp); return t>=ds && t<=de; }); if(dayEvents.length===0) listEl.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs">這天沒有安排行程 😴</div>`; else window.renderEventListItems(dayEvents, listEl); };
+        
+        // === New Function: Handle Double Click ===
+        window.handleBigCalDbClick = function(y, m, d) {
+            // 1. 建立日期字串
+            const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            
+            // 2. 開啟新增視窗 (會先重置欄位)
+            window.openAddModal();
+            
+            // 3. 設定日期
+            const dateInput = document.getElementById('input-date-start');
+            if (dateInput) {
+                dateInput.value = dateStr;
+            }
+            
+            // 4. 更新顯示文字
+            window.updateDateDisplay('start', dateStr);
+            
+            // 5. 連動結束時間 (如果有的話)
+            if(window.autoUpdateEnd) window.autoUpdateEnd();
+        };
+
         window.renderBigCalendar = function() {
             const y = bigCalDate.getFullYear();
             const m = bigCalDate.getMonth();
@@ -2282,7 +2304,8 @@ window.openEditModal = function (id) {
                     bars += `<div class="more-events">+${dayEvents.length-3}</div>`;
                 }
 
-                html += `<div class="big-cal-cell ${isToday?'today':''}" id="big-cal-day-${d}" onclick="window.selectBigCalendarDate(${y},${m},${d})">
+                // Add ondblclick handler here
+                html += `<div class="big-cal-cell ${isToday?'today':''}" id="big-cal-day-${d}" onclick="window.selectBigCalendarDate(${y},${m},${d})" ondblclick="window.handleBigCalDbClick(${y},${m},${d})">
                     <div class="big-cal-day-num">${d}</div>
                     <div class="w-full px-1 space-y-px">${bars}</div>
                 </div>`;
