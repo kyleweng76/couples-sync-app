@@ -353,7 +353,6 @@
         border-radius: 999px;
         background-color: var(--active-tab-color, #2cc998);
         }
-        
     </style>
 </head>
 <body class="text-gray-700 h-screen flex flex-col overflow-hidden bg-white">
@@ -383,119 +382,94 @@
             <div id="connection-status" class="w-2.5 h-2.5 rounded-full bg-red-400 ring-2 ring-white shadow-sm"></div>
         </div>
     </header>
+
     <!-- Main Content -->
     <main id="main-container">
-<!-- Page 1: Dashboard -->
-<div id="page-dashboard" class="page-content active">
-    
-    <!-- 1. 頂部間距 -->
-    <div class="mt-6"></div>
-
-    <!-- 2. 對話式便利貼區 -->
-    <div class="flex flex-col items-center w-full mb-6">
-        
-        <!-- A. 頭像與對話氣泡列 -->
-        <div class="w-full flex justify-between items-start px-5 mb-2 relative z-10">
+        <!-- Page 1: Dashboard -->
+        <div id="page-dashboard" class="page-content active">
             
-            <!-- 左邊：皓皓 -->
-            <div class="flex flex-col items-center gap-1">
-                <div class="relative flex items-center group" onclick="window.setNoteInputFocus()">
-                    <div id="avatar-note-haohao" class="w-14 h-14 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xl font-bold ring-4 ring-white shadow-md z-20 cursor-pointer transition-transform active:scale-95" style="background-color: #2cc998;">
-                        皓
-                        <div id="status-dot-haohao" class="hidden absolute top-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
+            <!-- 1. 頂部間距 -->
+            <div class="mt-6"></div>
+
+            <!-- 2. 對話式便利貼區 -->
+            <div class="flex flex-col items-center w-full mb-6">
+                
+                <!-- A. 頭像與對話氣泡列 -->
+                <div class="w-full flex justify-between items-start px-5 mb-2 relative z-10">
+                    
+                    <!-- 左邊：皓皓 -->
+                    <div class="flex flex-col items-center gap-1">
+                        <div class="relative flex items-center group" onclick="window.setNoteInputFocus()">
+                            <div id="avatar-note-haohao" class="w-14 h-14 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xl font-bold ring-4 ring-white shadow-md z-20 cursor-pointer transition-transform active:scale-95" style="background-color: #2cc998;">
+                                皓
+                                <div id="status-dot-haohao" class="hidden absolute top-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
+                            </div>
+
+                            <div id="note-bubble-haohao" class="hidden absolute left-[64px] top-1/2 transform -translate-y-1/2 opacity-0 -translate-x-2 transition-all duration-300 z-10 w-[110px] flex flex-col items-start">
+                                <div class="absolute top-1/2 -translate-y-1/2 -left-1.5 w-3 h-3 bg-white transform rotate-45 border-b border-l border-gray-100 z-20 pointer-events-none"></div>
+                                <div class="relative bg-white border border-gray-100 px-2 py-2 rounded-2xl shadow-md text-xs text-gray-600 text-left leading-relaxed break-all whitespace-normal z-10 w-full group-hover:border-green-100 transition-colors">
+                                    <span id="note-text-haohao">...</span>
+                                    <button onclick="window.deleteNote('haohao'); event.stopPropagation();" class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center shadow-sm hover:bg-red-500 hover:text-white transition opacity-0 group-hover:opacity-100 scale-90">
+                                        <i data-lucide="x" class="w-2.5 h-2.5"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <span id="note-time-haohao" class="text-[10px] text-gray-300 h-4 transition-opacity duration-300 opacity-0"></span>
                     </div>
 
-                    <div id="note-bubble-haohao" class="hidden absolute left-[64px] top-1/2 transform -translate-y-1/2 opacity-0 -translate-x-2 transition-all duration-300 z-10 w-[110px] flex flex-col items-start">
-                        <div class="absolute top-1/2 -translate-y-1/2 -left-1.5 w-3 h-3 bg-white transform rotate-45 border-b border-l border-gray-100 z-20 pointer-events-none"></div>
-                        <div class="relative bg-white border border-gray-100 px-2 py-2 rounded-2xl shadow-md text-xs text-gray-600 text-left leading-relaxed break-all whitespace-normal z-10 w-full group-hover:border-green-100 transition-colors">
-                            <span id="note-text-haohao">...</span>
-                            <button onclick="window.deleteNote('haohao'); event.stopPropagation();" class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center shadow-sm hover:bg-red-500 hover:text-white transition opacity-0 group-hover:opacity-100 scale-90">
-                                <i data-lucide="x" class="w-2.5 h-2.5"></i>
-                            </button>
+                    <!-- 右邊：毛毛 -->
+                    <div class="flex flex-col items-center gap-1">
+                        <div class="relative flex flex-row-reverse items-center group" onclick="window.setNoteInputFocus()">
+                            <div id="avatar-note-maomao" class="w-14 h-14 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xl font-bold ring-4 ring-white shadow-md z-20 cursor-pointer transition-transform active:scale-95" style="background-color: #e6688d;">
+                                毛
+                                <div id="status-dot-maomao" class="hidden absolute top-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
+                            </div>
+
+                            <div id="note-bubble-maomao" class="hidden absolute right-[64px] top-1/2 transform -translate-y-1/2 opacity-0 translate-x-2 transition-all duration-300 z-10 w-[110px] flex flex-col items-end">
+                                <div class="absolute top-1/2 -translate-y-1/2 -right-1.5 w-3 h-3 bg-white transform rotate-45 border-t border-r border-gray-100 z-20 pointer-events-none"></div>
+                                <div class="relative bg-white border border-gray-100 px-2 py-2 rounded-2xl shadow-md text-xs text-gray-600 text-left leading-relaxed break-all whitespace-normal z-10 w-full group-hover:border-pink-100 transition-colors">
+                                    <span id="note-text-maomao">...</span>
+                                    <button onclick="window.deleteNote('maomao'); event.stopPropagation();" class="absolute -top-1.5 -left-1.5 w-4 h-4 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center shadow-sm hover:bg-red-500 hover:text-white transition opacity-0 group-hover:opacity-100 scale-90">
+                                        <i data-lucide="x" class="w-2.5 h-2.5"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
+                        <span id="note-time-maomao" class="text-[10px] text-gray-300 h-4 transition-opacity duration-300 opacity-0"></span>
                     </div>
                 </div>
-                <span id="note-time-haohao" class="text-[10px] text-gray-300 h-4 transition-opacity duration-300 opacity-0"></span>
+
+                <!-- B. 輸入框 -->
+                <div class="relative z-20 h-9 w-[270px]">
+                    <div class="flex items-center bg-white rounded-full px-1 py-0.5 shadow-sm border border-gray-200 focus-within:ring-2 focus-within:ring-green-100 focus-within:border-green-300 transition-all h-full">
+                        <div class="w-8 h-8 flex items-center justify-center text-gray-300 flex-shrink-0">
+                            <i data-lucide="message-circle" class="w-4 h-4"></i>
+                        </div>
+                        <input type="text" id="note-input" maxlength="14" placeholder="說點什麼吧..." 
+                            class="flex-1 bg-transparent border-none text-xs text-gray-600 placeholder-gray-300 focus:ring-0 pl-2 outline-none text-left h-full tracking-wide">
+                        <button onclick="window.sendNote()" class="w-7 h-7 flex items-center justify-center bg-gray-50 text-ttgreen rounded-full hover:bg-green-50 active:scale-90 transition mr-0.5 flex-shrink-0">
+                            <i data-lucide="send" class="w-3.5 h-3.5 ml-0.5"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            <!-- 右邊：毛毛 -->
-            <div class="flex flex-col items-center gap-1">
-                <div class="relative flex flex-row-reverse items-center group" onclick="window.setNoteInputFocus()">
-                    <div id="avatar-note-maomao" class="w-14 h-14 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xl font-bold ring-4 ring-white shadow-md z-20 cursor-pointer transition-transform active:scale-95" style="background-color: #e6688d;">
-                        毛
-                        <div id="status-dot-maomao" class="hidden absolute top-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
-                    </div>
-
-                    <div id="note-bubble-maomao" class="hidden absolute right-[64px] top-1/2 transform -translate-y-1/2 opacity-0 translate-x-2 transition-all duration-300 z-10 w-[110px] flex flex-col items-end">
-                        <div class="absolute top-1/2 -translate-y-1/2 -right-1.5 w-3 h-3 bg-white transform rotate-45 border-t border-r border-gray-100 z-20 pointer-events-none"></div>
-                        <div class="relative bg-white border border-gray-100 px-2 py-2 rounded-2xl shadow-md text-xs text-gray-600 text-left leading-relaxed break-all whitespace-normal z-10 w-full group-hover:border-pink-100 transition-colors">
-                            <span id="note-text-maomao">...</span>
-                            <button onclick="window.deleteNote('maomao'); event.stopPropagation();" class="absolute -top-1.5 -left-1.5 w-4 h-4 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center shadow-sm hover:bg-red-500 hover:text-white transition opacity-0 group-hover:opacity-100 scale-90">
-                                <i data-lucide="x" class="w-2.5 h-2.5"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                 <span id="note-time-maomao" class="text-[10px] text-gray-300 h-4 transition-opacity duration-300 opacity-0"></span>
-            </div>
-        </div>
-
-        <!-- B. 輸入框 -->
-        <div class="relative z-20 h-9 w-[270px]">
-            <div class="flex items-center bg-white rounded-full px-1 py-0.5 shadow-sm border border-gray-200 focus-within:ring-2 focus-within:ring-green-100 focus-within:border-green-300 transition-all h-full">
-                <div class="w-8 h-8 flex items-center justify-center text-gray-300 flex-shrink-0">
-                    <i data-lucide="message-circle" class="w-4 h-4"></i>
-                </div>
-                <input type="text" id="note-input" maxlength="14" placeholder="說點什麼吧..." 
-                    class="flex-1 bg-transparent border-none text-xs text-gray-600 placeholder-gray-300 focus:ring-0 pl-2 outline-none text-left h-full tracking-wide">
-                <button onclick="window.sendNote()" class="w-7 h-7 flex items-center justify-center bg-gray-50 text-ttgreen rounded-full hover:bg-green-50 active:scale-90 transition mr-0.5 flex-shrink-0">
-                    <i data-lucide="send" class="w-3.5 h-3.5 ml-0.5"></i>
+            <!-- 3. 操作按鈕區 -->
+            <div class="px-4 flex gap-3 mb-6">
+                <button onclick="window.openAddModal()" class="flex-1 bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-gray-600 flex items-center justify-center gap-2 active:bg-gray-50 transition">
+                    <i data-lucide="calendar-plus" class="w-5 h-5 text-ttgreen"></i>
+                    <span class="text-sm font-bold">新增行程</span>
+                </button>
+                
+                <button onclick="window.openAddTodoModal()" class="flex-1 bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-gray-600 flex items-center justify-center gap-2 active:bg-gray-50 transition">
+                    <i data-lucide="check-square" class="w-5 h-5 text-blue-400"></i>
+                    <span class="text-sm font-bold">新增待辦</span>
                 </button>
             </div>
-        </div>
-    </div>
 
-    <!-- 3. 操作按鈕區 (從底部移到這裡) -->
-    <div class="px-4 flex gap-3 mb-6">
-        <button onclick="window.openAddModal()" class="flex-1 bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-gray-600 flex items-center justify-center gap-2 active:bg-gray-50 transition">
-            <i data-lucide="calendar-plus" class="w-5 h-5 text-ttgreen"></i>
-            <span class="text-sm font-bold">新增行程</span>
-        </button>
-        
-        <button onclick="window.openAddTodoModal()" class="flex-1 bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-gray-600 flex items-center justify-center gap-2 active:bg-gray-50 transition">
-            <i data-lucide="check-square" class="w-5 h-5 text-blue-400"></i>
-            <span class="text-sm font-bold">新增待辦</span>
-        </button>
-    </div>
-
-    <!-- 4. Next Up Card -->
-    <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 mx-4">
-        <div class="bg-ttgreen px-4 py-2 flex justify-between items-center">
-            <span class="text-white text-xs font-bold tracking-wider">NEXT 7 DAYS</span>
-            <span id="dashboard-countdown" class="text-white text-xs bg-white/20 px-2 py-0.5 rounded-full">...</span>
-        </div>
-        <div id="dashboard-next-list" class="divide-y divide-gray-100 min-h-[100px]">
-            <div class="text-center py-8 text-gray-400 text-sm">載入中...</div>
-        </div>
-    </div>
-
-    <!-- 5. 待辦清單摘要 -->
-    <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 p-4 mx-4 mt-4">
-        <div class="flex justify-between items-center mb-3">
-            <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2">
-                <i data-lucide="check-square" class="w-4 h-4 text-ttgreen"></i> 待辦清單
-            </h3>
-            <button onclick="window.switchTab('todo')" class="text-xs text-ttgreen font-medium">查看全部</button>
-        </div>
-        <div id="dashboard-todo-list" class="space-y-2">
-            <p class="text-xs text-gray-400 text-center py-2">載入中...</p>
-        </div>
-    </div>
-    
-</div>
-
-            <!-- Next Up Card -->
-            <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 mx-4 mt-4">
+            <!-- 4. Next Up Card -->
+            <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 mx-4">
                 <div class="bg-ttgreen px-4 py-2 flex justify-between items-center">
                     <span class="text-white text-xs font-bold tracking-wider">NEXT 7 DAYS</span>
                     <span id="dashboard-countdown" class="text-white text-xs bg-white/20 px-2 py-0.5 rounded-full">...</span>
@@ -505,7 +479,7 @@
                 </div>
             </div>
 
-            <!-- Dashboard Todo Summary -->
+            <!-- 5. 待辦清單摘要 -->
             <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 p-4 mx-4 mt-4">
                 <div class="flex justify-between items-center mb-3">
                     <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2">
@@ -518,18 +492,8 @@
                 </div>
             </div>
             
-            <div class="px-4 mt-4 flex gap-3 pb-6">
-    <button onclick="window.openAddModal()" class="flex-1 bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-gray-600 flex items-center justify-center gap-2 active:bg-gray-50 transition">
-        <i data-lucide="calendar-plus" class="w-5 h-5 text-ttgreen"></i>
-        <span class="text-sm font-bold">新增行程</span>
-    </button>
-    
-    <button onclick="window.openAddTodoModal()" class="flex-1 bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-gray-600 flex items-center justify-center gap-2 active:bg-gray-50 transition">
-        <i data-lucide="check-square" class="w-5 h-5 text-blue-400"></i>
-        <span class="text-sm font-bold">新增待辦</span>
-    </button>
-</div>
-</div>
+        </div>
+
         <!-- Page 2: Calendar -->
         <div id="page-calendar" class="page-content">
             <div class="flex-none bg-white z-10 border-b border-gray-200 px-2 py-2 flex items-center justify-between">
@@ -609,7 +573,8 @@
         <div id="page-settings" class="page-content p-4 space-y-6">
             <h2 class="text-lg font-bold text-gray-800 px-1">設定</h2>
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="p-4 border-b border-gray-50">
+                <!-- 這裡加上 id="role-selection-section" 方便 JS 抓取 -->
+                <div id="role-selection-section" class="p-4 border-b border-gray-50 transition-all duration-300">
                     <p class="text-sm text-gray-500 mb-3">我是誰？ (切換身分)</p>
                     <div class="flex gap-2">
                         <button id="role-haohao" onclick="window.setRole('haohao')" class="flex-1 py-3 rounded-lg text-sm font-medium border transition">皓皓</button>
@@ -633,7 +598,7 @@
                     </div>
                 </div>
             </div>
-            <div class="text-center text-xs text-gray-400 mt-4">Firebase Connected · Version 102.8 (Sync Todo to Calendar List)</div>
+            <div class="text-center text-xs text-gray-400 mt-4">Firebase Connected · Version 103.0 (Role Enforcement)</div>
         </div>
     </main>
 
@@ -840,6 +805,13 @@
                     <input type="checkbox" id="todo-check-joint" class="custom-checkbox">
                 </div>
                 
+                <div id="todo-calendar-option" class="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between transition-opacity">
+                    <div class="flex flex-col">
+                        <span class="text-sm text-gray-700">同步至行事曆</span>
+                        <span class="text-[10px] text-gray-400">需先選擇日期</span>
+                    </div>
+                    <input type="checkbox" id="todo-check-calendar" class="custom-checkbox" disabled>
+                </div>
             </div>
 
             <!-- Footer (Delete Button - Unified Style) -->
@@ -877,10 +849,9 @@
 
             <div id="calendar-days" class="calendar-grid"></div>
             <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center text-sm font-medium">
-    <button onclick="window.selectToday()" class="text-ttgreen hover:bg-green-50 px-3 py-1.5 rounded-lg transition">今天</button>
-    <button onclick="window.clearDate()" class="text-red-400 hover:bg-red-50 px-3 py-1.5 rounded-lg transition">清除</button>
-    <button onclick="window.closeCalendar()" class="text-gray-400 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition">取消</button>
-</div>
+                <button onclick="window.selectToday()" class="text-ttgreen hover:bg-green-50 px-3 py-1.5 rounded-lg transition">今天</button>
+                <button onclick="window.closeCalendar()" class="text-gray-400 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition">取消</button>
+            </div>
         </div>
     </div>
 
@@ -895,35 +866,6 @@
     </nav>
 
     <script>
-      /* =========================================
-   便利貼刪除功能
-   ========================================= */
-window.deleteNote = function(role) {
-    // 簡單的確認 (可選)
-    // if(!confirm('要刪除這則心情嗎？')) return;
-
-    // 從資料庫刪除
-    db.collection('notes').doc(role).delete()
-        .then(() => {
-            // 視覺上立刻隱藏氣泡 (不用等資料庫 callback，體驗較快)
-            const bubbleId = `note-bubble-${role}`;
-            const bubbleEl = document.getElementById(bubbleId);
-            const dotId = `status-dot-${role}`;
-            const dotEl = document.getElementById(dotId);
-            
-            if (bubbleEl) {
-                bubbleEl.classList.add('opacity-0', 'hidden');
-            }
-            if (dotEl) {
-                dotEl.classList.add('hidden');
-            }
-            window.showToast('心情已刪除 💨');
-        })
-        .catch(err => {
-            console.error(err);
-            window.showToast('刪除失敗');
-        });
-};
        /* ===== STABLE PATCH: SafeRun Helper ===== */
         window.safeRun = function (fn, label = 'unknown') {
         try {
@@ -955,7 +897,8 @@ window.deleteNote = function(role) {
         const firebaseConfig = { apiKey: "AIzaSyDLrPr4X6r3e2V_vqFaCICgKVwLmiykxpc", authDomain: "kyle-mao.firebaseapp.com", projectId: "kyle-mao", storageBucket: "kyle-mao.firebasestorage.app", messagingSenderId: "290564848532", appId: "1:290564848532:web:006c4e9df4b1330895ad81" };
         let db; try { if(typeof firebase!=='undefined'){if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);db=firebase.firestore();}}catch(e){}
 
-        let currentUserRole = localStorage.getItem('user_role') || 'haohao'; 
+        // 修改：移除預設值，若沒存過就是 null
+        let currentUserRole = localStorage.getItem('user_role'); 
         let currentSelectedColor = '#2cc998'; 
         let currentCategory = 'default';
         let editingEventId = null;
@@ -964,12 +907,13 @@ window.deleteNote = function(role) {
         let isSavingEvent = false;
         let __lastSaveAt = 0;
         let allTodosCache = [];
-// 修改處：優先從 localStorage 讀取顏色，若沒有才使用預設值
-let roleColors = { 
-    haohao: localStorage.getItem('color_haohao') || '#2cc998', 
-    maomao: localStorage.getItem('color_maomao') || '#e6688d', 
-    joint: localStorage.getItem('color_joint') || '#f7b546' 
-};        let colorPickerTarget = null;
+        // 修改：優先從 localStorage 讀取顏色，若沒有才使用預設值
+        let roleColors = { 
+            haohao: localStorage.getItem('color_haohao') || '#2cc998', 
+            maomao: localStorage.getItem('color_maomao') || '#e6688d', 
+            joint: localStorage.getItem('color_joint') || '#f7b546' 
+        };
+        let colorPickerTarget = null;
         let calTargetInput = 'start'; 
         let calCurrentDate = new Date(); 
         let bigCalDate = new Date();
@@ -981,6 +925,29 @@ let roleColors = {
         const moodMap = { 'charging': { icon: '⚡️', bg: 'bg-yellow-100', border: 'border-yellow-300' }, 'sleepy': { icon: '💤', bg: 'bg-blue-100', border: 'border-blue-300' }, 'love': { icon: '❤️', bg: 'bg-rose-100', border: 'border-rose-300' }, 'busy': { icon: '🔥', bg: 'bg-orange-100', border: 'border-orange-300' }, 'normal': { icon: '😶', bg: 'bg-gray-50', border: 'border-gray-100' } };
 
         // --- 2. GLOBAL FUNCTION DEFINITIONS (Assigned to window immediately) ---
+
+        /* =========================================
+           身分強制檢查機制
+           ========================================= */
+        window.checkRoleEnforcement = function() {
+            if (!currentUserRole) {
+                // 1. 強制切換到設定頁
+                window.switchTab('settings');
+                
+                // 2. 跳出提示
+                window.showToast('👋 請先告訴我您是誰？');
+                
+                // 3. 視覺引導：讓選擇區塊閃爍一下
+                const roleSection = document.getElementById('role-selection-section');
+                if(roleSection) {
+                    roleSection.classList.add('ring-2', 'ring-ttgreen', 'bg-green-50');
+                    setTimeout(() => roleSection.classList.remove('ring-2', 'ring-ttgreen', 'bg-green-50'), 600);
+                }
+                
+                return false; // 阻擋後續操作
+            }
+            return true; // 通行
+        };
         
         window.updateDateDisplay = function(type, dateStr) {
             const displayEl = (type === 'recur') ? document.getElementById('display-recur-until') : (type === 'todo' ? document.getElementById('display-date-todo') : document.getElementById(`display-date-${type}`));
@@ -1060,59 +1027,79 @@ let roleColors = {
         };
         window.checkEndDateValidity = function() { const sD = document.getElementById('input-date-start').value; const sT = document.getElementById('input-time-start').value; const eD = document.getElementById('input-date-end').value; const eT = document.getElementById('input-time-end').value; if(new Date(`${eD}T${eT}`) < new Date(`${sD}T${sT}`)) { window.autoUpdateEnd(); } else { window.checkRecurValidity(); } };
         window.setNowToInputs = function() { const now = new Date(); const dStr = now.toISOString().split('T')[0]; let h = now.getHours(), m = now.getMinutes(); if(m < 30) { m = 30; } else { m = 0; h += 1; } if(h > 23) h = 0; const tStr = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`; const startEl = document.getElementById('input-date-start'); if(startEl) { startEl.value = dStr; document.getElementById('input-time-start').value = tStr; window.updateDateDisplay('start', dStr); window.updateTimeDisplay('start', tStr); const endD = document.getElementById('input-date-end'); if(endD) endD.value = dStr; const endT = document.getElementById('input-time-end'); if(endT) endT.value = tStr; window.updateDateDisplay('end', dStr); window.updateTimeDisplay('end', tStr); } };
-// 修改：身分切換時，全面更新 UI 提示
-window.updateRoleUI = function() {
-    // 1. 設定頁面的按鈕樣式 (維持原樣)
-    const btnHaohao = document.getElementById('role-haohao');
-    const btnMaomao = document.getElementById('role-maomao');
-    if (btnHaohao) {
-        const activeClass = "flex-1 py-3 rounded-lg text-sm font-bold border border-ttgreen bg-green-50 text-ttgreen transition shadow-sm";
-        const inactiveClass = "flex-1 py-3 rounded-lg text-sm font-medium border border-gray-200 text-gray-400 bg-white transition";
-        if (currentUserRole === 'haohao') {
-            btnHaohao.className = activeClass;
-            btnMaomao.className = inactiveClass;
-        } else {
-            btnHaohao.className = inactiveClass;
-            btnMaomao.className = activeClass;
-        }
-        const ptText = document.getElementById('partner-toggle-text');
-        if (ptText) ptText.textContent = (currentUserRole === 'haohao' ? '與毛毛一起' : '與皓皓一起');
-    }
+        // 修改：身分切換時，全面更新 UI 提示
+        window.updateRoleUI = function() {
+            // 1. 設定頁按鈕狀態
+            const btnHaohao = document.getElementById('role-haohao');
+            const btnMaomao = document.getElementById('role-maomao');
+            
+            if (btnHaohao) {
+                const activeClass = "flex-1 py-3 rounded-lg text-sm font-bold border border-ttgreen bg-green-50 text-ttgreen transition shadow-sm";
+                const inactiveClass = "flex-1 py-3 rounded-lg text-sm font-medium border border-gray-200 text-gray-400 bg-white transition";
+                
+                if (currentUserRole === 'haohao') {
+                    btnHaohao.className = activeClass;
+                    btnMaomao.className = inactiveClass;
+                } else if (currentUserRole === 'maomao') {
+                    btnHaohao.className = inactiveClass;
+                    btnMaomao.className = activeClass;
+                } else {
+                    // 都沒選：兩個都是未選取狀態
+                    btnHaohao.className = inactiveClass;
+                    btnMaomao.className = inactiveClass;
+                }
+                
+                const ptText = document.getElementById('partner-toggle-text');
+                if (ptText && currentUserRole) ptText.textContent = (currentUserRole === 'haohao' ? '與毛毛一起' : '與皓皓一起');
+            }
 
-    // === 新增 2. 更新 Header 身分膠囊 ===
-    const badge = document.getElementById('header-role-badge');
-    const badgeName = document.getElementById('header-role-name');
-    if (badge && badgeName) {
-        const name = currentUserRole === 'haohao' ? '皓皓' : '毛毛';
-        const color = roleColors[currentUserRole];
-        
-        badgeName.textContent = name;
-        badge.style.backgroundColor = color;
-        badge.classList.remove('opacity-0'); // 顯示出來
-        
-        // 確保 icon 顏色正確 (白色)
-        // Lucide icon 需要重繪嗎？通常不用，因為它是 SVG 繼承顏色，但若有需要可加
-    }
+            // 2. Header 身分膠囊
+            const badge = document.getElementById('header-role-badge');
+            const badgeName = document.getElementById('header-role-name');
+            if (badge && badgeName) {
+                if (currentUserRole) {
+                    const name = currentUserRole === 'haohao' ? '皓皓' : '毛毛';
+                    const color = roleColors[currentUserRole];
+                    badgeName.textContent = name;
+                    badge.style.backgroundColor = color;
+                    badge.classList.remove('opacity-0');
+                } else {
+                    // 未選擇狀態
+                    badgeName.textContent = '請選擇';
+                    badge.style.backgroundColor = '#9ca3af'; // 灰色
+                    badge.classList.remove('opacity-0');
+                    // 加個小動畫吸引注意
+                    badge.classList.add('animate-pulse');
+                }
+            }
 
-    // === 新增 3. 更新便利貼輸入框提示 ===
-    const noteInput = document.getElementById('note-input');
-    if (noteInput) {
-        const name = currentUserRole === 'haohao' ? '皓皓' : '毛毛';
-        noteInput.placeholder = `${name}，說點什麼...`; // 直接叫名字
-        
-        // 讓輸入框的外框顏色也跟著變 (透過 CSS 變數或直接改 style)
-        // 這裡我們簡單地用 border color
-        noteInput.parentElement.style.borderColor = roleColors[currentUserRole];
-    }
-    
-    // 4. 同步 Active Tab 顏色 (維持原樣)
-    document.documentElement.style.setProperty(
-        '--active-tab-color',
-        roleColors[currentUserRole]
-    );
-    // 補上這行，確保 Header 裡面的 user icon 重新渲染
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-};        window.updateSettingsColorUI = function() { const h = document.getElementById('setting-color-haohao'); if(h) { h.style.backgroundColor = roleColors.haohao; document.getElementById('setting-color-maomao').style.backgroundColor = roleColors.maomao; document.getElementById('setting-color-joint').style.backgroundColor = roleColors.joint; } };
+            // 3. 便利貼輸入框提示
+            const noteInput = document.getElementById('note-input');
+            if (noteInput) {
+                if (currentUserRole) {
+                    const name = currentUserRole === 'haohao' ? '皓皓' : '毛毛';
+                    noteInput.placeholder = `${name}，說點什麼吧...`;
+                    noteInput.parentElement.style.borderColor = roleColors[currentUserRole];
+                    noteInput.disabled = false;
+                } else {
+                    noteInput.placeholder = '請先選擇身分...';
+                    noteInput.parentElement.style.borderColor = '#e5e7eb';
+                    // 沒身分時鎖住輸入框，強迫去設定
+                    noteInput.disabled = true;
+                }
+            }
+            
+            // 4. 同步 Active Tab 顏色
+            if (currentUserRole) {
+                document.documentElement.style.setProperty('--active-tab-color', roleColors[currentUserRole]);
+                // 移除 header 閃爍動畫
+                if(badge) badge.classList.remove('animate-pulse');
+            }
+            
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        };
+
+        window.updateSettingsColorUI = function() { const h = document.getElementById('setting-color-haohao'); if(h) { h.style.backgroundColor = roleColors.haohao; document.getElementById('setting-color-maomao').style.backgroundColor = roleColors.maomao; document.getElementById('setting-color-joint').style.backgroundColor = roleColors.joint; } };
         window.setStatus = function(s) { document.getElementById('input-status').value = s; document.querySelectorAll('.status-btn').forEach(b=>{ if(b.dataset.status===s) b.classList.add('active'); else b.classList.remove('active'); }); };
         window.showToast = function(msg) { const t = document.getElementById('toast-container'); const m = document.getElementById('toast-message'); m.textContent = msg; t.classList.add('visible'); setTimeout(() => t.classList.remove('visible'), 2000); };
         window.updateParticipantsPreview = function() { const container = document.getElementById('participants-preview'); const isP = document.getElementById('check-partner').checked; let html = ''; html += `<div class="avatar-sm z-20" style="background-color:${roleColors[currentUserRole]}">${currentUserRole==='haohao'?'皓':'毛'}</div>`; if(isP) { const p = currentUserRole==='haohao'?'maomao':'haohao'; html += `<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[p]}">${p==='haohao'?'皓':'毛'}</div>`; } container.innerHTML = html; };
@@ -1127,63 +1114,81 @@ window.updateRoleUI = function() {
     roleColors[role]
   );
 };
-        window.updateMyStatus = function() { if(!db) return; const moods = ['normal', 'charging', 'sleepy', 'love', 'busy']; const randomMood = moods[Math.floor(Math.random() * moods.length)]; const d = {}; d[currentUserRole] = randomMood; db.collection('status').doc('current').set(d, { merge: true }); };
+        window.updateMyStatus = function(status) {
+             // === 加入這行 ===
+            if (!window.checkRoleEnforcement()) return;
+            // ===============
+             if(!db) return; const moods = ['normal', 'charging', 'sleepy', 'love', 'busy']; 
+             // If status is passed, use it, otherwise random (legacy support if needed, but UI passes 'charging' etc now)
+             // Actually UI passes specific status now? The UI calls updateMyStatus('charging')
+             // But the original code was random. Let's fix it to use the passed status if available.
+             
+             let moodToSet = status;
+             if (!moodToSet || !moodMap[moodToSet]) {
+                 moodToSet = moods[Math.floor(Math.random() * moods.length)];
+             }
+             
+             const d = {}; d[currentUserRole] = moodToSet; db.collection('status').doc('current').set(d, { merge: true }); 
+        };
         window.toggleGlobalColorPicker = function(show) { const el = document.getElementById('global-color-picker'); const grid = document.getElementById('global-color-grid'); if(show) { grid.innerHTML = ''; timeTreeColors.forEach(color => { const row = document.createElement('div'); row.className = "flex items-center p-2 rounded hover:bg-gray-50 cursor-pointer transition"; row.onclick = () => window.selectGlobalColor(color); row.innerHTML = `<div class="w-5 h-5 rounded-full mr-3 shadow-sm" style="background-color: ${color.hex}"></div><span class="text-sm text-gray-700">${color.name}</span>`; grid.appendChild(row); }); el.classList.remove('hidden'); setTimeout(() => el.classList.add('visible'), 10); } else { el.classList.remove('visible'); setTimeout(() => el.classList.add('hidden'), 200); colorPickerTarget = null; } };
-window.selectGlobalColor = function(c) {
-    // 1. 如果是在「新增/編輯行程」時選顏色 (維持原樣)
-    if (colorPickerTarget === 'event') {
-        currentSelectedColor = c.hex;
-        document.getElementById('selected-color-name').textContent = c.name;
-        document.getElementById('selected-color-dot').style.backgroundColor = c.hex;
-    } 
-    // 2. 如果是在「設定頁面」選代表色 (修改邏輯)
-    else if (colorPickerTarget) {
-        const newHex = c.hex;
-        const targetRole = colorPickerTarget; // 目前正在修改的角色 (haohao, maomao, joint)
-        const oldHex = roleColors[targetRole]; // 該角色原本的顏色 (用來交換用)
 
-        // === 步驟 A: 檢查衝突 ===
-        let conflictRole = null;
-        for (let key in roleColors) {
-            // 如果不是自己，且顏色跟新選的一樣，就是衝突者
-            if (key !== targetRole && roleColors[key] === newHex) {
-                conflictRole = key;
-                break;
+        window.selectGlobalColor = function(c) {
+            // 1. 如果是在「新增/編輯行程」時選顏色 (維持原樣)
+            if (colorPickerTarget === 'event') {
+                currentSelectedColor = c.hex;
+                document.getElementById('selected-color-name').textContent = c.name;
+                document.getElementById('selected-color-dot').style.backgroundColor = c.hex;
+            } 
+            // 2. 如果是在「設定頁面」選代表色 (修改邏輯)
+            else if (colorPickerTarget) {
+                const newHex = c.hex;
+                const targetRole = colorPickerTarget; // 目前正在修改的角色 (haohao, maomao, joint)
+                const oldHex = roleColors[targetRole]; // 該角色原本的顏色 (用來交換用)
+
+                // === 步驟 A: 檢查衝突 ===
+                let conflictRole = null;
+                for (let key in roleColors) {
+                    // 如果不是自己，且顏色跟新選的一樣，就是衝突者
+                    if (key !== targetRole && roleColors[key] === newHex) {
+                        conflictRole = key;
+                        break;
+                    }
+                }
+
+                // === 步驟 B: 更新目標角色的顏色 ===
+                roleColors[targetRole] = newHex;
+                localStorage.setItem(`color_${targetRole}`, newHex);
+
+                // === 步驟 C: 處理衝突 (自動交換) ===
+                if (conflictRole) {
+                    // 把衝突者的顏色換成舊顏色
+                    roleColors[conflictRole] = oldHex;
+                    localStorage.setItem(`color_${conflictRole}`, oldHex);
+                    
+                    // 顯示提示訊息
+                    const roleNames = { haohao: '皓皓', maomao: '毛毛', joint: '共同行程' };
+                    window.showToast(`顏色重複，已與「${roleNames[conflictRole]}」交換顏色！`);
+                }
+
+                // === 步驟 D: 更新介面 ===
+                // 1. 更新設定頁面的三個圓圈
+                window.updateSettingsColorUI();
+
+                // 2. 檢查是否影響到底部導航列 (Active Tab) 的顏色
+                // (無論是「直接修改自己」或是「因為交換而改變了自己」都要更新)
+                if (targetRole === currentUserRole || conflictRole === currentUserRole) {
+                    if (currentUserRole) {
+                        document.documentElement.style.setProperty(
+                            '--active-tab-color',
+                            roleColors[currentUserRole]
+                        );
+                    }
+                }
             }
-        }
-
-        // === 步驟 B: 更新目標角色的顏色 ===
-        roleColors[targetRole] = newHex;
-        localStorage.setItem(`color_${targetRole}`, newHex);
-
-        // === 步驟 C: 處理衝突 (自動交換) ===
-        if (conflictRole) {
-            // 把衝突者的顏色換成舊顏色
-            roleColors[conflictRole] = oldHex;
-            localStorage.setItem(`color_${conflictRole}`, oldHex);
             
-            // 顯示提示訊息
-            const roleNames = { haohao: '皓皓', maomao: '毛毛', joint: '共同行程' };
-            window.showToast(`顏色重複，已與「${roleNames[conflictRole]}」交換顏色！`);
-        }
-
-        // === 步驟 D: 更新介面 ===
-        // 1. 更新設定頁面的三個圓圈
-        window.updateSettingsColorUI();
-
-        // 2. 檢查是否影響到底部導航列 (Active Tab) 的顏色
-        // (無論是「直接修改自己」或是「因為交換而改變了自己」都要更新)
-        if (targetRole === currentUserRole || conflictRole === currentUserRole) {
-             document.documentElement.style.setProperty(
-                '--active-tab-color',
-                roleColors[currentUserRole]
-            );
-        }
-    }
-    
-    // 關閉選色視窗
-    window.toggleGlobalColorPicker(false);
-};
+            // 關閉選色視窗
+            window.toggleGlobalColorPicker(false);
+        };
         window.openColorConfig = function(target) { colorPickerTarget = target; window.toggleGlobalColorPicker(true); };
         window.syncSelectedColorUI = function() {
             const dot = document.getElementById('selected-color-dot');
@@ -1200,201 +1205,184 @@ window.selectGlobalColor = function(c) {
 
         // --- 3. RENDERERS ---
         window.renderEvents = function(ignored) { const items = window.getCalendarItems(); const now = new Date(); const future = items.filter(e => { const date = new Date(e.timestamp); if(e.isTodo && e.done) return false; return !isNaN(date) && date >= now; }); const titleEl = document.getElementById('next-event-title'); if(titleEl && future.length > 0) { const n = future[0], d = new Date(n.timestamp); titleEl.textContent = n.title; const timeStr = n.allDay ? "All Day" : d.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',hour12:false}); document.getElementById('next-event-time').textContent = timeStr; document.getElementById('next-event-date').textContent = d.toLocaleDateString('zh-TW',{month:'numeric',day:'numeric',weekday:'short'}); const diff = Math.ceil((d-now)/(1000*60*60*24)); document.getElementById('countdown').textContent = diff<=0?"TODAY":`D - ${diff}`; } else if(titleEl) { titleEl.textContent = "No Upcoming Events"; } const listEl = document.getElementById('event-list'); if(listEl) { if (items.length === 0) listEl.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">無行程</div>`; else window.renderEventListItems(items, listEl); } };
-window.getCalendarItems = function() {
-    const events = allEventsCache.map(e => ({...e, type: 'event'}));
-    
-    // 修改處：只要有 timestamp (代表有設定日期)，就視為要顯示在行事曆，不檢查 addToCalendar 欄位
-    const todos = allTodosCache.filter(t => t.timestamp).map(t => ({
-        id: t.id,
-        title: t.title,
-        timestamp: t.timestamp,
-        color: null,
-        allDay: !t.dueTime,
-        isTodo: true,
-        done: t.done,
-        type: 'todo',
-        creator: t.creator,
-        isJoint: t.isJoint
-    }));
-
-    return [...events, ...todos].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-};        
-window.renderDashboardNextUp = function(items) {
-    const now = new Date();
-    const next7Days = new Date();
-    next7Days.setDate(now.getDate() + 7);
-    
-    const upcoming = items.filter(item => {
-        const t = new Date(item.timestamp);
-        if (item.isTodo && item.done) return false;
-        return !isNaN(t) && t >= now && t <= next7Days;
-    });
-
-    const countEl = document.getElementById('dashboard-countdown');
-    if (upcoming.length > 0) {
-        const first = upcoming[0];
-        const d = new Date(first.timestamp);
-        const diff = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
-        countEl.textContent = diff <= 0 ? "TODAY" : `D - ${diff}`;
-    } else {
-        countEl.textContent = "FREE";
-    }
-
-    const container = document.getElementById('dashboard-next-list');
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    if (upcoming.length === 0) {
-        container.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">未來 7 天沒有行程 😴</div>`;
-    } else {
-        let html = '';
-        upcoming.forEach(item => {
-            const date = new Date(item.timestamp);
-            const timeStr = item.allDay ? "All Day" : date.toLocaleTimeString('zh-TW', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-            });
-            const dateStr = date.toLocaleDateString('zh-TW', {
-                month: 'numeric',
-                day: 'numeric',
-                weekday: 'short'
+        window.getCalendarItems = function() { const events = allEventsCache.map(e => ({...e, type: 'event'})); const todos = allTodosCache.filter(t => t.timestamp).map(t => ({ id: t.id, title: t.title, timestamp: t.timestamp, color: null, allDay: !t.dueTime, isTodo: true, done: t.done, type: 'todo', creator: t.creator, isJoint: t.isJoint })); return [...events, ...todos].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)); };
+        
+        window.renderDashboardNextUp = function(items) {
+            const now = new Date();
+            const next7Days = new Date();
+            next7Days.setDate(now.getDate() + 7);
+            
+            const upcoming = items.filter(item => {
+                const t = new Date(item.timestamp);
+                if (item.isTodo && item.done) return false;
+                return !isNaN(t) && t >= now && t <= next7Days;
             });
 
-            // === 修改處：強制顏色邏輯 ===
-            // 1. 如果是共同行程 -> 用 joint 顏色
-            // 2. 否則 -> 用建立者的顏色 (皓皓/毛毛)
-            let color;
-            if (item.isJoint) {
-                color = roleColors.joint;
+            const countEl = document.getElementById('dashboard-countdown');
+            if (upcoming.length > 0) {
+                const first = upcoming[0];
+                const d = new Date(first.timestamp);
+                const diff = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
+                countEl.textContent = diff <= 0 ? "TODAY" : `D - ${diff}`;
             } else {
-                color = (item.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
-            }
-            // ===========================
-
-            let tagHtml = item.isTodo ? `<span class="ml-2 text-[10px] border border-gray-200 text-gray-400 px-1 rounded flex-shrink-0">待辦</span>` : '';
-            
-            // 補上 TBC/TBD 標籤
-            if (!item.isTodo) {
-                 if (item.status === 'tbc') tagHtml = `<span class="ml-2 status-tag tbc">TBC</span>`;
-                 else if (item.status === 'tbd') tagHtml = `<span class="ml-2 status-tag tbd">TBD</span>`;
+                countEl.textContent = "FREE";
             }
 
-            let clickAction = item.isTodo ? `window.openEditTodoModal('${item.id}')` : `window.openEditModal('${item.id}')`;
+            const container = document.getElementById('dashboard-next-list');
+            if (!container) return;
             
-            html += `
-            <div class="flex items-center p-3 hover:bg-gray-50 cursor-pointer" onclick="${clickAction}">
-                <div class="w-1 self-stretch rounded-full mr-3" style="background-color: ${color}"></div>
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center">
-                        <span class="text-sm font-bold text-gray-800 truncate">${item.title}</span>
-                        ${tagHtml}
-                    </div>
-                    <div class="text-xs text-gray-500 mt-0.5">${dateStr} · ${timeStr} ${item.location ? `· ${item.location}` : ''}</div>
-                </div>
-            </div>`;
-        });
-        container.innerHTML = html;
-    }
-};
-window.renderCalendarListView = function() { const items = window.getCalendarItems(); const listEl = document.getElementById('event-list'); if(!listEl) return; if (items.length === 0) { listEl.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">無行程</div>`; } else { window.renderEventListItems(items, listEl); } };
-window.renderEventListItems = function(items, container) {
-    let html = '';
-    items.forEach(e => {
-        const date = new Date(e.timestamp);
-        if (isNaN(date)) return;
-        const timeStr = e.allDay ? "All Day" : date.toLocaleTimeString('zh-TW', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-        });
-
-        // === 修改處：統一計算顏色邏輯 ===
-        // 優先判斷是否為共同行程，是則強制使用 joint 顏色
-        let displayColor;
-        if (e.isJoint) {
-            displayColor = roleColors.joint;
-        } else {
-            displayColor = (e.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
-        }
-        // ============================
-
-        if (e.isTodo) {
-            // === 待辦事項 ===
-            const statusClass = e.done ? "line-through text-gray-400" : "text-gray-800";
-            const checkIcon = e.done ? '<i data-lucide="check-square" class="w-5 h-5 text-green-500"></i>' : '<i data-lucide="square" class="w-5 h-5 text-gray-400"></i>';
+            container.innerHTML = '';
             
-            html += `
-            <div class="flex p-4 items-center gap-4 hover:bg-gray-50 transition cursor-pointer">
-                <div class="flex flex-col items-center w-10">
-                    <span class="text-xs text-gray-400 font-medium uppercase">${date.toLocaleDateString('en-US',{weekday:'short'})}</span>
-                    <span class="text-xl font-bold text-gray-800 leading-none">${date.getDate()}</span>
-                </div>
-                <!-- 使用計算好的顏色 -->
-                <div class="w-1 self-stretch rounded-full" style="background-color: ${displayColor}"></div>
-                <div class="flex-1 min-w-0 flex items-center justify-between" onclick="window.openEditTodoModal('${e.id}')">
-                    <div>
-                        <div class="flex items-center ${statusClass}">
-                            <span class="font-bold truncate block">${e.title}</span>
-                            <span class="ml-2 text-[10px] border border-gray-200 px-1 rounded text-gray-400 flex-shrink-0">待辦</span>
+            if (upcoming.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">未來 7 天沒有行程 😴</div>`;
+            } else {
+                let html = '';
+                upcoming.forEach(item => {
+                    const date = new Date(item.timestamp);
+                    const timeStr = item.allDay ? "All Day" : date.toLocaleTimeString('zh-TW', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    });
+                    const dateStr = date.toLocaleDateString('zh-TW', {
+                        month: 'numeric',
+                        day: 'numeric',
+                        weekday: 'short'
+                    });
+
+                    // === 修改處：強制顏色邏輯 ===
+                    // 1. 如果是共同行程 -> 用 joint 顏色
+                    // 2. 否則 -> 用建立者的顏色 (皓皓/毛毛)
+                    let color;
+                    if (item.isJoint) {
+                        color = roleColors.joint;
+                    } else {
+                        color = (item.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
+                    }
+                    // ===========================
+
+                    let tagHtml = item.isTodo ? `<span class="ml-2 text-[10px] border border-gray-200 text-gray-400 px-1 rounded flex-shrink-0">待辦</span>` : '';
+                    
+                    // 補上 TBC/TBD 標籤
+                    if (!item.isTodo) {
+                        if (item.status === 'tbc') tagHtml = `<span class="ml-2 status-tag tbc">TBC</span>`;
+                        else if (item.status === 'tbd') tagHtml = `<span class="ml-2 status-tag tbd">TBD</span>`;
+                    }
+
+                    let clickAction = item.isTodo ? `window.openEditTodoModal('${item.id}')` : `window.openEditModal('${item.id}')`;
+                    
+                    html += `
+                    <div class="flex items-center p-3 hover:bg-gray-50 cursor-pointer" onclick="${clickAction}">
+                        <div class="w-1 self-stretch rounded-full mr-3" style="background-color: ${color}"></div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center">
+                                <span class="text-sm font-bold text-gray-800 truncate">${item.title}</span>
+                                ${tagHtml}
+                            </div>
+                            <div class="text-xs text-gray-500 mt-0.5">${dateStr} · ${timeStr} ${item.location ? `· ${item.location}` : ''}</div>
                         </div>
-                        <div class="text-xs text-gray-500">${timeStr}</div>
-                    </div>
-                </div>
-                <div class="flex-none p-2 cursor-pointer" onclick="window.toggleTodo('${e.id}', ${!e.done}); event.stopPropagation();">
-                    ${checkIcon}
-                </div>
-            </div>`;
-        } else {
-            // === 一般行程 ===
-            let ic = '';
-            if (e.category === 'travel') ic = 'plane';
-            else if (e.category === 'appointment') ic = 'scissors';
-            else if (e.category === 'gathering') ic = 'users';
-            else if (e.category === 'vacation') ic = 'palmtree';
-
-            let ico = ic ? `<i data-lucide="${ic}" class="w-3 h-3 text-gray-400 mr-1"></i>` : '';
-
-            let st = '';
-            if (e.status === 'tbc') st = `<span class="ml-2 status-tag tbc">TBC</span>`;
-            else if (e.status === 'tbd') st = `<span class="ml-2 status-tag tbd">TBD</span>`;
-
-            // 小頭像邏輯 (如果是共同行程，顯示兩個頭像)
-            let av = `<div class="avatar-sm z-20" style="background-color:${roleColors[e.creator]||'#2cc998'}">${e.creator==='haohao'?'皓':'毛'}</div>`;
-            if (e.isJoint) {
-                const partner = e.creator === 'haohao' ? 'maomao' : 'haohao';
-                const partnerName = partner === 'haohao' ? '皓' : '毛';
-                av += `<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[partner]}">${partnerName}</div>`;
+                    </div>`;
+                });
+                container.innerHTML = html;
             }
+        };
+        window.renderCalendarListView = function() { const items = window.getCalendarItems(); const listEl = document.getElementById('event-list'); if(!listEl) return; if (items.length === 0) { listEl.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">無行程</div>`; } else { window.renderEventListItems(items, listEl); } };
+        window.renderEventListItems = function(items, container) {
+            let html = '';
+            items.forEach(e => {
+                const date = new Date(e.timestamp);
+                if (isNaN(date)) return;
+                const timeStr = e.allDay ? "All Day" : date.toLocaleTimeString('zh-TW', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
 
-            html += `
-            <div class="flex p-4 items-start gap-4 hover:bg-gray-50 transition cursor-pointer card-press" onclick="window.openEditModal('${e.id}')">
-                <div class="flex flex-col items-center w-10 pt-1">
-                    <span class="text-xs text-gray-400 font-medium uppercase">${date.toLocaleDateString('en-US',{weekday:'short'})}</span>
-                    <!-- 日期數字顏色也跟著變 -->
-                    <span class="text-xl font-bold leading-none" style="color:${displayColor}">${date.getDate()}</span>
-                </div>
-                <!-- 側邊條顏色 -->
-                <div class="w-1 self-stretch rounded-full" style="background-color:${displayColor}"></div>
-                <div class="flex-1 min-w-0 pt-1">
-                    <div class="flex items-center">
-                        ${ico}
-                        <h4 class="font-bold text-gray-800 truncate">${e.title}</h4>
-                        ${st}
-                    </div>
-                    <div class="text-xs text-gray-500">${timeStr} ${e.location?'· '+e.location:''}</div>
-                </div>
-                <div class="flex items-center self-center -space-x-1 pl-2">${av}</div>
-            </div>`;
-        }
-    });
-    container.innerHTML = html;
-    if (typeof lucide !== 'undefined') lucide.createIcons({
-        root: container
-    });
-};
-window.toggleAllDay = function() { const isChecked = document.getElementById('check-allday').checked; document.querySelectorAll('.dt-wrapper-time').forEach(d => d.style.display = isChecked ? 'none' : 'block'); };
+                // === 修改處：統一計算顏色邏輯 ===
+                // 優先判斷是否為共同行程，是則強制使用 joint 顏色
+                let displayColor;
+                if (e.isJoint) {
+                    displayColor = roleColors.joint;
+                } else {
+                    displayColor = (e.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
+                }
+                // ============================
+
+                if (e.isTodo) {
+                    // === 待辦事項 ===
+                    const statusClass = e.done ? "line-through text-gray-400" : "text-gray-800";
+                    const checkIcon = e.done ? '<i data-lucide="check-square" class="w-5 h-5 text-green-500"></i>' : '<i data-lucide="square" class="w-5 h-5 text-gray-400"></i>';
+                    
+                    html += `
+                    <div class="flex p-4 items-center gap-4 hover:bg-gray-50 transition cursor-pointer">
+                        <div class="flex flex-col items-center w-10">
+                            <span class="text-xs text-gray-400 font-medium uppercase">${date.toLocaleDateString('en-US',{weekday:'short'})}</span>
+                            <span class="text-xl font-bold text-gray-800 leading-none">${date.getDate()}</span>
+                        </div>
+                        <!-- 使用計算好的顏色 -->
+                        <div class="w-1 self-stretch rounded-full" style="background-color: ${displayColor}"></div>
+                        <div class="flex-1 min-w-0 flex items-center justify-between" onclick="window.openEditTodoModal('${e.id}')">
+                            <div>
+                                <div class="flex items-center ${statusClass}">
+                                    <span class="font-bold truncate block">${e.title}</span>
+                                    <span class="ml-2 text-[10px] border border-gray-200 px-1 rounded text-gray-400 flex-shrink-0">待辦</span>
+                                </div>
+                                <div class="text-xs text-gray-500">${timeStr}</div>
+                            </div>
+                        </div>
+                        <div class="flex-none p-2 cursor-pointer" onclick="window.toggleTodo('${e.id}', ${!e.done}); event.stopPropagation();">
+                            ${checkIcon}
+                        </div>
+                    </div>`;
+                } else {
+                    // === 一般行程 ===
+                    let ic = '';
+                    if (e.category === 'travel') ic = 'plane';
+                    else if (e.category === 'appointment') ic = 'scissors';
+                    else if (e.category === 'gathering') ic = 'users';
+                    else if (e.category === 'vacation') ic = 'palmtree';
+
+                    let ico = ic ? `<i data-lucide="${ic}" class="w-3 h-3 text-gray-400 mr-1"></i>` : '';
+
+                    let st = '';
+                    if (e.status === 'tbc') st = `<span class="ml-2 status-tag tbc">TBC</span>`;
+                    else if (e.status === 'tbd') st = `<span class="ml-2 status-tag tbd">TBD</span>`;
+
+                    // 小頭像邏輯 (如果是共同行程，顯示兩個頭像)
+                    let av = `<div class="avatar-sm z-20" style="background-color:${roleColors[e.creator]||'#2cc998'}">${e.creator==='haohao'?'皓':'毛'}</div>`;
+                    if (e.isJoint) {
+                        const partner = e.creator === 'haohao' ? 'maomao' : 'haohao';
+                        const partnerName = partner === 'haohao' ? '皓' : '毛';
+                        av += `<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[partner]}">${partnerName}</div>`;
+                    }
+
+                    html += `
+                    <div class="flex p-4 items-start gap-4 hover:bg-gray-50 transition cursor-pointer card-press" onclick="window.openEditModal('${e.id}')">
+                        <div class="flex flex-col items-center w-10 pt-1">
+                            <span class="text-xs text-gray-400 font-medium uppercase">${date.toLocaleDateString('en-US',{weekday:'short'})}</span>
+                            <!-- 日期數字顏色也跟著變 -->
+                            <span class="text-xl font-bold leading-none" style="color:${displayColor}">${date.getDate()}</span>
+                        </div>
+                        <!-- 側邊條顏色 -->
+                        <div class="w-1 self-stretch rounded-full" style="background-color:${displayColor}"></div>
+                        <div class="flex-1 min-w-0 pt-1">
+                            <div class="flex items-center">
+                                ${ico}
+                                <h4 class="font-bold text-gray-800 truncate">${e.title}</h4>
+                                ${st}
+                            </div>
+                            <div class="text-xs text-gray-500">${timeStr} ${e.location?'· '+e.location:''}</div>
+                        </div>
+                        <div class="flex items-center self-center -space-x-1 pl-2">${av}</div>
+                    </div>`;
+                }
+            });
+            container.innerHTML = html;
+            if (typeof lucide !== 'undefined') lucide.createIcons({
+                root: container
+            });
+        };
+        window.toggleAllDay = function() { const isChecked = document.getElementById('check-allday').checked; document.querySelectorAll('.dt-wrapper-time').forEach(d => d.style.display = isChecked ? 'none' : 'block'); };
         window.toggleRecurring = function() { const isChecked = document.getElementById('check-recurring').checked; const opts = document.getElementById('recurring-options'); if(isChecked) { opts.classList.remove('hidden'); if(!document.getElementById('input-recur-until').value) document.getElementById('input-recur-until').value = document.getElementById('input-date-end').value; } else opts.classList.add('hidden'); };
         window.toggleTravelFields = function() { const type = document.getElementById('input-transport-type').value; const isPlane = type === 'plane'; document.getElementById('travel-region-intl').classList.toggle('hidden', !isPlane); document.getElementById('travel-region-tw').classList.toggle('hidden', isPlane); };
         window.toggleBooked = function() { const isChecked = document.getElementById('check-booked').checked; const txt = document.getElementById('appoint-status-text'); txt.textContent = isChecked ? "已預約" : "未完成"; txt.className = isChecked ? "text-xs font-bold text-purple-600" : "text-xs text-gray-500"; };
@@ -1416,6 +1404,8 @@ window.saveEvent = function () {
     window.showToast('資料庫尚未連線');
     return;
   }
+
+  // 防連點
   if (window.__savingEvent) return;
   window.__savingEvent = true;
 
@@ -1441,19 +1431,13 @@ window.saveEvent = function () {
       throw new Error('Missing date');
     }
 
-    // === 修改處：判斷是否為全天行程 ===
-    const timeInput = document.getElementById('input-time-start')?.value;
-    // 如果時間欄位是空的，就視為 All Day
-    const isAllDay = !timeInput; 
-    // 若為全天，Timestamp 仍需一個時間排序，暫定 00:00
-    const time = timeInput || '00:00'; 
+    const time = document.getElementById('input-time-start')?.value || '00:00'; // Default time if missing
     const timestamp = new Date(`${startDate}T${time}:00`).toISOString();
 
     const data = {
       title,
       startDate,
       timestamp,
-      allDay: isAllDay, // 寫入全天旗標
       isJoint: document.getElementById('check-partner')?.checked || false,
       status: document.getElementById('input-status')?.value || 'confirmed',
       note: document.getElementById('input-note')?.value || '',
@@ -1506,6 +1490,10 @@ window.saveEvent = function () {
             }
         };
 window.openAddModal = function () {
+  // === 加入這行 ===
+  if (!window.checkRoleEnforcement()) return;
+  // ===============
+
   editingEventId = null;
 
   // === 基本欄位（都存在）===
@@ -1574,7 +1562,7 @@ window.openEditModal = function (id) {
     window.updateDateDisplay('start', ds);
   }
 
-  // === 修改處：時間 (若為 All Day 則清空，否則解析顯示) ===
+  // === 時間 (若為 All Day 則清空，否則解析顯示) ===
   const timeInput = document.getElementById('input-time-start');
   
   if (evt.allDay) {
@@ -1605,255 +1593,408 @@ window.openEditModal = function (id) {
   // === 備註 ===
   document.getElementById('input-note').value = evt.note || '';
 
-  // === 顏色邏輯 ===
+  // === 顏色邏輯（只保留資料，不碰 UI）===
   currentSelectedColor = evt.color || roleColors[evt.creator] || roleColors[currentUserRole];
   colorPickerTarget = 'event';
-  if(window.syncSelectedColorUI) window.syncSelectedColorUI();
 
-  // 刪除按鈕
+  // 刪除按鈕：編輯模式下顯示
   const delBtn = document.getElementById('btn-delete-event');
   if(delBtn) delBtn.classList.remove('hidden');
 
-  // 開 modal
+  // === 開 modal ===
   const m = document.getElementById('add-modal');
   m.classList.remove('hidden');
   setTimeout(() => m.classList.add('visible'), 10);
 };
-window.openAddTodoModal = function() {
-    editingTodoId = null;
-    document.getElementById('todo-modal-title').textContent = '新增待辦事項';
-    document.getElementById('todo-modal-btn').textContent = '新增';
-    document.getElementById('todo-input-title').value = '';
-    document.getElementById('input-date-todo').value = '';
-    document.getElementById('input-time-todo').value = '';
-    
-    // 重置顯示文字
-    const dd = document.getElementById('display-date-todo');
-    dd.textContent = '請選擇';
-    dd.classList.add('dt-text-placeholder');
-    dd.classList.remove('dt-text-value');
-
-    const dt = document.getElementById('display-time-todo');
-    dt.textContent = '請選擇';
-    dt.classList.add('dt-text-placeholder');
-    dt.classList.remove('dt-text-value');
-
-    document.getElementById('todo-check-joint').checked = false;
-    
-    // === 修改處：已移除舊的 checkbox 重置程式碼 ===
-
-    const btn = document.getElementById('btn-delete-todo');
-    if (btn) btn.classList.add('hidden');
-    
-    const m = document.getElementById('add-todo-modal');
-    m.classList.remove('hidden');
-    setTimeout(() => m.classList.add('visible'), 10);
-};
-window.closeAddModal = function() {
+ window.openAddTodoModal = function() { 
+    // === 加入這行 ===
+    if (!window.checkRoleEnforcement()) return;
+    // ===============
+    editingTodoId = null; document.getElementById('todo-modal-title').textContent = '新增待辦事項'; document.getElementById('todo-modal-btn').textContent = '新增'; document.getElementById('todo-input-title').value = ''; document.getElementById('input-date-todo').value = ''; document.getElementById('input-time-todo').value = ''; 
+    const dd = document.getElementById('display-date-todo'); dd.textContent = '請選擇'; dd.classList.add('dt-text-placeholder'); dd.classList.remove('dt-text-value');
+    const dt = document.getElementById('display-time-todo'); dt.textContent = '請選擇'; dt.classList.add('dt-text-placeholder'); dt.classList.remove('dt-text-value');
+ document.getElementById('todo-check-joint').checked = false; document.getElementById('todo-check-calendar').checked = false; window.checkTodoCalendarOption(); const btn=document.getElementById('btn-delete-todo'); if(btn) btn.classList.add('hidden'); const m = document.getElementById('add-todo-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); };
+ window.closeAddModal = function() {
   window.__savingEvent = false; // 🔒 保險重置
   const m=document.getElementById('add-modal');
   m.classList.remove('visible');
   setTimeout(()=>m.classList.add('hidden'),200);
 };
-/* =========================================
-   待辦事項邏輯修復包 (請替換相關函式)
-   ========================================= */
-
-// 1. 開啟新增視窗
-window.openAddTodoModal = function() {
-    editingTodoId = null;
-    document.getElementById('todo-modal-title').textContent = '新增待辦事項';
-    document.getElementById('todo-modal-btn').textContent = '新增';
-    document.getElementById('todo-input-title').value = '';
-    document.getElementById('input-date-todo').value = '';
-    document.getElementById('input-time-todo').value = '';
-
-    // 重置日期顯示
-    const dd = document.getElementById('display-date-todo');
-    if(dd) {
-        dd.textContent = '請選擇';
-        dd.classList.add('dt-text-placeholder');
-        dd.classList.remove('dt-text-value');
-    }
-
-    const dt = document.getElementById('display-time-todo');
-    if(dt) {
-        dt.textContent = '請選擇';
-        dt.classList.add('dt-text-placeholder');
-        dt.classList.remove('dt-text-value');
-    }
-
-    // 重置勾選框
-    const jointCheck = document.getElementById('todo-check-joint');
-    if(jointCheck) jointCheck.checked = false;
-
-    // 隱藏刪除按鈕
-    const btnDel = document.getElementById('btn-delete-todo');
-    if (btnDel) btnDel.classList.add('hidden');
-
-    // 顯示視窗
-    const m = document.getElementById('add-todo-modal');
-    m.classList.remove('hidden');
-    setTimeout(() => m.classList.add('visible'), 10);
-};
-
-// 2. 開啟編輯視窗
-window.openEditTodoModal = function(id) {
-    editingTodoId = id;
-    const todo = allTodosCache.find(t => t.id === id);
-    if (!todo) return;
-
-    document.getElementById('todo-modal-title').textContent = '編輯待辦事項';
-    document.getElementById('todo-modal-btn').textContent = '儲存';
-    document.getElementById('todo-input-title').value = todo.title;
-
-    // 設定日期
-    if (todo.dueDate) {
-        document.getElementById('input-date-todo').value = todo.dueDate;
-        window.updateDateDisplay('todo', todo.dueDate);
-    } else {
-        document.getElementById('input-date-todo').value = '';
-        window.updateDateDisplay('todo', '');
-    }
-
-    // 設定時間
-    if (todo.dueTime) {
-        document.getElementById('input-time-todo').value = todo.dueTime;
-        window.updateTimeDisplay('todo', todo.dueTime);
-    } else {
-        document.getElementById('input-time-todo').value = '';
-        window.updateTimeDisplay('todo', '');
-    }
-
-    // 設定共同勾選
-    const jointCheck = document.getElementById('todo-check-joint');
-    if(jointCheck) jointCheck.checked = todo.isJoint;
-
-    // 顯示刪除按鈕
-    const btnDel = document.getElementById('btn-delete-todo');
-    if (btnDel) btnDel.classList.remove('hidden');
-
-    // 顯示視窗
-    const m = document.getElementById('add-todo-modal');
-    m.classList.remove('hidden');
-    setTimeout(() => m.classList.add('visible'), 10);
-};
-
-// 3. 關閉視窗 (這就是之前可能遺失的關鍵函式)
-window.closeAddTodoModal = function() {
-    const m = document.getElementById('add-todo-modal');
-    if (!m) return;
-    
-    m.classList.remove('visible');
-    setTimeout(() => m.classList.add('hidden'), 200);
-
-    // 強制重置儲存狀態 (解鎖按鈕)
-    window.isSavingTodo = false;
-    const btn = document.getElementById('todo-modal-btn');
-    if (btn) {
-        btn.textContent = editingTodoId ? '儲存' : '新增';
-        btn.style.opacity = '1';
-    }
-};
-
-// 4. 儲存待辦事項 (修復：清除日期後無法存檔的問題)
-window.isSavingTodo = false;
-
-window.saveTodoItem = function() {
-    if (window.isSavingTodo) return;
-
-    const title = document.getElementById('todo-input-title').value;
-    if (!title) {
-        window.showToast('請輸入內容');
-        return;
-    }
-
-    // 鎖定按鈕
-    window.isSavingTodo = true;
-    const btn = document.getElementById('todo-modal-btn');
-    const originalText = btn ? btn.textContent : '儲存';
-    if (btn) {
-        btn.textContent = '儲存中...';
-        btn.style.opacity = '0.5';
-    }
-
-    const date = document.getElementById('input-date-todo').value;
-    const time = document.getElementById('input-time-todo').value;
-    const isJoint = document.getElementById('todo-check-joint').checked;
-    
-    // 若有日期則自動標記需同步
-    const addToCalendar = !!date; 
-
-    // === 修改重點 ===
-    // 我們必須「明確」設定日期欄位，即使是空的也要設為 null
-    // 這樣資料庫才會知道要把舊的日期刪掉
-    const todoData = {
-        title,
-        done: false,
-        creator: currentUserRole,
-        isJoint: isJoint,
-        addToCalendar: addToCalendar,
-        // 如果 date 是空的，就設為 null；否則設為 date
-        dueDate: date || null,
-        // 如果 date 或 time 是空的，就設為 null
-        dueTime: (date && time) ? time : null,
-        // timestamp 也是一樣
-        timestamp: null,
-        // 注意：編輯時通常不更新 createdAt，以免順序亂掉，這裡我們維持原樣或可選擇不傳
-        createdAt: new Date().toISOString() 
-    };
-
-    // 計算 Timestamp (只有在有日期時才計算)
-    if (date) {
-        const tStr = time || "00:00";
-        todoData.timestamp = new Date(`${date}T${tStr}`).toISOString();
-    }
-
-    const onSuccess = (msg) => {
-        if (typeof window.closeAddTodoModal === 'function') {
-            window.closeAddTodoModal();
-        } else {
-            const m = document.getElementById('add-todo-modal');
-            if(m) {
-                 m.classList.remove('visible');
-                 setTimeout(() => m.classList.add('hidden'), 200);
-            }
-            window.isSavingTodo = false;
-        }
-        window.showToast(msg);
-    };
-
-    const onError = (err) => {
-        console.error("Save Error:", err);
-        window.showToast('儲存失敗，請檢查網路');
+        window.openEditTodoModal = function(id) { editingTodoId = id; const todo = allTodosCache.find(t => t.id === id); if(!todo) return; document.getElementById('todo-modal-title').textContent = '編輯待辦事項'; document.getElementById('todo-modal-btn').textContent = '儲存'; document.getElementById('todo-input-title').value = todo.title; if(todo.dueDate) { document.getElementById('input-date-todo').value = todo.dueDate; window.updateDateDisplay('todo', todo.dueDate); } else { document.getElementById('input-date-todo').value = ''; window.updateDateDisplay('todo', ''); } if(todo.dueTime) { document.getElementById('input-time-todo').value = todo.dueTime; window.updateTimeDisplay('todo', todo.dueTime); } else { document.getElementById('input-time-todo').value = ''; window.updateTimeDisplay('todo', ''); } document.getElementById('todo-check-joint').checked = todo.isJoint; document.getElementById('todo-check-calendar').checked = todo.addToCalendar; window.checkTodoCalendarOption(); const btn=document.getElementById('btn-delete-todo'); if(btn) btn.classList.remove('hidden'); const m = document.getElementById('add-todo-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); };
+        window.closeAddTodoModal = function() { const m = document.getElementById('add-todo-modal'); m.classList.remove('visible'); setTimeout(()=>m.classList.add('hidden'),200); };
+        window.checkTodoCalendarOption = function() { const dateVal = document.getElementById('input-date-todo').value; const opt = document.getElementById('todo-calendar-option'); const check = document.getElementById('todo-check-calendar'); if (dateVal) { opt.classList.remove('opacity-50', 'pointer-events-none'); check.disabled = false; } else { opt.classList.add('opacity-50', 'pointer-events-none'); check.disabled = true; check.checked = false; } };
+        
+        // 4. 儲存待辦事項 (修復：清除日期後無法存檔的問題)
         window.isSavingTodo = false;
-        if (btn) {
-            btn.textContent = originalText;
-            btn.style.opacity = '1';
-        }
-    };
 
-    // 執行寫入
-    if (editingTodoId) {
-        // 編輯模式：這裡傳送 null 會把資料庫裡的舊日期洗掉
-        db.collection('todos').doc(editingTodoId).update(todoData)
-            .then(() => onSuccess('待辦事項已更新'))
-            .catch(onError);
-    } else {
-        db.collection('todos').add(todoData)
-            .then(() => onSuccess('待辦事項已新增'))
-            .catch(onError);
-    }
-};
-window.toggleTodo = function(id,s) { db.collection('todos').doc(id).update({done:s}); };
+        window.saveTodoItem = function() {
+            if (window.isSavingTodo) return;
+
+            const title = document.getElementById('todo-input-title').value;
+            if (!title) {
+                window.showToast('請輸入內容');
+                return;
+            }
+
+            // 鎖定按鈕
+            window.isSavingTodo = true;
+            const btn = document.getElementById('todo-modal-btn');
+            const originalText = btn ? btn.textContent : '儲存';
+            if (btn) {
+                btn.textContent = '儲存中...';
+                btn.style.opacity = '0.5';
+            }
+
+            const date = document.getElementById('input-date-todo').value;
+            const time = document.getElementById('input-time-todo').value;
+            const isJoint = document.getElementById('todo-check-joint').checked;
+            
+            // 若有日期則自動標記需同步
+            const addToCalendar = !!date; 
+
+            // === 修改重點 ===
+            // 我們必須「明確」設定日期欄位，即使是空的也要設為 null
+            // 這樣資料庫才會知道要把舊的日期刪掉
+            const todoData = {
+                title,
+                done: false,
+                creator: currentUserRole,
+                isJoint: isJoint,
+                addToCalendar: addToCalendar,
+                // 如果 date 是空的，就設為 null；否則設為 date
+                dueDate: date || null,
+                // 如果 date 或 time 是空的，就設為 null
+                dueTime: (date && time) ? time : null,
+                // timestamp 也是一樣
+                timestamp: null,
+                // 注意：編輯時通常不更新 createdAt，以免順序亂掉，這裡我們維持原樣或可選擇不傳
+                createdAt: new Date().toISOString() 
+            };
+
+            // 計算 Timestamp (只有在有日期時才計算)
+            if (date) {
+                const tStr = time || "00:00";
+                todoData.timestamp = new Date(`${date}T${tStr}`).toISOString();
+            }
+
+            const onSuccess = (msg) => {
+                if (typeof window.closeAddTodoModal === 'function') {
+                    window.closeAddTodoModal();
+                } else {
+                    const m = document.getElementById('add-todo-modal');
+                    if(m) {
+                        m.classList.remove('visible');
+                        setTimeout(() => m.classList.add('hidden'), 200);
+                    }
+                    window.isSavingTodo = false;
+                }
+                window.showToast(msg);
+            };
+
+            const onError = (err) => {
+                console.error("Save Error:", err);
+                window.showToast('儲存失敗，請檢查網路');
+                window.isSavingTodo = false;
+                if (btn) {
+                    btn.textContent = originalText;
+                    btn.style.opacity = '1';
+                }
+            };
+
+            // 執行寫入
+            if (editingTodoId) {
+                // 編輯模式：這裡傳送 null 會把資料庫裡的舊日期洗掉
+                db.collection('todos').doc(editingTodoId).update(todoData)
+                    .then(() => onSuccess('待辦事項已更新'))
+                    .catch(onError);
+            } else {
+                db.collection('todos').add(todoData)
+                    .then(() => onSuccess('待辦事項已新增'))
+                    .catch(onError);
+            }
+        };
+
+        window.toggleTodo = function(id,s) { db.collection('todos').doc(id).update({done:s}); };
         window.deleteTodo = function(id) { if(confirm('刪除?')) db.collection('todos').doc(id).delete(); };
         window.renderTodos = function(todos) { const jointList=document.getElementById('todo-list-joint'), haohaoList=document.getElementById('todo-list-haohao'), maomaoList=document.getElementById('todo-list-maomao'), dashboardList=document.getElementById('dashboard-todo-list'); if(!jointList) return; jointList.innerHTML=''; haohaoList.innerHTML=''; maomaoList.innerHTML=''; dashboardList.innerHTML=''; let pendingCount=0; todos.forEach(t => { let colorHex = roleColors.haohao; let container = haohaoList; if (t.isJoint) { colorHex = roleColors.joint; container = jointList; } else if (t.creator === 'maomao') { colorHex = roleColors.maomao; container = maomaoList; } let checkStyle = t.done ? `background-color: #d1d5db; border-color: #d1d5db;` : `border-color: ${colorHex};`; let titleClass = t.done ? "text-gray-400 line-through" : "text-gray-800"; if (t.done) { } else { pendingCount++; } let calInfo = t.dueDate ? `<span class="text-[10px] ${t.done?'text-gray-300':'text-gray-400'} ml-2 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${t.dueDate}</span>` : ''; const html = `<div class="todo-item flex items-center p-3 bg-white rounded-xl border border-gray-100 shadow-sm"><div class="flex-none p-2 cursor-pointer" onclick="window.toggleTodo('${t.id}', ${!t.done}); event.stopPropagation();"><div class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors text-white" style="${checkStyle}">${t.done?'<i data-lucide="check" class="w-3 h-3"></i>':''}</div></div><div class="flex-1 px-2 cursor-pointer overflow-hidden" onclick="window.openEditTodoModal('${t.id}')"><span class="${titleClass} font-medium truncate block">${t.title}</span>${calInfo}</div><button onclick="window.deleteTodo('${t.id}'); event.stopPropagation();" class="flex-none p-2 text-gray-300 hover:text-red-400"><i data-lucide="x" class="w-4 h-4"></i></button></div>`; container.innerHTML += html; }); if (pendingCount === 0) dashboardList.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">沒有未完成的待辦事項 🎉</p>`; else { const pendings = todos.filter(t => !t.done).slice(0, 3); pendings.forEach(t => { let dotColor = t.isJoint ? roleColors.joint : (t.creator==='haohao' ? roleColors.haohao : roleColors.maomao); dashboardList.innerHTML += `<div class="flex items-center gap-2 text-sm bg-gray-50 p-2 rounded-lg border border-gray-100"><div class="w-2 h-2 rounded-full" style="background-color: ${dotColor}"></div><span class="truncate text-gray-700">${t.title}</span></div>`; }); if (todos.filter(t => !t.done).length > 3) dashboardList.innerHTML += `<div class="text-center text-xs text-gray-400 mt-1">還有 ${todos.filter(t => !t.done).length - 3} 個項目...</div>`; } if(typeof lucide !== 'undefined') lucide.createIcons(); };
         
 
+        /* =========================================
+           便利貼 (Status Note) 功能邏輯
+           ========================================= */
+
+        // 1. 發送便利貼
+        window.sendNote = function() {
+            // === 加入這行 ===
+            if (!window.checkRoleEnforcement()) return;
+            // ===============
+            const input = document.getElementById('note-input');
+            const text = input.value.trim();
+
+            if (!text) return;
+
+            // 寫入資料庫 (collection: 'notes', docId: role)
+            // 這樣同一個人永遠只有一則最新的 note
+            db.collection('notes').doc(currentUserRole).set({
+                text: text,
+                timestamp: new Date().toISOString(),
+                creator: currentUserRole
+            }).then(() => {
+                window.showToast('心情已發送 💬');
+                input.value = ''; // 清空輸入框
+                input.blur(); // 收起鍵盤
+            }).catch(err => {
+                console.error(err);
+                window.showToast('發送失敗');
+            });
+        };
+
+        // 2. 聚焦輸入框 (點擊頭像時觸發)
+        window.setNoteInputFocus = function() {
+            const input = document.getElementById('note-input');
+            input.focus();
+        };
         
+        // 新增：計算相對時間的輔助函式
+        window.getRelativeTimeStr = function(timestamp) {
+            const now = new Date();
+            const date = new Date(timestamp);
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / (1000 * 60));
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+            if (diffMins < 1) return '剛剛';
+            if (diffMins < 60) return `${diffMins}分鐘前`;
+            if (diffHours < 24) return `${diffHours}小時前`;
+            return '1天前';
+        };
+
+        // 3. 渲染便利貼 (更新：加入時間顯示與 7字寬度控制)
+        window.renderNoteBubble = function(role, data) {
+            const bubbleId = `note-bubble-${role}`;
+            const textId = `note-text-${role}`;
+            const dotId = `status-dot-${role}`;
+            const timeId = `note-time-${role}`; // 新增時間 ID
+            
+            const bubbleEl = document.getElementById(bubbleId);
+            const textEl = document.getElementById(textId);
+            const dotEl = document.getElementById(dotId);
+            const timeEl = document.getElementById(timeId);
+
+            if (!bubbleEl || !textEl) return;
+
+            if (!data || !data.text || !data.timestamp) {
+                hideBubble(bubbleEl, dotEl, timeEl, role);
+                return;
+            }
+
+            const now = new Date();
+            const noteTime = new Date(data.timestamp);
+            const diffHours = (now - noteTime) / (1000 * 60 * 60);
+
+            if (diffHours < 24) {
+                textEl.textContent = data.text;
+                if(timeEl) timeEl.textContent = window.getRelativeTimeStr(data.timestamp);
+                
+                // 顯示
+                bubbleEl.classList.remove('hidden');
+                if(dotEl) dotEl.classList.remove('hidden');
+                if(timeEl) timeEl.classList.remove('opacity-0'); // 顯示時間
+                
+                // 動畫：左右滑入
+                requestAnimationFrame(() => {
+                    bubbleEl.classList.remove('opacity-0');
+                    if (role === 'haohao') {
+                        bubbleEl.classList.remove('-translate-x-2'); 
+                    } else {
+                        bubbleEl.classList.remove('translate-x-2'); 
+                    }
+                });
+            } else {
+                hideBubble(bubbleEl, dotEl, timeEl, role);
+            }
+        };
+
+        // 更新隱藏函式，加入時間標籤的處理
+        function hideBubble(bubbleEl, dotEl, timeEl, role) {
+            bubbleEl.classList.add('opacity-0');
+            if (role === 'haohao') {
+                bubbleEl.classList.add('-translate-x-2');
+            } else {
+                bubbleEl.classList.add('translate-x-2');
+            }
+            
+            if(dotEl) dotEl.classList.add('hidden');
+            if(timeEl) timeEl.classList.add('opacity-0'); // 隱藏時間
+            
+            setTimeout(() => {
+                bubbleEl.classList.add('hidden');
+            }, 300);
+        }
+
+        // 4. 更新頭像顏色 (配合設定頁面的顏色)
+        window.syncNoteAvatarColors = function() {
+            const h = document.getElementById('avatar-note-haohao');
+            const m = document.getElementById('avatar-note-maomao');
+            if(h) h.style.backgroundColor = roleColors.haohao;
+            if(m) m.style.backgroundColor = roleColors.maomao;
+        };
         
+        window.deleteNote = function(role) {
+            // === 加入這行 ===
+            if (!window.checkRoleEnforcement()) return;
+            // ===============
+            db.collection('notes').doc(role).delete()
+                .then(() => {
+                    const bubbleId = `note-bubble-${role}`;
+                    const bubbleEl = document.getElementById(bubbleId);
+                    const dotId = `status-dot-${role}`;
+                    const dotEl = document.getElementById(dotId);
+                    const timeId = `note-time-${role}`;
+                    const timeEl = document.getElementById(timeId);
+                    
+                    if (bubbleEl) bubbleEl.classList.add('opacity-0', 'hidden');
+                    if (dotEl) dotEl.classList.add('hidden');
+                    if (timeEl) timeEl.classList.add('opacity-0');
+                    
+                    window.showToast('心情已刪除 💨');
+                })
+                .catch(err => {
+                    console.error(err);
+                    window.showToast('刪除失敗');
+                });
+        };
+        
+        window.clearDate = function() {
+            // 1. 如果是待辦事項 (todo)
+            if (calTargetInput === 'todo') {
+                // 清空日期與時間的隱藏值
+                document.getElementById('input-date-todo').value = '';
+                document.getElementById('input-time-todo').value = '';
+                
+                // 使用現有的 helper 函式來重置顯示文字 (變回「請選擇」)
+                if (window.updateDateDisplay) window.updateDateDisplay('todo', '');
+                if (window.updateTimeDisplay) window.updateTimeDisplay('todo', '');
+            } 
+            // 2. 如果是其他 (例如一般行程，雖然通常必填，但也提供清除功能)
+            else {
+                const el = document.getElementById(`input-date-${calTargetInput}`);
+                if (el) el.value = '';
+                if (window.updateDateDisplay) window.updateDateDisplay(calTargetInput, '');
+                
+                // 如果是開始日期被清除，可能需要連動結束日期檢查，但因為是清空，暫不處理自動計算
+            }
+
+            // 3. 關閉視窗
+            window.closeCalendar();
+        };
+
+        // ===== MISSING NAVIGATION & CALENDAR RENDER FUNCTIONS =====
+        window.switchTab = function(tabId) {
+            // 1. Pages
+            document.querySelectorAll('.page-content').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById('page-' + tabId);
+            if(target) target.classList.add('active');
+            
+            // 2. Nav
+            const tabs = ['dashboard', 'calendar', 'todo', 'settings'];
+            document.querySelectorAll('.nav-item').forEach((el, idx) => {
+                if(tabs[idx] === tabId) el.classList.add('active');
+                else el.classList.remove('active');
+            });
+
+            // 3. Special Logic
+            if(tabId === 'calendar' && currentViewMode === 'month') {
+                window.renderBigCalendar();
+            }
+        };
+
+        window.switchCalendarView = function(mode) {
+            currentViewMode = mode;
+            const vList = document.getElementById('calendar-view-list');
+            const vMonth = document.getElementById('calendar-view-month');
+            const bList = document.getElementById('btn-view-list');
+            const bMonth = document.getElementById('btn-view-month');
+            
+            if(mode === 'list') {
+                vList.classList.remove('hidden');
+                vMonth.classList.add('hidden');
+                bList.classList.add('bg-white','shadow-sm','text-ttgreen','font-bold');
+                bList.classList.remove('text-gray-500','font-medium');
+                bMonth.classList.remove('bg-white','shadow-sm','text-ttgreen','font-bold');
+                bMonth.classList.add('text-gray-500','font-medium');
+            } else {
+                vList.classList.add('hidden');
+                vMonth.classList.remove('hidden');
+                bMonth.classList.add('bg-white','shadow-sm','text-ttgreen','font-bold');
+                bMonth.classList.remove('text-gray-500','font-medium');
+                bList.classList.remove('bg-white','shadow-sm','text-ttgreen','font-bold');
+                bList.classList.add('text-gray-500','font-medium');
+                window.renderBigCalendar();
+            }
+        };
+
+        window.changeBigCalMonth = function(delta) {
+            bigCalDate.setMonth(bigCalDate.getMonth() + delta);
+            window.renderBigCalendar();
+        };
         
         window.selectBigCalendarDate = function(y,m,d) { document.querySelectorAll('.big-cal-cell.selected').forEach(e=>e.classList.remove('selected')); if(m===bigCalDate.getMonth()) { const el=document.getElementById(`big-cal-day-${d}`); if(el) el.classList.add('selected'); } document.getElementById('selected-date-label').textContent = `${y}年${m+1}月${d}日`; const listEl = document.getElementById('month-event-list'); if(!listEl) return; const items = window.getCalendarItems(); const ds=new Date(y, m, d), de=new Date(y, m, d, 23,59,59); const dayEvents = items.filter(e => { const t = new Date(e.timestamp); return t>=ds && t<=de; }); if(dayEvents.length===0) listEl.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs">這天沒有安排行程 😴</div>`; else window.renderEventListItems(dayEvents, listEl); };
+        window.renderBigCalendar = function() {
+            const y = bigCalDate.getFullYear();
+            const m = bigCalDate.getMonth();
+            const title = document.getElementById('big-cal-title');
+            if(title) title.textContent = `${y}年${m+1}月`;
+            
+            const firstDay = new Date(y, m, 1).getDay();
+            const daysInMonth = new Date(y, m+1, 0).getDate();
+            
+            let html = '';
+            for(let i=0; i<firstDay; i++) {
+                html += `<div class="big-cal-cell bg-gray-50/50"></div>`;
+            }
+            
+            const nowStr = new Date().toDateString();
+            const items = window.getCalendarItems ? window.getCalendarItems() : [];
+
+            for(let d=1; d<=daysInMonth; d++) {
+                const dateObj = new Date(y, m, d);
+                const isToday = dateObj.toDateString() === nowStr;
+                
+                // Filter events for this day
+                const dayEvents = items.filter(e => {
+                    const t = new Date(e.timestamp);
+                    return t.getDate() === d && t.getMonth() === m && t.getFullYear() === y;
+                });
+
+                // Bars HTML
+                let bars = '';
+                dayEvents.slice(0, 3).forEach(e => {
+                    // === 修改處：強制顏色邏輯 ===
+                    let bg;
+                    if (e.isJoint) {
+                        bg = roleColors.joint;
+                    } else {
+                        bg = (e.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
+                    }
+                    // =========================
+
+                    bars += `<div class="event-bar ${e.isTodo&&e.done?'done':''}" style="background-color:${bg}">${e.title}</div>`;
+                });
+                if(dayEvents.length > 3) {
+                    bars += `<div class="more-events">+${dayEvents.length-3}</div>`;
+                }
+
+                html += `<div class="big-cal-cell ${isToday?'today':''}" id="big-cal-day-${d}" onclick="window.selectBigCalendarDate(${y},${m},${d})">
+                    <div class="big-cal-day-num">${d}</div>
+                    <div class="w-full px-1 space-y-px">${bars}</div>
+                </div>`;
+            }
+            
+            const grid = document.getElementById('big-cal-grid');
+            if(grid) grid.innerHTML = html;
+        };
+
 function initApp(db) {
   if (!db) {
     console.error("Firebase not initialized");
@@ -1865,16 +2006,6 @@ function initApp(db) {
   if (conn) {
     conn.className = "w-2 h-2 rounded-full bg-ttgreen shadow-[0_0_8px_#2cc998]";
   }
-
-/* ===== STABLE PATCH: Notes Listener (便利貼) ===== */
-  db.collection('notes').onSnapshot(snapshot => {
-      snapshot.forEach(doc => {
-          // doc.id 會是 'haohao' 或 'maomao'
-          window.renderNoteBubble(doc.id, doc.data());
-      });
-      // 順便同步一下頭像顏色
-      window.syncNoteAvatarColors();
-  });
 
   /* ===== STABLE PATCH: Events Snapshot ===== */
   bindSnapshot(
@@ -1913,17 +2044,12 @@ function initApp(db) {
       );
       allTodosCache = todos;
 
-      // 1. 更新待辦清單頁面 (原本就有)
       safeRun(() => window.renderTodos(todos), 'todos');
-
-      // 2. 更新 Dashboard 摘要 (原本就有)
       safeRun(
         () => window.renderDashboardNextUp(window.getCalendarItems()),
         'dashboard-todos'
       );
-
-      // 3. === 新增：強制更新行事曆列表 ===
-      // 這行會讓列表視圖抓取最新的待辦事項
+      
       safeRun(
         () => window.renderCalendarListView(),
         'calendar-list-from-todos'
@@ -1947,309 +2073,17 @@ function initApp(db) {
     },
     'status'
   );
+  
+  /* ===== STABLE PATCH: Notes Listener (便利貼) ===== */
+  db.collection('notes').onSnapshot(snapshot => {
+      snapshot.forEach(doc => {
+          // doc.id 會是 'haohao' 或 'maomao'
+          window.renderNoteBubble(doc.id, doc.data());
+      });
+      // 順便同步一下頭像顏色
+      window.syncNoteAvatarColors();
+  });
 }
-
-
-
- 
-/* ===== STABLE PATCH: App Bootstrap ===== */
-
-
-// ===== Calendar Picker (fixed) =====
-window.openCalendar = function(t) {
-  calTargetInput = t;
-
-  // read currently selected date (do NOT auto-fill)
-  let v = '';
-  if (t === 'recur') v = document.getElementById('input-recur-until')?.value || '';
-  else if (t === 'todo') v = document.getElementById('input-date-todo')?.value || '';
-  else v = document.getElementById(`input-date-${t}`)?.value || '';
-
-  calCurrentDate = v ? new Date(v) : new Date();
-  if (isNaN(calCurrentDate.getTime())) calCurrentDate = new Date();
-
-  window.renderCalendarModal();
-
-  const m = document.getElementById('calendar-picker-modal');
-  if (!m) return;
-  m.classList.remove('hidden');
-  setTimeout(()=>m.classList.add('visible'),10);
-
-  if (window.lockBodyScroll) window.lockBodyScroll(true);
-};
-
-window.closeCalendar = function() {
-  const m = document.getElementById('calendar-picker-modal');
-  if (!m) return;
-  m.classList.remove('visible');
-  setTimeout(()=>m.classList.add('hidden'),200);
-
-  if (window.lockBodyScroll) window.lockBodyScroll(false);
-};
-
-window.selectCalDate = function(y,m,d) {
-  const s = `${y}-${(m+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
-
-  if (calTargetInput === 'recur') {
-    const el = document.getElementById('input-recur-until');
-    if (el) el.value = s;
-    window.updateDateDisplay?.('recur', s);
-  } else if (calTargetInput === 'todo') {
-    const el = document.getElementById('input-date-todo');
-    if (el) el.value = s;
-    window.updateDateDisplay?.('todo', s);
-    // === 修改處：移除了 checkTodoCalendarOption 呼叫 ===
-  } else {
-    const el = document.getElementById(`input-date-${calTargetInput}`);
-    if (el) el.value = s;
-    window.updateDateDisplay?.(calTargetInput, s);
-  }
-
-  window.closeCalendar();
-
-  if (calTargetInput === 'start') window.autoUpdateEnd?.();
-  else if (calTargetInput === 'end') window.checkEndDateValidity?.();
-};
-
-window.changeCalMonth = function(offset) {
-  calCurrentDate.setMonth(calCurrentDate.getMonth() + offset);
-  window.renderCalendarModal();
-};
-
-window.renderCalendarModal = function() {
-  const y = calCurrentDate.getFullYear();
-  const m = calCurrentDate.getMonth();
-  const today = new Date();
-
-  const title = document.getElementById('cal-month-title');
-  if (title) title.textContent = `${y}年${m+1}月`;
-
-  const dim = new Date(y, m+1, 0).getDate();
-  const sd  = new Date(y, m, 1).getDay();
-
-  // get selected date string for highlighting
-  let selectedStr = '';
-  if (calTargetInput === 'recur') selectedStr = document.getElementById('input-recur-until')?.value || '';
-  else if (calTargetInput === 'todo') selectedStr = document.getElementById('input-date-todo')?.value || '';
-  else selectedStr = document.getElementById(`input-date-${calTargetInput}`)?.value || '';
-
-  let h = '';
-
-  for (let i = 0; i < sd; i++) h += `<div class="cal-day empty"></div>`;
-
-  for (let d = 1; d <= dim; d++) {
-    const isToday = (y===today.getFullYear() && m===today.getMonth() && d===today.getDate());
-    const str = `${y}-${(m+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
-    const isSelected = selectedStr === str;
-
-    h += `<div class="cal-day ${isToday?'today':''} ${isSelected?'selected':''}"
-              onclick="window.selectCalDate(${y},${m},${d})">${d}</div>`;
-  }
-
-  const totalCells = sd + dim;
-  const remainder = totalCells % 7;
-  if (remainder !== 0) {
-    for (let i = 0; i < 7 - remainder; i++) h += `<div class="cal-day empty"></div>`;
-  }
-
-  const days = document.getElementById('calendar-days');
-  if (days) days.innerHTML = h;
-};
-
-window.selectToday = function() {
-  const t = new Date();
-  window.selectCalDate(t.getFullYear(), t.getMonth(), t.getDate());
-};
-
-// ===== NEW: Time Picker Logic (Fix for Missing Function) =====
-window.openTimePicker = function(target) {
-    timePickerTarget = target;
-    const container = document.getElementById('time-list-container');
-    container.innerHTML = ''; // clear
-
-    // Generate time slots every 15 mins
-    const times = [];
-    for (let h=0; h<24; h++) {
-        for (let m=0; m<60; m+=15) { // 15 min intervals
-            const timeStr = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;
-            times.push(timeStr);
-        }
-    }
-
-    // Current value
-    let currentVal = '';
-    if (target === 'todo') currentVal = document.getElementById('input-time-todo').value;
-    else currentVal = document.getElementById(`input-time-${target}`).value;
-
-    let html = '';
-    times.forEach(t => {
-        const isSelected = t === currentVal;
-        html += `<div class="time-option ${isSelected?'selected':''}" onclick="window.selectTime('${t}')">${t}</div>`;
-    });
-    
-    // Add "None" option only for Todo or if needed, but for now strict times
-    if (target === 'todo') {
-        html = `<div class="time-option text-gray-400" onclick="window.selectTime('')">清除時間</div>` + html;
-    }
-
-    container.innerHTML = html;
-
-    const modal = document.getElementById('time-picker-modal');
-    modal.classList.remove('hidden');
-    setTimeout(() => modal.classList.add('visible'), 10);
-    
-    // Scroll to selected
-    if (currentVal) {
-        setTimeout(() => {
-            const selectedEl = container.querySelector('.selected');
-            if (selectedEl) selectedEl.scrollIntoView({block: 'center'});
-        }, 100);
-    }
-};
-
-window.closeTimePicker = function() {
-    const modal = document.getElementById('time-picker-modal');
-    modal.classList.remove('visible');
-    setTimeout(() => modal.classList.add('hidden'), 200);
-};
-
-// FIX: Safe select time
-window.selectTime = function(timeStr) {
-    try {
-        if (timePickerTarget === 'todo') {
-            const el = document.getElementById('input-time-todo');
-            if(el) el.value = timeStr;
-            // Use unified update helper for display logic
-            window.updateTimeDisplay('todo', timeStr);
-        } else {
-            const el = document.getElementById(`input-time-${timePickerTarget}`);
-            if(el) el.value = timeStr;
-            window.updateTimeDisplay(timePickerTarget, timeStr);
-            if (timePickerTarget === 'start') {
-                if(window.autoUpdateEnd) window.autoUpdateEnd(); 
-            }
-        }
-    } catch(e) {
-        console.error("selectTime error", e);
-    } finally {
-        window.closeTimePicker();
-    }
-};
-
-// ===== MISSING NAVIGATION & CALENDAR RENDER FUNCTIONS =====
-window.switchTab = function(tabId) {
-    // 1. Pages 切換顯示
-    document.querySelectorAll('.page-content').forEach(el => el.classList.remove('active'));
-    const target = document.getElementById('page-' + tabId);
-    if(target) target.classList.add('active');
-    
-    // 2. Nav 圖標狀態切換
-    const tabs = ['dashboard', 'calendar', 'todo', 'settings'];
-    document.querySelectorAll('.nav-item').forEach((el, idx) => {
-        if(tabs[idx] === tabId) el.classList.add('active');
-        else el.classList.remove('active');
-    });
-
-    // 3. 特殊邏輯處理
-    // 如果切換到行事曆且是月曆模式，需要重繪
-    if(tabId === 'calendar' && currentViewMode === 'month') {
-        window.renderBigCalendar();
-    }
-    
-    // === 修改處：如果切換到設定頁，強制更新顏色圓圈 UI ===
-    if(tabId === 'settings') {
-        window.updateSettingsColorUI();
-    }
-    // 在 window.switchTab 函式內加入：
-if(tabId === 'dashboard') {
-    window.syncNoteAvatarColors?.();
-}
-};
-
-window.switchCalendarView = function(mode) {
-    currentViewMode = mode;
-    const vList = document.getElementById('calendar-view-list');
-    const vMonth = document.getElementById('calendar-view-month');
-    const bList = document.getElementById('btn-view-list');
-    const bMonth = document.getElementById('btn-view-month');
-    
-    if(mode === 'list') {
-        vList.classList.remove('hidden');
-        vMonth.classList.add('hidden');
-        bList.classList.add('bg-white','shadow-sm','text-ttgreen','font-bold');
-        bList.classList.remove('text-gray-500','font-medium');
-        bMonth.classList.remove('bg-white','shadow-sm','text-ttgreen','font-bold');
-        bMonth.classList.add('text-gray-500','font-medium');
-    } else {
-        vList.classList.add('hidden');
-        vMonth.classList.remove('hidden');
-        bMonth.classList.add('bg-white','shadow-sm','text-ttgreen','font-bold');
-        bMonth.classList.remove('text-gray-500','font-medium');
-        bList.classList.remove('bg-white','shadow-sm','text-ttgreen','font-bold');
-        bList.classList.add('text-gray-500','font-medium');
-        window.renderBigCalendar();
-    }
-};
-
-window.changeBigCalMonth = function(delta) {
-    bigCalDate.setMonth(bigCalDate.getMonth() + delta);
-    window.renderBigCalendar();
-};
-
-window.renderBigCalendar = function() {
-    const y = bigCalDate.getFullYear();
-    const m = bigCalDate.getMonth();
-    const title = document.getElementById('big-cal-title');
-    if(title) title.textContent = `${y}年${m+1}月`;
-    
-    const firstDay = new Date(y, m, 1).getDay();
-    const daysInMonth = new Date(y, m+1, 0).getDate();
-    
-    let html = '';
-    for(let i=0; i<firstDay; i++) {
-        html += `<div class="big-cal-cell bg-gray-50/50"></div>`;
-    }
-    
-    const nowStr = new Date().toDateString();
-    const items = window.getCalendarItems ? window.getCalendarItems() : [];
-
-    for(let d=1; d<=daysInMonth; d++) {
-        const dateObj = new Date(y, m, d);
-        const isToday = dateObj.toDateString() === nowStr;
-        
-        // Filter events for this day
-        const dayEvents = items.filter(e => {
-            const t = new Date(e.timestamp);
-            return t.getDate() === d && t.getMonth() === m && t.getFullYear() === y;
-        });
-
-        // Bars HTML
-        let bars = '';
-        dayEvents.slice(0, 3).forEach(e => {
-            // === 修改處：強制顏色邏輯 ===
-            let bg;
-            if (e.isJoint) {
-                bg = roleColors.joint;
-            } else {
-                bg = (e.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
-            }
-            // =========================
-
-            bars += `<div class="event-bar ${e.isTodo&&e.done?'done':''}" style="background-color:${bg}">${e.title}</div>`;
-        });
-        if(dayEvents.length > 3) {
-            bars += `<div class="more-events">+${dayEvents.length-3}</div>`;
-        }
-
-        html += `<div class="big-cal-cell ${isToday?'today':''}" id="big-cal-day-${d}" onclick="window.selectBigCalendarDate(${y},${m},${d})">
-            <div class="big-cal-day-num">${d}</div>
-            <div class="w-full px-1 space-y-px">${bars}</div>
-        </div>`;
-    }
-    
-    const grid = document.getElementById('big-cal-grid');
-    if(grid) grid.innerHTML = html;
-};
 
 document.addEventListener('DOMContentLoaded', () => {
   safeRun(() => {
@@ -2257,11 +2091,22 @@ document.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
     }
 
-    // ⭐ 初始化 Active Tab 指示線顏色
-    document.documentElement.style.setProperty(
-      '--active-tab-color',
-      roleColors[currentUserRole]
-    );
+    // 初始化介面
+    window.updateRoleUI();
+
+    // === 新增：啟動時檢查 ===
+    if (!currentUserRole) {
+        // 如果沒有身分，直接跳轉到設定頁
+        window.switchTab('settings');
+        // 顯示提示
+        setTimeout(() => window.showToast('歡迎！請先選擇您的身分 👋'), 500);
+    } else {
+        // 有身分，正常設定顏色
+        document.documentElement.style.setProperty(
+          '--active-tab-color',
+          roleColors[currentUserRole]
+        );
+    }
 
     if (db) {
       initApp(db);
@@ -2269,7 +2114,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 'bootstrap');
 });
 
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.protocol === 'http:')) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then(reg => console.log('SW registered', reg))
@@ -2288,171 +2133,7 @@ document.addEventListener('visibilitychange', () => {
     }, 'resume');
   }
 });
-window.clearDate = function() {
-    // 1. 如果是待辦事項 (todo)
-    if (calTargetInput === 'todo') {
-        // 清空日期與時間的隱藏值
-        document.getElementById('input-date-todo').value = '';
-        document.getElementById('input-time-todo').value = '';
-        
-        // 使用現有的 helper 函式來重置顯示文字 (變回「請選擇」)
-        if (window.updateDateDisplay) window.updateDateDisplay('todo', '');
-        if (window.updateTimeDisplay) window.updateTimeDisplay('todo', '');
-    } 
-    // 2. 如果是其他 (例如一般行程，雖然通常必填，但也提供清除功能)
-    else {
-        const el = document.getElementById(`input-date-${calTargetInput}`);
-        if (el) el.value = '';
-        if (window.updateDateDisplay) window.updateDateDisplay(calTargetInput, '');
-        
-        // 如果是開始日期被清除，可能需要連動結束日期檢查，但因為是清空，暫不處理自動計算
-    }
 
-    // 3. 關閉視窗
-    window.closeCalendar();
-};
-/* =========================================
-   便利貼 (Status Note) 功能邏輯
-   ========================================= */
-
-// 1. 發送便利貼
-window.sendNote = function() {
-    const input = document.getElementById('note-input');
-    const text = input.value.trim();
-
-    if (!text) return;
-
-    // 寫入資料庫 (collection: 'notes', docId: role)
-    // 這樣同一個人永遠只有一則最新的 note
-    db.collection('notes').doc(currentUserRole).set({
-        text: text,
-        timestamp: new Date().toISOString(),
-        creator: currentUserRole
-    }).then(() => {
-        window.showToast('心情已發送 💬');
-        input.value = ''; // 清空輸入框
-        input.blur(); // 收起鍵盤
-    }).catch(err => {
-        console.error(err);
-        window.showToast('發送失敗');
-    });
-};
-
-// 2. 聚焦輸入框 (點擊頭像時觸發)
-window.setNoteInputFocus = function() {
-    const input = document.getElementById('note-input');
-    input.focus();
-};
-
-// 3. 渲染便利貼 (修正：橫向對話氣泡)
-// 3. 渲染便利貼 (修正：垂直置中動畫)
-// 新增：計算相對時間的輔助函式
-window.getRelativeTimeStr = function(timestamp) {
-    const now = new Date();
-    const date = new Date(timestamp);
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-
-    if (diffMins < 1) return '剛剛';
-    if (diffMins < 60) return `${diffMins}分鐘前`;
-    if (diffHours < 24) return `${diffHours}小時前`;
-    return '1天前';
-};
-
-// 3. 渲染便利貼 (更新：加入時間顯示與 7字寬度控制)
-window.renderNoteBubble = function(role, data) {
-    const bubbleId = `note-bubble-${role}`;
-    const textId = `note-text-${role}`;
-    const dotId = `status-dot-${role}`;
-    const timeId = `note-time-${role}`; // 新增時間 ID
-    
-    const bubbleEl = document.getElementById(bubbleId);
-    const textEl = document.getElementById(textId);
-    const dotEl = document.getElementById(dotId);
-    const timeEl = document.getElementById(timeId);
-
-    if (!bubbleEl || !textEl) return;
-
-    if (!data || !data.text || !data.timestamp) {
-        hideBubble(bubbleEl, dotEl, timeEl, role);
-        return;
-    }
-
-    const now = new Date();
-    const noteTime = new Date(data.timestamp);
-    const diffHours = (now - noteTime) / (1000 * 60 * 60);
-
-    if (diffHours < 24) {
-        textEl.textContent = data.text;
-        if(timeEl) timeEl.textContent = window.getRelativeTimeStr(data.timestamp);
-        
-        // 顯示
-        bubbleEl.classList.remove('hidden');
-        if(dotEl) dotEl.classList.remove('hidden');
-        if(timeEl) timeEl.classList.remove('opacity-0'); // 顯示時間
-        
-        // 動畫：左右滑入
-        requestAnimationFrame(() => {
-            bubbleEl.classList.remove('opacity-0');
-            if (role === 'haohao') {
-                bubbleEl.classList.remove('-translate-x-2'); 
-            } else {
-                bubbleEl.classList.remove('translate-x-2'); 
-            }
-        });
-    } else {
-        hideBubble(bubbleEl, dotEl, timeEl, role);
-    }
-};
-
-// 更新隱藏函式，加入時間標籤的處理
-function hideBubble(bubbleEl, dotEl, timeEl, role) {
-    bubbleEl.classList.add('opacity-0');
-    if (role === 'haohao') {
-        bubbleEl.classList.add('-translate-x-2');
-    } else {
-        bubbleEl.classList.add('translate-x-2');
-    }
-    
-    if(dotEl) dotEl.classList.add('hidden');
-    if(timeEl) timeEl.classList.add('opacity-0'); // 隱藏時間
-    
-    setTimeout(() => {
-        bubbleEl.classList.add('hidden');
-    }, 300);
-}
-
-// 另外別忘了更新刪除函式，也要順便隱藏時間
-window.deleteNote = function(role) {
-    db.collection('notes').doc(role).delete()
-        .then(() => {
-            const bubbleId = `note-bubble-${role}`;
-            const bubbleEl = document.getElementById(bubbleId);
-            const dotId = `status-dot-${role}`;
-            const dotEl = document.getElementById(dotId);
-            const timeId = `note-time-${role}`;
-            const timeEl = document.getElementById(timeId);
-            
-            if (bubbleEl) bubbleEl.classList.add('opacity-0', 'hidden');
-            if (dotEl) dotEl.classList.add('hidden');
-            if (timeEl) timeEl.classList.add('opacity-0');
-            
-            window.showToast('心情已刪除 💨');
-        })
-        .catch(err => {
-            console.error(err);
-            window.showToast('刪除失敗');
-        });
-};
-
-// 4. 更新頭像顏色 (配合設定頁面的顏色)
-window.syncNoteAvatarColors = function() {
-    const h = document.getElementById('avatar-note-haohao');
-    const m = document.getElementById('avatar-note-maomao');
-    if(h) h.style.backgroundColor = roleColors.haohao;
-    if(m) m.style.backgroundColor = roleColors.maomao;
-};
 </script>
 
 </body>
