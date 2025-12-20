@@ -1438,6 +1438,7 @@ window.saveEvent = function () {
       title,
       startDate,
       timestamp,
+      allDay: isAllDay, // 寫入全天旗標
       isJoint: document.getElementById('check-partner')?.checked || false,
       status: document.getElementById('input-status')?.value || 'confirmed',
       note: document.getElementById('input-note')?.value || '',
@@ -2093,6 +2094,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 初始化介面
     window.updateRoleUI();
+    
+    // === 新增這行：啟動時同步設定頁的顏色圈圈 ===
+    window.updateSettingsColorUI();
+    // ==========================================
 
     // === 新增：啟動時檢查 ===
     if (!currentUserRole) {
