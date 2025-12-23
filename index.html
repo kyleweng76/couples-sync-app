@@ -52,7 +52,6 @@
         }
         .page-content.active { display: block; }
         
-        /* 修改：Padding Top 統一為 70px，避免切換時跳動 */
         #page-calendar.active {
             display: flex;
             flex-direction: column;
@@ -174,6 +173,41 @@
         .status-tag { display: inline-block; padding: 1px 5px; border-radius: 4px; font-size: 10px; font-weight: bold; vertical-align: 1px; line-height: 1.4; flex-shrink: 0; }
         .status-tag.tbc { border: 1px solid #f59e0b; color: #f59e0b; background: #fffbeb; }
         .status-tag.tbd { border: 1px dashed #ef4444; color: #ef4444; background: #fef2f2; }
+        
+        .recur-btn {
+            padding: 6px 12px;
+            font-size: 13px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            color: #6b7280;
+            background: white;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .recur-btn.active {
+            background-color: #ecfdf5;
+            border-color: #2cc998;
+            color: #2cc998;
+            font-weight: bold;
+        }
+        .day-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid #e5e7eb;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .day-circle.active {
+            background-color: #2cc998;
+            border-color: #2cc998;
+            color: white;
+            font-weight: bold;
+        }
         
         input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 
@@ -727,6 +761,45 @@
             />
           </div>
 
+          <!-- Recurrence (New!) -->
+          <div class="bg-white border border-gray-200 rounded-xl p-4">
+             <div class="flex justify-between items-center mb-3">
+                 <span class="text-sm text-gray-700 font-bold">重複設定</span>
+                 <input type="checkbox" id="check-recur-event" class="custom-checkbox" onchange="window.toggleRecurOptions('event')">
+             </div>
+             <div id="recur-options-event" class="hidden space-y-3 pt-2 border-t border-gray-100">
+                 <!-- Frequency -->
+                 <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                     <button type="button" class="recur-btn active flex-shrink-0" data-val="daily" onclick="window.selectRecurFreq('event', 'daily')">每天</button>
+                     <button type="button" class="recur-btn flex-shrink-0" data-val="weekly" onclick="window.selectRecurFreq('event', 'weekly')">每週</button>
+                     <button type="button" class="recur-btn flex-shrink-0" data-val="biweekly" onclick="window.selectRecurFreq('event', 'biweekly')">每兩週</button>
+                     <button type="button" class="recur-btn flex-shrink-0" data-val="monthly" onclick="window.selectRecurFreq('event', 'monthly')">每月</button>
+                     <button type="button" class="recur-btn flex-shrink-0" data-val="yearly" onclick="window.selectRecurFreq('event', 'yearly')">每年</button>
+                 </div>
+                 
+                 <!-- Weekly Days Selector -->
+                 <div id="recur-days-row-event" class="flex justify-between hidden">
+                     <button type="button" class="day-circle" onclick="window.toggleRecurDay(this)" data-d="0">日</button>
+                     <button type="button" class="day-circle" onclick="window.toggleRecurDay(this)" data-d="1">一</button>
+                     <button type="button" class="day-circle" onclick="window.toggleRecurDay(this)" data-d="2">二</button>
+                     <button type="button" class="day-circle" onclick="window.toggleRecurDay(this)" data-d="3">三</button>
+                     <button type="button" class="day-circle" onclick="window.toggleRecurDay(this)" data-d="4">四</button>
+                     <button type="button" class="day-circle" onclick="window.toggleRecurDay(this)" data-d="5">五</button>
+                     <button type="button" class="day-circle" onclick="window.toggleRecurDay(this)" data-d="6">六</button>
+                 </div>
+
+                 <!-- End Date (Fixed: Custom Picker) -->
+                 <div class="dt-row p-0 border-none" onclick="window.openCalendar('recur-event')">
+                     <div class="dt-label text-xs text-gray-400">結束重複</div>
+                     <div class="dt-value">
+                         <span id="display-date-recur-event" class="text-sm text-gray-600 bg-gray-50 rounded px-2 py-1">設定日期</span>
+                         <input type="hidden" id="input-date-recur-event">
+                     </div>
+                 </div>
+                 <p class="text-[10px] text-gray-400 text-center">將自動產生至結束日期的行程</p>
+             </div>
+          </div>
+
           <!-- Status -->
           <div class="bg-white rounded-xl p-4 border border-gray-200">
             <label class="text-xs font-bold text-gray-400 mb-2 block">狀態</label>
@@ -828,6 +901,45 @@
                 <div class="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between">
                     <span class="text-sm text-gray-700">共同待辦 (兩人可見)</span>
                     <input type="checkbox" id="todo-check-joint" class="custom-checkbox">
+                </div>
+
+                <!-- Recurrence (New! for Todo) -->
+                <div class="bg-white border border-gray-200 rounded-xl p-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-sm text-gray-700 font-bold">重複設定</span>
+                        <input type="checkbox" id="check-recur-todo" class="custom-checkbox" onchange="window.toggleRecurOptions('todo')">
+                    </div>
+                    <div id="recur-options-todo" class="hidden space-y-3 pt-2 border-t border-gray-100">
+                        <!-- Frequency -->
+                        <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                            <button type="button" class="recur-btn active flex-shrink-0" data-val="daily" onclick="window.selectRecurFreq('todo', 'daily')">每天</button>
+                            <button type="button" class="recur-btn flex-shrink-0" data-val="weekly" onclick="window.selectRecurFreq('todo', 'weekly')">每週</button>
+                            <button type="button" class="recur-btn flex-shrink-0" data-val="biweekly" onclick="window.selectRecurFreq('todo', 'biweekly')">每兩週</button>
+                            <button type="button" class="recur-btn flex-shrink-0" data-val="monthly" onclick="window.selectRecurFreq('todo', 'monthly')">每月</button>
+                            <button type="button" class="recur-btn flex-shrink-0" data-val="yearly" onclick="window.selectRecurFreq('todo', 'yearly')">每年</button>
+                        </div>
+                        
+                        <!-- Weekly Days Selector -->
+                        <div id="recur-days-row-todo" class="flex justify-between hidden">
+                            <button type="button" class="day-circle" onclick="window.toggleRecurDay(this)" data-d="0">日</button>
+                            <button type="button" class="day-circle" onclick="window.toggleRecurDay(this)" data-d="1">一</button>
+                            <button type="button" class="day-circle" onclick="window.toggleRecurDay(this)" data-d="2">二</button>
+                            <button type="button" class="day-circle" onclick="window.toggleRecurDay(this)" data-d="3">三</button>
+                            <button type="button" class="day-circle" onclick="window.toggleRecurDay(this)" data-d="4">四</button>
+                            <button type="button" class="day-circle" onclick="window.toggleRecurDay(this)" data-d="5">五</button>
+                            <button type="button" class="day-circle" onclick="window.toggleRecurDay(this)" data-d="6">六</button>
+                        </div>
+
+                        <!-- End Date (Fixed: Custom Picker) -->
+                        <div class="dt-row p-0 border-none" onclick="window.openCalendar('recur-todo')">
+                            <div class="dt-label text-xs text-gray-400">結束重複</div>
+                            <div class="dt-value">
+                                <span id="display-date-recur-todo" class="text-sm text-gray-600 bg-gray-50 rounded px-2 py-1">設定日期</span>
+                                <input type="hidden" id="input-date-recur-todo">
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-gray-400 text-center">將自動產生至結束日期的待辦</p>
+                    </div>
                 </div>
             </div>
 
@@ -940,6 +1052,9 @@
         let timePickerTarget = ''; // FIX: variable for time picker
         let deleteTarget = 'event'; // 'event' or 'todo'
         let noteToDelete = null;
+        
+        // Recurrence Variables
+        let currentRecurFreq = { event: 'daily', todo: 'daily' };
 
         const timeTreeColors = [ { name: "Emerald Green", hex: "#2cc998" }, { name: "Modern Cyan", hex: "#5cc2d1" }, { name: "Deep Sky Blue", hex: "#5ba3eb" }, { name: "Pastel Brown", hex: "#a68b75" }, { name: "Midnight Black", hex: "#333333" }, { name: "Apple Red", hex: "#e35651" }, { name: "French Rose", hex: "#e6688d" }, { name: "Coral Pink", hex: "#f29074" }, { name: "Bright Orange", hex: "#f7b546" }, { name: "Soft Violet", hex: "#9f82d1" } ];
         const moodMap = { 'charging': { icon: '⚡️', bg: 'bg-yellow-100', border: 'border-yellow-300' }, 'sleepy': { icon: '💤', bg: 'bg-blue-100', border: 'border-blue-300' }, 'love': { icon: '❤️', bg: 'bg-rose-100', border: 'border-rose-300' }, 'busy': { icon: '🔥', bg: 'bg-orange-100', border: 'border-orange-300' }, 'normal': { icon: '😶', bg: 'bg-gray-50', border: 'border-gray-100' } };
@@ -947,12 +1062,109 @@
         // --- 2. GLOBAL FUNCTION DEFINITIONS (Assigned to window immediately) ---
 
         // ==========================================
-        //  MISSING PICKER LOGIC (RE-ADDED)
+        //  RECURRENCE LOGIC (Added Here)
         // ==========================================
+        
+        window.toggleRecurOptions = function(type) {
+            const check = document.getElementById(`check-recur-${type}`);
+            const options = document.getElementById(`recur-options-${type}`);
+            if(check.checked) {
+                options.classList.remove('hidden');
+                // Set default end date to 3 months from now
+                const end = new Date();
+                end.setMonth(end.getMonth() + 3);
+                const dateStr = end.toISOString().split('T')[0];
+                document.getElementById(`input-date-recur-${type}`).value = dateStr;
+                window.updateDateDisplay(`recur-${type}`, dateStr);
+            } else {
+                options.classList.add('hidden');
+            }
+        };
+
+        window.selectRecurFreq = function(type, freq) {
+            currentRecurFreq[type] = freq;
+            const container = document.getElementById(`recur-options-${type}`);
+            const buttons = container.querySelectorAll('.recur-btn');
+            buttons.forEach(b => {
+                if(b.dataset.val === freq) b.classList.add('active');
+                else b.classList.remove('active');
+            });
+            
+            // Show/Hide Days Selector for Weekly/Biweekly
+            const daysRow = document.getElementById(`recur-days-row-${type}`);
+            if(freq === 'weekly' || freq === 'biweekly') {
+                daysRow.classList.remove('hidden');
+            } else {
+                daysRow.classList.add('hidden');
+            }
+        };
+
+        window.toggleRecurDay = function(el) {
+            el.classList.toggle('active');
+        };
+
+        // Utility: Generate recurring dates
+        window.generateRecurringDates = function(startDateStr, endDateStr, freq, selectedDays) {
+            const dates = [];
+            let current = new Date(startDateStr);
+            const end = new Date(endDateStr);
+            const startDay = current.getDate();
+            const startMonth = current.getMonth();
+            
+            // Safety: max 100 events to prevent browser hang
+            let limit = 100; 
+            
+            // Bi-weekly logic: Calculate week difference from start
+            const getWeekDiff = (d1, d2) => {
+                const oneJan = new Date(d1.getFullYear(), 0, 1);
+                const w1 = Math.ceil((((d1 - oneJan) / 86400000) + oneJan.getDay() + 1) / 7);
+                const oneJan2 = new Date(d2.getFullYear(), 0, 1);
+                const w2 = Math.ceil((((d2 - oneJan2) / 86400000) + oneJan2.getDay() + 1) / 7);
+                // Simplify: just diff in ms / weeks
+                return Math.floor((d2 - d1) / (7 * 24 * 60 * 60 * 1000));
+            };
+
+            while(current <= end && limit > 0) {
+                let addIt = false;
+                
+                if (freq === 'daily') {
+                    addIt = true;
+                } else if (freq === 'weekly') {
+                    // Check if current day is in selectedDays
+                    if (selectedDays.includes(current.getDay())) addIt = true;
+                } else if (freq === 'biweekly') {
+                    // Check week parity relative to start
+                    const weekDiff = getWeekDiff(new Date(startDateStr), current);
+                    if (weekDiff % 2 === 0 && selectedDays.includes(current.getDay())) {
+                        addIt = true;
+                    }
+                } else if (freq === 'monthly') {
+                    if (current.getDate() === startDay) addIt = true;
+                } else if (freq === 'yearly') {
+                    if (current.getMonth() === startMonth && current.getDate() === startDay) addIt = true;
+                }
+
+                if (addIt) {
+                    dates.push(new Date(current));
+                    limit--;
+                }
+
+                // Increment
+                if(freq === 'monthly') {
+                    current.setMonth(current.getMonth() + 1);
+                } else if (freq === 'yearly') {
+                    current.setFullYear(current.getFullYear() + 1);
+                } else {
+                    // Daily, Weekly, Biweekly -> Increment by day to catch multiple days/week
+                    current.setDate(current.getDate() + 1);
+                }
+            }
+            return dates;
+        };
 
         // --- Calendar Picker ---
         window.openCalendar = function(type) {
-            calTargetInput = type; // 'start', 'end', 'todo'
+            calTargetInput = type; // 'start', 'end', 'todo', 'recur-event', 'recur-todo'
             
             // Get current value
             const val = document.getElementById(`input-date-${type}`).value;
@@ -1156,10 +1368,11 @@
         
         window.updateDateDisplay = function(type, dateStr) {
             const displayEl = (type === 'recur') ? document.getElementById('display-recur-until') : (type === 'todo' ? document.getElementById('display-date-todo') : document.getElementById(`display-date-${type}`));
+            
             if(!displayEl) return;
             if(!dateStr) { 
                 // Empty state styling
-                if (type === 'recur') displayEl.textContent = "設定日期"; 
+                if (type === 'recur' || type.startsWith('recur-')) displayEl.textContent = "設定日期"; 
                 else if (type === 'todo') {
                     displayEl.textContent = "請選擇"; 
                     displayEl.classList.add('dt-text-placeholder');
@@ -1179,7 +1392,7 @@
 
             const date = new Date(dateStr); 
             const weekDays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
-            if (type === 'recur' || type === 'todo') displayEl.textContent = `${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()} (${weekDays[date.getDay()]})`;
+            if (type === 'recur' || type === 'todo' || type.startsWith('recur-')) displayEl.textContent = `${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()} (${weekDays[date.getDay()]})`;
             else displayEl.textContent = `${date.getFullYear()}年${date.getMonth()+1}月${date.getDate()}日(${weekDays[date.getDay()]})`;
         };
 
@@ -1679,13 +1892,12 @@ window.saveEvent = function () {
     }
 
     const time = document.getElementById('input-time-start')?.value || '00:00'; // Default time if missing
+    // FIX: 如果全天行程，timestamp 以 startDateT00:00 為準
     const timestamp = new Date(`${startDate}T${time}:00`).toISOString();
     const isAllDay = !document.getElementById('input-time-start').value;
 
-    const data = {
+    const baseData = {
       title,
-      startDate,
-      timestamp,
       allDay: isAllDay, // 寫入全天旗標
       isJoint: document.getElementById('check-partner')?.checked || false,
       status: document.getElementById('input-status')?.value || 'confirmed',
@@ -1696,27 +1908,84 @@ window.saveEvent = function () {
       createdAt: new Date().toISOString()
     };
 
-    const req = editingEventId
-      ? db.collection('events').doc(editingEventId).update(data)
-      : db.collection('events').add(data);
-
-    req
-      .then(() => {
-        window.showToast('行程已儲存');
-        window.closeAddModal();
-      })
-      .catch(err => {
-        console.error(err);
-        window.showToast('儲存失敗');
-      })
-      .finally(() => {
-        window.__savingEvent = false;
-        if (saveBtn) {
-          saveBtn.disabled = false;
-          saveBtn.textContent = '保存';
-          saveBtn.classList.remove('opacity-60');
+    // --- RECURRENCE LOGIC ---
+    const isRecur = document.getElementById('check-recur-event').checked;
+    
+    if (editingEventId && !isRecur) {
+        // Edit Mode (Single Event)
+        db.collection('events').doc(editingEventId).update({
+            ...baseData,
+            startDate,
+            timestamp
+        }).then(() => {
+            window.showToast('行程已儲存');
+            window.closeAddModal();
+        }).catch(err => { console.error(err); window.showToast('儲存失敗'); })
+        .finally(() => {
+            window.__savingEvent = false;
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '保存'; saveBtn.classList.remove('opacity-60'); }
+        });
+    } else {
+        // Add Mode (Single or Recurring)
+        let batchEvents = [];
+        
+        if (isRecur) {
+            // FIX: Read from the new custom picker hidden input
+            const endDateStr = document.getElementById('input-date-recur-event').value;
+            if (!endDateStr) {
+                window.showToast('請選擇重複結束日期');
+                throw new Error('Missing end date');
+            }
+            
+            // Get selected days for weekly/biweekly
+            const dayBtns = document.querySelectorAll('#recur-days-row-event .day-circle.active');
+            const selectedDays = Array.from(dayBtns).map(b => parseInt(b.dataset.d));
+            
+            // Generate dates
+            const dateList = window.generateRecurringDates(startDate, endDateStr, currentRecurFreq.event, selectedDays);
+            
+            if (dateList.length === 0) {
+                 window.showToast('區間內沒有符合的日期');
+                 throw new Error('No dates generated');
+            }
+            
+            const groupId = crypto.randomUUID(); // Group ID for future reference
+            
+            batchEvents = dateList.map(d => {
+                const dStr = d.toISOString().split('T')[0];
+                const ts = new Date(`${dStr}T${time}:00`).toISOString();
+                return {
+                    ...baseData,
+                    startDate: dStr,
+                    timestamp: ts,
+                    groupId: groupId
+                };
+            });
+            
+        } else {
+            // Single Event
+            batchEvents.push({
+                ...baseData,
+                startDate,
+                timestamp
+            });
         }
-      });
+
+        // Batch Save
+        const batchPromise = Promise.all(batchEvents.map(evt => db.collection('events').add(evt)));
+        
+        batchPromise.then(() => {
+            const msg = isRecur ? `已建立 ${batchEvents.length} 個重複行程` : '行程已儲存';
+            window.showToast(msg);
+            window.closeAddModal();
+        }).catch(err => {
+            console.error(err);
+            window.showToast('儲存失敗');
+        }).finally(() => {
+            window.__savingEvent = false;
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '保存'; saveBtn.classList.remove('opacity-60'); }
+        });
+    }
 
   } catch (err) {
     window.__savingEvent = false;
@@ -1774,6 +2043,13 @@ window.openAddModal = function () {
   // 一起 / 不一起
   const partner = document.getElementById('check-partner');
   partner.checked = false;
+  
+  // 重置重複選項
+  document.getElementById('check-recur-event').checked = false;
+  window.toggleRecurOptions('event');
+  // Reset buttons
+  window.selectRecurFreq('event', 'daily');
+  document.querySelectorAll('.day-circle').forEach(b => b.classList.remove('active'));
 
   // 狀態預設 confirmed
   window.setStatus('confirmed');
@@ -1844,6 +2120,10 @@ window.openEditModal = function (id) {
 
   // === 備註 ===
   document.getElementById('input-note').value = evt.note || '';
+  
+  // 編輯模式隱藏重複選項 (保持簡單)
+  document.getElementById('check-recur-event').checked = false;
+  window.toggleRecurOptions('event');
 
   // === 顏色邏輯（只保留資料，不碰 UI）===
   currentSelectedColor = evt.color || roleColors[evt.creator] || roleColors[currentUserRole];
@@ -1868,6 +2148,12 @@ window.openEditModal = function (id) {
     
     // FIX: 移除了對不存在元素 'todo-check-calendar' 的引用
     document.getElementById('todo-check-joint').checked = false; 
+    
+    // Reset recurrence
+    document.getElementById('check-recur-todo').checked = false;
+    window.toggleRecurOptions('todo');
+    window.selectRecurFreq('todo', 'daily');
+    document.querySelectorAll('.day-circle').forEach(b => b.classList.remove('active'));
     
     const btn=document.getElementById('btn-delete-todo'); if(btn) btn.classList.add('hidden'); const m = document.getElementById('add-todo-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); 
  };
@@ -1900,7 +2186,9 @@ window.openEditModal = function (id) {
             } 
             document.getElementById('todo-check-joint').checked = todo.isJoint; 
             
-            // FIX: 移除了對不存在元素 'todo-check-calendar' 的引用
+            // Edit mode: Hide recurrence options
+            document.getElementById('check-recur-todo').checked = false;
+            window.toggleRecurOptions('todo');
             
             const btn=document.getElementById('btn-delete-todo'); 
             if(btn) btn.classList.remove('hidden'); 
@@ -1930,71 +2218,105 @@ window.openEditModal = function (id) {
                 btn.style.opacity = '0.5';
             }
 
-            const date = document.getElementById('input-date-todo').value;
-            const time = document.getElementById('input-time-todo').value;
+            const date = document.getElementById('input-date-todo').value || null;
+            const time = document.getElementById('input-time-todo').value || null;
             const isJoint = document.getElementById('todo-check-joint').checked;
+            const isRecur = document.getElementById('check-recur-todo').checked;
             
             // 若有日期則自動標記需同步
             const addToCalendar = !!date; 
 
-            // === 修改重點 ===
-            // 我們必須「明確」設定日期欄位，即使是空的也要設為 null
-            // 這樣資料庫才會知道要把舊的日期刪掉
-            const todoData = {
+            const baseData = {
                 title,
                 done: false,
                 creator: currentUserRole,
                 isJoint: isJoint,
                 addToCalendar: addToCalendar,
-                // 如果 date 是空的，就設為 null；否則設為 date
-                dueDate: date || null,
-                // 如果 date 或 time 是空的，就設為 null
+                dueDate: date,
                 dueTime: (date && time) ? time : null,
-                // timestamp 也是一樣
-                timestamp: null,
-                // 注意：編輯時通常不更新 createdAt，以免順序亂掉，這裡我們維持原樣或可選擇不傳
+                timestamp: null, // calculated below
                 createdAt: new Date().toISOString() 
             };
 
-            // 計算 Timestamp (只有在有日期時才計算)
+            // Calculate base timestamp
             if (date) {
                 const tStr = time || "00:00";
-                todoData.timestamp = new Date(`${date}T${tStr}`).toISOString();
+                try { baseData.timestamp = new Date(`${date}T${tStr}`).toISOString(); } catch(e){}
             }
 
-            const onSuccess = (msg) => {
+            const finish = (msg) => {
                 if (typeof window.closeAddTodoModal === 'function') {
                     window.closeAddTodoModal();
-                } else {
-                    const m = document.getElementById('add-todo-modal');
-                    if(m) {
-                        m.classList.remove('visible');
-                        setTimeout(() => m.classList.add('hidden'), 200);
-                    }
-                    window.isSavingTodo = false;
                 }
                 window.showToast(msg);
+                window.isSavingTodo = false;
+                if (btn) { btn.textContent = originalText; btn.style.opacity = '1'; }
             };
-
+            
             const onError = (err) => {
                 console.error("Save Error:", err);
-                window.showToast('儲存失敗，請檢查網路');
+                window.showToast('儲存失敗');
                 window.isSavingTodo = false;
-                if (btn) {
-                    btn.textContent = originalText;
-                    btn.style.opacity = '1';
-                }
+                if (btn) { btn.textContent = originalText; btn.style.opacity = '1'; }
             };
 
-            // 執行寫入
-            if (editingTodoId) {
-                // 編輯模式：這裡傳送 null 會把資料庫裡的舊日期洗掉
-                db.collection('todos').doc(editingTodoId).update(todoData)
-                    .then(() => onSuccess('待辦事項已更新'))
+            // Recurrence Logic for Todos
+            if (editingTodoId && !isRecur) {
+                db.collection('todos').doc(editingTodoId).update(baseData)
+                    .then(() => finish('待辦事項已更新'))
+                    .catch(onError);
+            } else if (!isRecur) {
+                db.collection('todos').add(baseData)
+                    .then(() => finish('待辦事項已新增'))
                     .catch(onError);
             } else {
-                db.collection('todos').add(todoData)
-                    .then(() => onSuccess('待辦事項已新增'))
+                // Recurring Todo
+                if (!date) {
+                    window.showToast('重複待辦需要設定開始日期');
+                    window.isSavingTodo = false;
+                    if (btn) { btn.textContent = originalText; btn.style.opacity = '1'; }
+                    return;
+                }
+                
+                // FIX: Read from the new custom picker hidden input
+                const endDateStr = document.getElementById('input-date-recur-todo').value;
+                if (!endDateStr) {
+                    window.showToast('請選擇重複結束日期');
+                    window.isSavingTodo = false;
+                    if (btn) { btn.textContent = originalText; btn.style.opacity = '1'; }
+                    return;
+                }
+
+                // Get selected days
+                const dayBtns = document.querySelectorAll('#recur-days-row-todo .day-circle.active');
+                const selectedDays = Array.from(dayBtns).map(b => parseInt(b.dataset.d));
+
+                const dateList = window.generateRecurringDates(date, endDateStr, currentRecurFreq.todo, selectedDays);
+                
+                if (dateList.length === 0) {
+                     window.showToast('區間內沒有符合的日期');
+                     window.isSavingTodo = false;
+                     if (btn) { btn.textContent = originalText; btn.style.opacity = '1'; }
+                     return;
+                }
+
+                const groupId = crypto.randomUUID();
+                const batchEvents = dateList.map(d => {
+                    const dStr = d.toISOString().split('T')[0];
+                    let ts = null;
+                    if(time) ts = new Date(`${dStr}T${time}`).toISOString();
+                    else ts = new Date(`${dStr}T00:00`).toISOString();
+
+                    return {
+                        ...baseData,
+                        dueDate: dStr,
+                        timestamp: ts,
+                        groupId: groupId
+                    };
+                });
+
+                Promise.all(batchEvents.map(evt => db.collection('todos').add(evt)))
+                    .then(() => finish(`已建立 ${batchEvents.length} 個重複待辦`))
                     .catch(onError);
             }
         };
@@ -2229,23 +2551,31 @@ window.openEditModal = function (id) {
         window.switchCalendarView = function(mode) {
             currentViewMode = mode;
             const vList = document.getElementById('calendar-view-list');
-            const vMonth = document.getElementById('calendar-view-month');
+            // 注意：vMonth (calendar-view-month) 現在是父容器，不應該被隱藏
             const bList = document.getElementById('btn-view-list');
             const bMonth = document.getElementById('btn-view-month');
             const calendarViewMonthContainer = document.getElementById('calendar-view-month-container');
             
             if(mode === 'list') {
                 vList.classList.remove('hidden');
-                vMonth.classList.add('hidden');
-                calendarViewMonthContainer.classList.add('hidden');
+                // FIX: 不要隱藏父容器 vMonth，否則列表也會不見
+                // vMonth.classList.add('hidden'); 
+                
+                // 隱藏月曆內容
+                if(calendarViewMonthContainer) calendarViewMonthContainer.classList.add('hidden');
+                
                 bList.classList.add('bg-white','shadow-sm','text-ttgreen','font-bold');
                 bList.classList.remove('text-gray-500','font-medium');
                 bMonth.classList.remove('bg-white','shadow-sm','text-ttgreen','font-bold');
                 bMonth.classList.add('text-gray-500','font-medium');
             } else {
                 vList.classList.add('hidden');
-                vMonth.classList.remove('hidden');
-                calendarViewMonthContainer.classList.remove('hidden');
+                // FIX: 同上
+                // vMonth.classList.remove('hidden');
+                
+                // 顯示月曆內容
+                if(calendarViewMonthContainer) calendarViewMonthContainer.classList.remove('hidden');
+                
                 bMonth.classList.add('bg-white','shadow-sm','text-ttgreen','font-bold');
                 bMonth.classList.remove('text-gray-500','font-medium');
                 bList.classList.remove('bg-white','shadow-sm','text-ttgreen','font-bold');
@@ -2296,6 +2626,9 @@ window.openEditModal = function (id) {
             }, {passive: true});
 
             el.addEventListener('touchend', e => {
+                // FIX: 只有在月曆模式下才啟用滑動切換
+                if (currentViewMode !== 'month') return;
+
                 const touchEndX = e.changedTouches[0].screenX;
                 const touchEndY = e.changedTouches[0].screenY;
                 
