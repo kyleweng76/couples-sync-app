@@ -731,14 +731,24 @@
                <input type="hidden" id="input-date-start">
              </div>
 
-             <!-- Time -->
+             <!-- Time (Start) -->
             <div class="dt-row border-t border-gray-50 dt-wrapper-time" onclick="window.openTimePicker('start')">
-              <div class="dt-label">時間</div>
+              <div class="dt-label">開始時間</div>
               <div class="dt-value group">
                 <span id="display-time-start" class="dt-text-placeholder transition-colors">請選擇</span>
                 <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 ml-1 group-active:text-gray-500"></i>
               </div>
               <input type="hidden" id="input-time-start" value="">
+            </div>
+            
+            <!-- Time (End) - New! -->
+            <div class="dt-row border-t border-gray-50 dt-wrapper-time" onclick="window.openTimePicker('end')">
+              <div class="dt-label">結束時間</div>
+              <div class="dt-value group">
+                <span id="display-time-end" class="dt-text-placeholder transition-colors">請選擇</span>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 ml-1 group-active:text-gray-500"></i>
+              </div>
+              <input type="hidden" id="input-time-end" value="">
             </div>
 
             <!-- Location -->
@@ -886,14 +896,24 @@
                         <input type="hidden" id="input-date-todo">
                     </div>
                     
-                    <!-- Time -->
+                    <!-- Time (Start) -->
                     <div class="dt-row border-t border-gray-50 dt-wrapper-time" onclick="window.openTimePicker('todo')">
-                        <div class="dt-label">時間</div>
+                        <div class="dt-label">開始時間</div>
                         <div class="dt-value group">
                             <span id="display-time-todo" class="dt-text-placeholder transition-colors">請選擇</span>
                             <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 ml-1 group-active:text-gray-500"></i>
                         </div>
                         <input type="hidden" id="input-time-todo">
+                    </div>
+                    
+                    <!-- Time (End) - New! -->
+                    <div class="dt-row border-t border-gray-50 dt-wrapper-time" onclick="window.openTimePicker('todo-end')">
+                        <div class="dt-label">結束時間</div>
+                        <div class="dt-value group">
+                            <span id="display-time-todo-end" class="dt-text-placeholder transition-colors">請選擇</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 ml-1 group-active:text-gray-500"></i>
+                        </div>
+                        <input type="hidden" id="input-time-todo-end">
                     </div>
                 </div>
 
@@ -1312,6 +1332,11 @@
             document.getElementById(`input-time-${timePickerTarget}`).value = timeStr;
             window.updateTimeDisplay(timePickerTarget, timeStr);
             window.closeTimePicker();
+            
+            // Auto Update End Time logic
+            if (timePickerTarget === 'start' || timePickerTarget === 'todo') {
+                if (window.autoUpdateEnd) window.autoUpdateEnd();
+            }
         };
 
         window.clearTime = function() {
@@ -1416,29 +1441,34 @@
         // FIX: Safer Auto Update
         window.autoUpdateEnd = function() { 
             try {
-                const sD = document.getElementById('input-date-start')?.value; 
-                const sT = document.getElementById('input-time-start')?.value; 
-                if(!sD || !sT) return; 
+                // Determine source: Event or Todo
+                let sT, endInputT, endDisplayType;
                 
-                // Safe Check: If end input doesn't exist, don't crash
-                const endInputD = document.getElementById('input-date-end');
-                const endInputT = document.getElementById('input-time-end');
-                
-                if (!endInputD || !endInputT) return;
+                // Try Event Inputs first
+                if (document.getElementById('input-time-start') && document.getElementById('input-time-start').offsetParent !== null) {
+                    sT = document.getElementById('input-time-start').value;
+                    endInputT = document.getElementById('input-time-end');
+                    endDisplayType = 'end';
+                } 
+                // Try Todo Inputs
+                else if (document.getElementById('input-time-todo') && document.getElementById('input-time-todo').offsetParent !== null) {
+                    sT = document.getElementById('input-time-todo').value;
+                    endInputT = document.getElementById('input-time-todo-end');
+                    endDisplayType = 'todo-end';
+                }
 
-                const start = new Date(`${sD}T${sT}`); 
-                const end = new Date(start.getTime() + 3600000); 
-                const eD = end.toISOString().split('T')[0]; 
-                const eT = end.toTimeString().substring(0,5); 
+                if (!sT || !endInputT) return;
+
+                // Add 1 hour logic
+                const [h, m] = sT.split(':').map(Number);
+                const endH = (h + 1) % 24;
+                const endTStr = `${String(endH).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
                 
-                endInputD.value = eD; 
-                endInputT.value = eT; 
-                
-                const dispEndT = document.getElementById('display-time-end');
-                if(dispEndT) dispEndT.value = eT; 
-                
-                window.updateDateDisplay('end', eD); 
-                if(window.checkRecurValidity) window.checkRecurValidity(); 
+                // Only update if empty
+                if (!endInputT.value) {
+                     endInputT.value = endTStr;
+                     window.updateTimeDisplay(endDisplayType, endTStr);
+                }
             } catch (e) {
                 console.warn("Auto update end failed silently", e);
             }
@@ -1682,11 +1712,18 @@
                 let html = '';
                 upcoming.forEach(item => {
                     const date = new Date(item.timestamp);
-                    const timeStr = item.allDay ? "All Day" : date.toLocaleTimeString('zh-TW', {
+                    let timeStr = item.allDay ? "All Day" : date.toLocaleTimeString('zh-TW', {
                         hour: '2-digit',
                         minute: '2-digit',
                         hour12: false
                     });
+                    
+                    // Show End Time if exists
+                    const endTime = item.endTime || item.dueTimeEnd;
+                    if (endTime && !item.allDay) {
+                        timeStr += ` - ${endTime}`;
+                    }
+
                     const dateStr = date.toLocaleDateString('zh-TW', {
                         month: 'numeric',
                         day: 'numeric',
@@ -1745,11 +1782,17 @@
             items.forEach(e => {
                 const date = new Date(e.timestamp);
                 if (isNaN(date)) return;
-                const timeStr = e.allDay ? "All Day" : date.toLocaleTimeString('zh-TW', {
+                let timeStr = e.allDay ? "All Day" : date.toLocaleTimeString('zh-TW', {
                     hour: '2-digit',
                     minute: '2-digit',
                     hour12: false
                 });
+
+                // Show End Time if exists
+                const endTime = e.endTime || e.dueTimeEnd;
+                if (endTime && !e.allDay) {
+                    timeStr += ` - ${endTime}`;
+                }
 
                 // === 修改處：統一計算顏色邏輯 ===
                 // 優先判斷是否為共同行程，是則強制使用 joint 顏色
@@ -1895,6 +1938,9 @@ window.saveEvent = function () {
     // FIX: 如果全天行程，timestamp 以 startDateT00:00 為準
     const timestamp = new Date(`${startDate}T${time}:00`).toISOString();
     const isAllDay = !document.getElementById('input-time-start').value;
+    
+    // NEW: Get End Time
+    const endTime = document.getElementById('input-time-end')?.value || '';
 
     const baseData = {
       title,
@@ -1905,6 +1951,7 @@ window.saveEvent = function () {
       creator: currentUserRole,
       color: currentSelectedColor,
       location: document.getElementById('input-location')?.value || '',
+      endTime: endTime, // Save End Time
       createdAt: new Date().toISOString()
     };
 
@@ -2037,6 +2084,16 @@ window.openAddModal = function () {
       td.classList.remove('dt-text-value');
   }
 
+  // End Time Reset
+  const te = document.getElementById('input-time-end');
+  if (te) te.value = '';
+  const tde = document.getElementById('display-time-end');
+  if (tde) {
+      tde.textContent = '請選擇';
+      tde.classList.add('dt-text-placeholder');
+      tde.classList.remove('dt-text-value');
+  }
+
   const loc = document.getElementById('input-location');
   if (loc) loc.value = '';
 
@@ -2098,6 +2155,7 @@ window.openEditModal = function (id) {
       timeInput.value = '';
       // 2. 顯示文字設為預設 (通常是 '請選擇'，這代表無時間=全天)
       window.updateTimeDisplay('start', ''); 
+      window.updateTimeDisplay('end', ''); // also clear end time display
   } else if (evt.timestamp) {
       // 3. 一般行程，解析時間並顯示
       const d = new Date(evt.timestamp);
@@ -2106,6 +2164,15 @@ window.openEditModal = function (id) {
       const timeStr = `${hours}:${minutes}`;
       timeInput.value = timeStr;
       window.updateTimeDisplay('start', timeStr);
+  }
+
+  // === 結束時間 ===
+  if (evt.endTime) {
+      document.getElementById('input-time-end').value = evt.endTime;
+      window.updateTimeDisplay('end', evt.endTime);
+  } else {
+      document.getElementById('input-time-end').value = '';
+      window.updateTimeDisplay('end', '');
   }
   
   // === 地點 ===
@@ -2146,6 +2213,11 @@ window.openEditModal = function (id) {
     const dd = document.getElementById('display-date-todo'); dd.textContent = '請選擇'; dd.classList.add('dt-text-placeholder'); dd.classList.remove('dt-text-value');
     const dt = document.getElementById('display-time-todo'); dt.textContent = '請選擇'; dt.classList.add('dt-text-placeholder'); dt.classList.remove('dt-text-value');
     
+    // Reset End Time
+    document.getElementById('input-time-todo-end').value = '';
+    const dte = document.getElementById('display-time-todo-end');
+    dte.textContent = '請選擇'; dte.classList.add('dt-text-placeholder'); dte.classList.remove('dt-text-value');
+
     // FIX: 移除了對不存在元素 'todo-check-calendar' 的引用
     document.getElementById('todo-check-joint').checked = false; 
     
@@ -2183,7 +2255,17 @@ window.openEditModal = function (id) {
             } else { 
                 document.getElementById('input-time-todo').value = ''; 
                 window.updateTimeDisplay('todo', ''); 
-            } 
+            }
+
+            // End Time
+            if (todo.dueTimeEnd) {
+                document.getElementById('input-time-todo-end').value = todo.dueTimeEnd;
+                window.updateTimeDisplay('todo-end', todo.dueTimeEnd);
+            } else {
+                document.getElementById('input-time-todo-end').value = '';
+                window.updateTimeDisplay('todo-end', '');
+            }
+
             document.getElementById('todo-check-joint').checked = todo.isJoint; 
             
             // Edit mode: Hide recurrence options
@@ -2223,6 +2305,9 @@ window.openEditModal = function (id) {
             const isJoint = document.getElementById('todo-check-joint').checked;
             const isRecur = document.getElementById('check-recur-todo').checked;
             
+            // New: End Time
+            const timeEnd = document.getElementById('input-time-todo-end').value || null;
+
             // 若有日期則自動標記需同步
             const addToCalendar = !!date; 
 
@@ -2234,6 +2319,7 @@ window.openEditModal = function (id) {
                 addToCalendar: addToCalendar,
                 dueDate: date,
                 dueTime: (date && time) ? time : null,
+                dueTimeEnd: (date && timeEnd) ? timeEnd : null, // Save End Time
                 timestamp: null, // calculated below
                 createdAt: new Date().toISOString() 
             };
