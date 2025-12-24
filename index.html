@@ -88,23 +88,22 @@
         .dt-wrapper-date { flex: 2; position: relative; }
         .dt-wrapper-time { flex: 1; position: relative; }
 
-        /* ===== UPDATED: Unified Input Row Styles ===== */
+        /* Unified Input Row Styles */
         .dt-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 16px;
             background: white;
-            /* Border logic handled by HTML classes now for better control */
             cursor: pointer;
             transition: background-color 0.2s;
         }
         .dt-row:active { background-color: #f9fafb; }
         
         .dt-label {
-            font-size: 15px; /* Slightly larger */
+            font-size: 15px; 
             font-weight: 500;
-            color: #1f2937; /* Darker gray */
+            color: #1f2937; 
             min-width: 60px;
         }
         
@@ -117,7 +116,6 @@
             overflow: hidden;
         }
         
-        /* Unified Input Style */
         .dt-input {
             width: 100%;
             text-align: right;
@@ -129,20 +127,10 @@
             padding: 0;
             font-weight: 400;
         }
-        .dt-input::placeholder {
-            color: #9ca3af; /* Matches the chevron color */
-        }
+        .dt-input::placeholder { color: #9ca3af; }
         
-        /* Text placeholder for Date/Time spans */
-        .dt-text-placeholder {
-            color: #9ca3af;
-            font-size: 15px;
-        }
-        .dt-text-value {
-            color: #1f2937; /* Dark */
-            font-size: 15px;
-            font-weight: 500;
-        }
+        .dt-text-placeholder { color: #9ca3af; font-size: 15px; }
+        .dt-text-value { color: #1f2937; font-size: 15px; font-weight: 500; }
 
         /* Fixed Time Dropdown Modal Style */
         .time-picker-modal-content {
@@ -209,39 +197,20 @@
             font-weight: bold;
         }
         
-        input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
-
-        /* Big Calendar View Styles */
-        .big-cal-header { font-size: 13px; color: #9ca3af; text-align: center; padding-bottom: 8px; font-weight: 500; }
-        .big-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background-color: #f3f4f6; border: 1px solid #f3f4f6; }
-        .big-cal-cell { 
-            background-color: white; 
-            min-height: 85px; 
-            padding: 2px; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            position: relative; 
-            cursor: pointer; 
-            overflow: hidden;
+        /* Event Bar Styles */
+        .event-bar { 
+            width: 100%; font-size: 9px; line-height: 1.2; padding: 2px 3px; border-radius: 2px; 
+            background-color: #2cc998; color: white; margin-bottom: 1px; white-space: nowrap; 
+            overflow: hidden; text-overflow: ellipsis; text-align: left; box-shadow: 0 1px 1px rgba(0,0,0,0.05); 
         }
-        .big-cal-cell.today { background-color: #f8fafc; }
-        .big-cal-cell.selected { background-color: #ecfdf5; box-shadow: inset 0 0 0 2px #2cc998; }
-        .big-cal-day-num { 
-            font-size: 12px; 
-            font-weight: 500; 
-            color: #374151; 
-            margin-bottom: 2px; 
-            width: 20px; 
-            height: 20px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            border-radius: 50%; 
-        }
-        .big-cal-cell.today .big-cal-day-num { background-color: #2cc998; color: white; }
-        .event-bar { width: 100%; font-size: 9px; line-height: 1.2; padding: 2px 3px; border-radius: 2px; background-color: #2cc998; color: white; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; box-shadow: 0 1px 1px rgba(0,0,0,0.05); }
         .event-bar.done { text-decoration: line-through; opacity: 0.6; }
+        
+        /* Leave/Vacation Style (Hollow/Outlined) */
+        .event-bar.leave {
+            background-color: white !important;
+            border: 1px solid currentColor;
+            font-weight: bold;
+        }
         .more-events { font-size: 9px; color: #9ca3af; margin-top: 1px; }
 
         /* Custom Calendar Styles */
@@ -258,163 +227,42 @@
         .avatar-sm { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: white; font-weight: bold; border: 1px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         #toast-container { transition: opacity 0.3s ease; }
         #toast-container.visible { opacity: 1; }
-        /* ===== Calendar Grid Fix (7 columns align) ===== */
-        .calendar-grid {
-        display: grid;
-        grid-template-columns: repeat(7, minmax(0, 1fr));
-        }
-        /* ===== FIX: Calendar Picker Height ===== */
-        #calendar-picker-modal .calendar-grid {
-        min-height: auto;
-        }
-
-        #calendar-picker-modal #calendar-days {
-        min-height: unset;
-        }
-        /* ===== iOS-like Calendar Picker ===== */
-
-        /* 整個日期 grid 更緊湊 */
-        #calendar-picker-modal .calendar-grid {
-        gap: 6px;
-        }
-
-        /* 日期格子：圓形、無外框 */
-        #calendar-picker-modal .cal-day {
-        width: 36px;
-        height: 36px;
-        aspect-ratio: unset;
-        border-radius: 9999px;
-        font-size: 14px;
-        font-weight: 500;
-        transition: background-color 0.15s ease, color 0.15s ease;
-        }
-
-        /* Hover（像 iOS 輕觸） */
-        #calendar-picker-modal .cal-day:hover {
-        background-color: #f2f2f7;
-        }
-
-        /* 今天（iOS 常用「字色提示」） */
-        #calendar-picker-modal .cal-day.today {
-        color: #2cc998;
-        font-weight: 600;
-        }
-
-        /* 選中日期（iOS 核心） */
-        #calendar-picker-modal .cal-day.selected {
-        background-color: #2cc998;
-        color: white;
-        font-weight: 600;
-        }
-
-        /* 空白格完全不可點 */
-        #calendar-picker-modal .cal-day.empty {
-        pointer-events: none;
-        background: transparent;
-        }
-
-        /* 星期標題更像 iOS */
-        #calendar-picker-modal .cal-day-header {
-        font-size: 11px;
-        font-weight: 500;
-        color: #8e8e93;
-        }
-
-        /* 整個 modal 高度縮短 */
-        #calendar-picker-modal .relative {
-        padding-bottom: 12px;
-        }
-        /* ===== iOS Bottom Nav Touch Fix ===== */
-        nav .nav-item {
-        padding-bottom: 6px;
-        }
-        /* ===== iOS-like Bottom Tab Bounce ===== */
-
-        /* Tab 本體 */
-        nav .nav-item {
-        transition:
-            transform 0.12s ease-out,
-            background-color 0.12s ease-out;
-        border-radius: 12px;
-        }
-
-        /* iOS Safari：避免長按出現藍色遮罩 */
-        nav .nav-item {
-        -webkit-tap-highlight-color: transparent;
-        }
-        /* ===== iOS-like Bottom Tab (Icon Only Bounce) ===== */
-
-        /* icon 本體 */
-        nav .nav-item i {
-        transition: transform 0.12s ease-out;
-        will-change: transform;
-        }
-
-        /* 按下時：只有 icon 縮 */
-        nav .nav-item:active i {
-        transform: scale(0.85);
-        }
-
-        /* 目前頁：icon 微放大 */
-        nav .nav-item.active i {
-        transform: scale(1.1);
-        }
-
-        /* 文字完全不動（保險） */
-        nav .nav-item span {
-        transform: none !important;
-        }
-
-        /* iOS Safari 防藍色高亮 */
-        nav .nav-item {
-        -webkit-tap-highlight-color: transparent;
-        }
-        /* ===== iOS-like Active Tab Indicator ===== */
-
-        /* nav-item 變成定位容器 */
-        nav .nav-item {
-        position: relative;
-        }
-
-        /* 使用 CSS 變數控制顏色 */
-        nav .nav-item.active::after {
-        content: "";
-        position: absolute;
-        bottom: 2px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 20px;
-        height: 3px;
-        border-radius: 999px;
-        background-color: var(--active-tab-color, #2cc998);
-        }
+        
+        /* iOS-like Calendar Picker */
+        #calendar-picker-modal .calendar-grid { gap: 6px; min-height: auto; }
+        #calendar-picker-modal #calendar-days { min-height: unset; }
+        #calendar-picker-modal .cal-day { width: 36px; height: 36px; aspect-ratio: unset; border-radius: 9999px; font-size: 14px; font-weight: 500; transition: background-color 0.15s ease, color 0.15s ease; }
+        #calendar-picker-modal .cal-day:hover { background-color: #f2f2f7; }
+        #calendar-picker-modal .cal-day.today { color: #2cc998; font-weight: 600; }
+        #calendar-picker-modal .cal-day.selected { background-color: #2cc998; color: white; font-weight: 600; }
+        #calendar-picker-modal .cal-day.empty { pointer-events: none; background: transparent; }
+        #calendar-picker-modal .cal-day-header { font-size: 11px; font-weight: 500; color: #8e8e93; }
+        #calendar-picker-modal .relative { padding-bottom: 12px; }
+        
+        /* iOS Bottom Nav */
+        nav .nav-item { padding-bottom: 6px; transition: transform 0.12s ease-out, background-color 0.12s ease-out; border-radius: 12px; -webkit-tap-highlight-color: transparent; position: relative; }
+        nav .nav-item i { transition: transform 0.12s ease-out; will-change: transform; }
+        nav .nav-item:active i { transform: scale(0.85); }
+        nav .nav-item.active i { transform: scale(1.1); }
+        nav .nav-item span { transform: none !important; }
+        nav .nav-item.active::after { content: ""; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 20px; height: 3px; border-radius: 999px; background-color: var(--active-tab-color, #2cc998); }
     </style>
 </head>
 <body class="text-gray-700 h-screen flex flex-col overflow-hidden bg-white">
 
-    <!-- Header (修正版：標題放大，身分標籤移至右側) -->
+    <!-- Header -->
     <header class="bg-white border-b border-gray-100 p-4 fixed top-0 w-full z-40 safe-top flex justify-between items-center shadow-sm">
-        
-        <!-- 左側：Logo + 標題 (恢復大字體與間距) -->
         <div class="flex items-center gap-3">
             <img src="icon.png" alt="Logo" class="w-9 h-9 rounded-xl shadow-sm">
             <h1 class="text-lg font-bold text-gray-800 tracking-wide">
                 小時光 <span class="text-xs text-gray-400 font-normal ml-0.5">for us</span>
             </h1>
         </div>
-
-        <!-- 右側：身分標籤 + 連線狀態燈 -->
         <div class="flex items-center gap-3">
-            
-            <!-- 身分顯示膠囊 (移到這裡，放在綠燈左邊) -->
-            <!-- 加上 cursor-pointer，點擊可以直接跳轉到設定頁切換身分，很方便 -->
-            <!-- 修改：onclick 改為開啟 Modal -->
             <div id="header-role-badge" class="px-2.5 py-1 rounded-full text-xs text-white font-bold shadow-sm transition-colors duration-300 flex items-center gap-1.5 opacity-0 cursor-pointer hover:opacity-90 active:scale-95 transition-transform" onclick="window.openSettingsModal()">
                 <span id="header-role-name">載入中</span>
                 <i data-lucide="user" class="w-3.5 h-3.5"></i>
             </div>
-
-            <!-- 連線狀態 -->
             <div id="connection-status" class="w-2.5 h-2.5 rounded-full bg-red-400 ring-2 ring-white shadow-sm"></div>
         </div>
     </header>
@@ -423,24 +271,18 @@
     <main id="main-container">
         <!-- Page 1: Dashboard -->
         <div id="page-dashboard" class="page-content active">
-            
-            <!-- 1. 頂部間距 -->
             <div class="mt-6"></div>
-
-            <!-- 2. 對話式便利貼區 -->
+            
+            <!-- Note Section -->
             <div class="flex flex-col items-center w-full mb-6">
-                
-                <!-- A. 頭像與對話氣泡列 -->
                 <div class="w-full flex justify-between items-start px-5 mb-2 relative z-10">
-                    
-                    <!-- 左邊：皓皓 -->
+                    <!-- Haohao -->
                     <div class="flex flex-col items-center gap-1">
                         <div class="relative flex items-center group" onclick="window.setNoteInputFocus()">
                             <div id="avatar-note-haohao" class="w-14 h-14 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xl font-bold ring-4 ring-white shadow-md z-20 cursor-pointer transition-transform active:scale-95" style="background-color: #2cc998;">
                                 皓
                                 <div id="status-dot-haohao" class="hidden absolute top-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
                             </div>
-
                             <div id="note-bubble-haohao" class="hidden absolute left-[64px] top-1/2 transform -translate-y-1/2 opacity-0 -translate-x-2 transition-all duration-300 z-10 w-[110px] flex flex-col items-start">
                                 <div class="absolute top-1/2 -translate-y-1/2 -left-1.5 w-3 h-3 bg-white transform rotate-45 border-b border-l border-gray-100 z-20 pointer-events-none"></div>
                                 <div class="relative bg-white border border-gray-100 px-2 py-2 rounded-2xl shadow-md text-xs text-gray-600 text-left leading-relaxed break-all whitespace-normal z-10 w-full group-hover:border-green-100 transition-colors cursor-pointer select-none active:scale-95 duration-200" onclick="event.stopPropagation()" ondblclick="window.confirmDeleteNote('haohao')">
@@ -451,14 +293,13 @@
                         <span id="note-time-haohao" class="text-[10px] text-gray-300 h-4 transition-opacity duration-300 opacity-0"></span>
                     </div>
 
-                    <!-- 右邊：毛毛 -->
+                    <!-- Maomao -->
                     <div class="flex flex-col items-center gap-1">
                         <div class="relative flex flex-row-reverse items-center group" onclick="window.setNoteInputFocus()">
                             <div id="avatar-note-maomao" class="w-14 h-14 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xl font-bold ring-4 ring-white shadow-md z-20 cursor-pointer transition-transform active:scale-95" style="background-color: #e6688d;">
                                 毛
                                 <div id="status-dot-maomao" class="hidden absolute top-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
                             </div>
-
                             <div id="note-bubble-maomao" class="hidden absolute right-[64px] top-1/2 transform -translate-y-1/2 opacity-0 translate-x-2 transition-all duration-300 z-10 w-[110px] flex flex-col items-end">
                                 <div class="absolute top-1/2 -translate-y-1/2 -right-1.5 w-3 h-3 bg-white transform rotate-45 border-t border-r border-gray-100 z-20 pointer-events-none"></div>
                                 <div class="relative bg-white border border-gray-100 px-2 py-2 rounded-2xl shadow-md text-xs text-gray-600 text-left leading-relaxed break-all whitespace-normal z-10 w-full group-hover:border-pink-100 transition-colors cursor-pointer select-none active:scale-95 duration-200" onclick="event.stopPropagation()" ondblclick="window.confirmDeleteNote('maomao')">
@@ -470,20 +311,13 @@
                     </div>
                 </div>
 
-                <!-- B. 輸入框 -->
+                <!-- Input -->
                 <div class="relative z-20 h-9 w-[270px]">
-                    <!-- Added overflow-hidden to clip the button if it tries to escape, and flex-nowrap -->
                     <div class="flex flex-nowrap items-center bg-white rounded-full px-1 py-0.5 shadow-sm border border-gray-200 focus-within:ring-2 focus-within:ring-opacity-50 transition-all h-full overflow-hidden">
-                        <!-- 左側 Icon (恢復) -->
                         <div class="w-8 h-8 flex items-center justify-center text-gray-300 flex-shrink-0">
                             <i data-lucide="message-circle" class="w-4 h-4"></i>
                         </div>
-                        
-                        <!-- 輸入框 -->
-                        <input type="text" id="note-input" maxlength="14" placeholder="說點什麼吧..." 
-                            class="flex-1 min-w-0 bg-transparent border-none text-xs text-gray-600 placeholder-gray-300 focus:ring-0 px-1 outline-none text-left h-full tracking-wide">
-
-                        <!-- 發送按鈕 (移到右側，並加入 ID) -->
+                        <input type="text" id="note-input" maxlength="14" placeholder="說點什麼吧..." class="flex-1 min-w-0 bg-transparent border-none text-xs text-gray-600 placeholder-gray-300 focus:ring-0 px-1 outline-none text-left h-full tracking-wide">
                         <button id="note-send-btn" onclick="window.sendNote()" class="w-7 h-7 flex items-center justify-center rounded-full text-white shadow-sm active:scale-90 transition ml-0.5 flex-shrink-0" style="background-color: #d1d5db;">
                             <i data-lucide="send" class="w-3.5 h-3.5 ml-0.5"></i>
                         </button>
@@ -491,20 +325,19 @@
                 </div>
             </div>
 
-            <!-- 3. 操作按鈕區 -->
+            <!-- Actions -->
             <div class="px-4 flex gap-3 mb-6">
                 <button onclick="window.openAddModal()" class="flex-1 bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-gray-600 flex items-center justify-center gap-2 active:bg-gray-50 transition">
                     <i data-lucide="calendar-plus" class="w-5 h-5 text-ttgreen"></i>
                     <span class="text-sm font-bold">新增行程</span>
                 </button>
-                
                 <button onclick="window.openAddTodoModal()" class="flex-1 bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-gray-600 flex items-center justify-center gap-2 active:bg-gray-50 transition">
                     <i data-lucide="check-square" class="w-5 h-5 text-blue-400"></i>
                     <span class="text-sm font-bold">新增待辦</span>
                 </button>
             </div>
 
-            <!-- 4. Next Up Card -->
+            <!-- Next Up -->
             <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 mx-4">
                 <div class="bg-ttgreen px-4 py-2 flex justify-between items-center">
                     <span class="text-white text-xs font-bold tracking-wider">NEXT 7 DAYS</span>
@@ -515,7 +348,7 @@
                 </div>
             </div>
 
-            <!-- 5. 待辦清單摘要 -->
+            <!-- Todo Summary -->
             <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 p-4 mx-4 mt-4">
                 <div class="flex justify-between items-center mb-3">
                     <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2">
@@ -527,20 +360,15 @@
                     <p class="text-xs text-gray-400 text-center py-2">載入中...</p>
                 </div>
             </div>
-            
         </div>
 
         <!-- Page 2: Calendar -->
         <div id="page-calendar" class="page-content">
-            <!-- 修正 Header：高度固定 60px，按鈕絕對定位 -->
             <div class="flex-none bg-white z-10 border-b border-gray-200 px-4 flex items-center justify-center h-[60px] relative">
-                 <!-- 中間：視圖切換 (置中 + 固定寬度) -->
                  <div class="flex bg-gray-100 p-1 rounded-lg">
                     <button onclick="window.switchCalendarView('list')" id="btn-view-list" class="w-16 py-1.5 text-xs font-bold rounded-md bg-white shadow-sm text-ttgreen transition-all">列表</button>
                     <button onclick="window.switchCalendarView('month')" id="btn-view-month" class="w-16 py-1.5 text-xs font-medium rounded-md text-gray-500 transition-all">月曆</button>
                 </div>
-                
-                <!-- 右側：新增按鈕 (絕對定位 + 垂直置中) -->
                 <button onclick="window.openAddModal()" class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-ttgreen text-white p-2 rounded-lg shadow-sm active:scale-95 transition">
                     <i data-lucide="plus" class="w-5 h-5"></i>
                 </button>
@@ -577,32 +405,26 @@
 
         <!-- Page 3: Todo -->
         <div id="page-todo" class="page-content">
-            <!-- 修正 Header：高度固定 60px，按鈕絕對定位 -->
             <div class="sticky top-0 bg-white z-10 border-b border-gray-200 px-4 flex items-center h-[60px] relative">
                 <h2 class="text-xl font-bold text-gray-800">待辦清單</h2>
-                 
-                 <!-- 右側：新增按鈕 (絕對定位 + 垂直置中) -->
                  <button onclick="window.openAddTodoModal()" class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-ttgreen text-white p-2 rounded-lg shadow-sm active:scale-95 transition">
                     <i data-lucide="plus" class="w-5 h-5"></i>
                 </button>
             </div>
             
             <div id="todo-list-container" class="p-4 space-y-6 pb-24">
-                <!-- Joint Section -->
                 <div>
                      <h3 class="text-sm font-bold text-orange-400 mb-2 flex items-center gap-1">
                         <i data-lucide="users" class="w-4 h-4"></i> 共同待辦
                     </h3>
                     <div id="todo-list-joint" class="space-y-2"></div>
                 </div>
-                 <!-- Haohao Section -->
                  <div>
                      <h3 class="text-sm font-bold text-ttgreen mb-2 flex items-center gap-1">
                         <i data-lucide="user" class="w-4 h-4"></i> 皓皓
                     </h3>
                     <div id="todo-list-haohao" class="space-y-2"></div>
                 </div>
-                 <!-- Maomao Section -->
                  <div>
                      <h3 class="text-sm font-bold text-pink-400 mb-2 flex items-center gap-1">
                         <i data-lucide="user" class="w-4 h-4"></i> 毛毛
@@ -611,10 +433,10 @@
                 </div>
             </div>
         </div>
-
-        <!-- Page 4 REMOVED, replaced by Modal -->
     </main>
 
+    <!-- Modals (All preserved) -->
+    
     <!-- Global Color Picker Modal -->
     <div id="global-color-picker" class="fixed inset-0 z-[70] flex items-center justify-center hidden modal">
         <div class="absolute inset-0 bg-black/20 backdrop-blur-[1px]" onclick="window.toggleGlobalColorPicker(false)"></div>
@@ -625,7 +447,6 @@
         </div>
     </div>
     
-    <!-- Settings Modal (New!) -->
     <div id="settings-modal" class="fixed inset-0 z-[60] flex items-center justify-center hidden modal">
         <div class="absolute inset-0 bg-black/20 backdrop-blur-[1px]" onclick="window.closeSettingsModal()"></div>
         <div class="relative bg-white w-[320px] rounded-2xl shadow-xl overflow-hidden transform scale-100 transition-transform">
@@ -637,7 +458,6 @@
             </div>
             
             <div class="p-5 space-y-6">
-                <!-- Role Selection -->
                 <div id="role-selection-section" class="space-y-3">
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">我是誰？ (切換身分)</p>
                     <div class="flex gap-3">
@@ -646,7 +466,6 @@
                     </div>
                 </div>
                 
-                <!-- Color Settings -->
                 <div class="space-y-3">
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">代表色設定</p>
                     <div class="space-y-2">
@@ -671,7 +490,6 @@
         </div>
     </div>
 
-    <!-- Confirm Modal -->
     <div id="confirm-modal" class="fixed inset-0 z-[80] flex items-center justify-center hidden modal">
         <div class="absolute inset-0 bg-black/20 backdrop-blur-[1px]" onclick="window.closeConfirmModal()"></div>
         <div class="relative bg-white w-[280px] rounded-xl shadow-xl p-5 transform scale-100 transition-transform">
@@ -684,7 +502,6 @@
         </div>
     </div>
     
-    <!-- Toast Notification -->
     <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-[90] pointer-events-none transition-opacity duration-300 opacity-0">
         <div id="toast-message" class="bg-gray-800/90 text-white px-4 py-2 rounded-full text-sm shadow-lg backdrop-blur-sm">
         </div>
@@ -698,7 +515,7 @@
         
         <!-- NEW HEADER: Standard App Style -->
         <div class="flex justify-between items-center px-4 py-3 border-b border-gray-100">
-            <button onclick="window.closeAddModal()" class="text-gray-500 text-sm font-medium px-2 py-1 hover:bg-gray-50 rounded-lg transition">取消</button>
+            <button onclick="window.closeAddModal()" class="text-gray-500 text-sm font-medium px-2 py-1 hover:bg-gray-50 rounded-lg transition cursor-pointer">取消</button>
             <span class="text-sm font-bold text-gray-800">行程詳情</span>
             <button onclick="window.saveEvent()" class="text-ttgreen text-sm font-bold px-2 py-1 hover:bg-green-50 rounded-lg transition">保存</button>
         </div>
@@ -723,7 +540,7 @@
              
              <!-- Date -->
              <div class="dt-row" onclick="window.openCalendar('start')">
-               <div class="dt-label">日期</div>
+               <div class="dt-label">開始日期</div>
                <div class="dt-value group">
                  <span id="display-date-start" class="dt-text-placeholder transition-colors">請選擇</span>
                  <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 ml-1 group-active:text-gray-500"></i>
@@ -742,6 +559,16 @@
             </div>
             
             <!-- Time (End) - New! -->
+            <div class="dt-row border-t border-gray-50" onclick="window.openCalendar('end')">
+               <div class="dt-label">結束日期</div>
+               <div class="dt-value group">
+                 <span id="display-date-end" class="dt-text-placeholder transition-colors">請選擇</span>
+                 <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 ml-1 group-active:text-gray-500"></i>
+               </div>
+               <input type="hidden" id="input-date-end">
+             </div>
+
+            <!-- End Time -->
             <div class="dt-row border-t border-gray-50 dt-wrapper-time" onclick="window.openTimePicker('end')">
               <div class="dt-label">結束時間</div>
               <div class="dt-value group">
@@ -872,7 +699,7 @@
             
             <!-- HEADER: Standard App Style (Unified with Add Event) -->
             <div class="flex justify-between items-center px-4 py-3 border-b border-gray-100">
-                <button onclick="window.closeAddTodoModal()" class="text-gray-500 text-sm font-medium px-2 py-1 hover:bg-gray-50 rounded-lg transition">取消</button>
+                <button onclick="window.closeAddTodoModal()" class="text-gray-500 text-sm font-medium px-2 py-1 hover:bg-gray-50 rounded-lg transition cursor-pointer">取消</button>
                 <span id="todo-modal-title" class="text-sm font-bold text-gray-800">新增待辦事項</span>
                 <button onclick="window.saveTodoItem()" id="todo-modal-btn" class="text-ttgreen text-sm font-bold px-2 py-1 hover:bg-green-50 rounded-lg transition">新增</button>
             </div>
@@ -888,7 +715,7 @@
                 <div class="bg-white border border-gray-100 rounded-xl overflow-hidden">
                     <!-- Date -->
                     <div class="dt-row" onclick="window.openCalendar('todo')">
-                        <div class="dt-label">日期</div>
+                        <div class="dt-label">開始日期</div>
                         <div class="dt-value group">
                             <span id="display-date-todo" class="dt-text-placeholder transition-colors">請選擇</span>
                             <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 ml-1 group-active:text-gray-500"></i>
@@ -906,6 +733,16 @@
                         <input type="hidden" id="input-time-todo">
                     </div>
                     
+                    <!-- End Date (New!) -->
+                    <div class="dt-row border-t border-gray-50" onclick="window.openCalendar('todo-end')">
+                        <div class="dt-label">結束日期</div>
+                        <div class="dt-value group">
+                            <span id="display-date-todo-end" class="dt-text-placeholder transition-colors">請選擇</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 ml-1 group-active:text-gray-500"></i>
+                        </div>
+                        <input type="hidden" id="input-date-todo-end">
+                    </div>
+
                     <!-- Time (End) - New! -->
                     <div class="dt-row border-t border-gray-50 dt-wrapper-time" onclick="window.openTimePicker('todo-end')">
                         <div class="dt-label">結束時間</div>
@@ -1081,10 +918,38 @@
 
         // --- 2. GLOBAL FUNCTION DEFINITIONS (Assigned to window immediately) ---
 
-        // ==========================================
-        //  RECURRENCE LOGIC (Added Here)
-        // ==========================================
+        function isLeaveEvent(title) {
+            if (!title) return false;
+            return title.includes('休假') || title.includes('請假');
+        }
         
+        function hideBubble(bubbleEl, dotEl, timeEl, role) {
+            bubbleEl.classList.add('opacity-0');
+            if (role === 'haohao') bubbleEl.classList.add('-translate-x-2'); else bubbleEl.classList.add('translate-x-2');
+            if(dotEl) dotEl.classList.add('hidden');
+            if(timeEl) timeEl.classList.add('opacity-0', 'hidden'); 
+            setTimeout(() => { bubbleEl.classList.add('hidden'); }, 300);
+        }
+
+        window.renderNoteBubble = function(role, data) {
+            const bubbleId = `note-bubble-${role}`; const textId = `note-text-${role}`; const dotId = `status-dot-${role}`; const timeId = `note-time-${role}`; 
+            const bubbleEl = document.getElementById(bubbleId); const textEl = document.getElementById(textId); const dotEl = document.getElementById(dotId); const timeEl = document.getElementById(timeId);
+            if (!bubbleEl || !textEl) return;
+            if (!data || !data.text || !data.timestamp) { hideBubble(bubbleEl, dotEl, timeEl, role); return; }
+            const now = new Date(); const noteTime = new Date(data.timestamp); const diffHours = (now - noteTime) / (1000 * 60 * 60);
+            if (diffHours < 24) {
+                textEl.textContent = data.text;
+                if(timeEl) { timeEl.textContent = window.getRelativeTimeStr(data.timestamp); timeEl.classList.remove('hidden'); timeEl.classList.remove('opacity-0'); }
+                bubbleEl.classList.remove('hidden'); if(dotEl) dotEl.classList.remove('hidden');
+                requestAnimationFrame(() => { bubbleEl.classList.remove('opacity-0'); if (role === 'haohao') { bubbleEl.classList.remove('-translate-x-2'); } else { bubbleEl.classList.remove('translate-x-2'); } });
+            } else { hideBubble(bubbleEl, dotEl, timeEl, role); }
+        };
+        
+        window.getRelativeTimeStr = function(timestamp) {
+            const now = new Date(); const date = new Date(timestamp); const diffMs = now - date; const diffMins = Math.floor(diffMs / (1000 * 60)); const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            if (diffMins < 1) return '剛剛'; if (diffMins < 60) return `${diffMins}分鐘前`; if (diffHours < 24) return `${diffHours}小時前`; return '1天前';
+        };
+
         window.toggleRecurOptions = function(type) {
             const check = document.getElementById(`check-recur-${type}`);
             const options = document.getElementById(`recur-options-${type}`);
@@ -1137,10 +1002,7 @@
             // Bi-weekly logic: Calculate week difference from start
             const getWeekDiff = (d1, d2) => {
                 const oneJan = new Date(d1.getFullYear(), 0, 1);
-                const w1 = Math.ceil((((d1 - oneJan) / 86400000) + oneJan.getDay() + 1) / 7);
-                const oneJan2 = new Date(d2.getFullYear(), 0, 1);
-                const w2 = Math.ceil((((d2 - oneJan2) / 86400000) + oneJan2.getDay() + 1) / 7);
-                // Simplify: just diff in ms / weeks
+                // Simple approximation is enough for parity check if consistent
                 return Math.floor((d2 - d1) / (7 * 24 * 60 * 60 * 1000));
             };
 
@@ -1182,1059 +1044,109 @@
             return dates;
         };
 
-        // --- Calendar Picker ---
-        window.openCalendar = function(type) {
-            calTargetInput = type; // 'start', 'end', 'todo', 'recur-event', 'recur-todo'
-            
-            // Get current value
-            const val = document.getElementById(`input-date-${type}`).value;
-            if (val) {
-                calCurrentDate = new Date(val);
-            } else {
-                calCurrentDate = new Date();
-            }
-            
-            window.renderCalendarPicker();
-            const m = document.getElementById('calendar-picker-modal');
-            m.classList.remove('hidden');
-            setTimeout(() => m.classList.add('visible'), 10);
-        };
-
-        window.closeCalendar = function() {
-            const m = document.getElementById('calendar-picker-modal');
-            m.classList.remove('visible');
-            setTimeout(() => m.classList.add('hidden'), 200);
-        };
-
-        window.changeCalMonth = function(delta) {
-            calCurrentDate.setMonth(calCurrentDate.getMonth() + delta);
-            window.renderCalendarPicker();
-        };
-
-        window.renderCalendarPicker = function() {
-            const y = calCurrentDate.getFullYear();
-            const m = calCurrentDate.getMonth();
-            
-            document.getElementById('cal-month-title').textContent = `${y}年${m + 1}月`;
-            
-            const firstDay = new Date(y, m, 1).getDay();
-            const daysInMonth = new Date(y, m + 1, 0).getDate();
-            
-            const grid = document.getElementById('calendar-days');
-            grid.innerHTML = '';
-            
-            // Empty slots
-            for (let i = 0; i < firstDay; i++) {
-                grid.innerHTML += `<div class="cal-day empty"></div>`;
-            }
-            
-            const todayStr = new Date().toDateString();
-            // Current selected value
-            const inputVal = document.getElementById(`input-date-${calTargetInput}`).value;
-            const selectedDateStr = inputVal ? new Date(inputVal).toDateString() : '';
-
-            for (let d = 1; d <= daysInMonth; d++) {
-                const thisDate = new Date(y, m, d);
-                const thisDateStr = thisDate.toDateString();
-                
-                let classes = "cal-day";
-                if (thisDateStr === todayStr) classes += " today";
-                if (thisDateStr === selectedDateStr) classes += " selected";
-                
-                const el = document.createElement('div');
-                el.className = classes;
-                el.textContent = d;
-                el.onclick = () => window.selectDate(y, m, d);
-                grid.appendChild(el);
-            }
-        };
-
-        window.selectDate = function(y, m, d) {
-            const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-            
-            // Set value
-            document.getElementById(`input-date-${calTargetInput}`).value = dateStr;
-            
-            // Update Display
-            window.updateDateDisplay(calTargetInput, dateStr);
-            
-            // If setting start date, auto-set end date if needed (legacy logic, keep safe)
-            if (calTargetInput === 'start') {
-                if(window.autoUpdateEnd) window.autoUpdateEnd(); 
-            }
-            
-            // Special: if in todo modal, check calendar option
-            
-            window.closeCalendar();
-        };
-
-        window.selectToday = function() {
-            const now = new Date();
-            window.selectDate(now.getFullYear(), now.getMonth(), now.getDate());
-        };
-
-        // --- Time Picker Logic ---
-        window.openTimePicker = function(type) {
-            timePickerTarget = type;
-            const container = document.getElementById('time-list-container');
-            container.innerHTML = '';
-            
-            const currentVal = document.getElementById(`input-time-${type}`).value;
-            
-            // Header for clear/cancel (Sticky)
-            const header = document.createElement('div');
-            header.className = "sticky top-0 bg-white border-b border-gray-100 flex justify-between items-center px-4 py-3 z-10 flex-none";
-            header.innerHTML = `
-                <button onclick="window.closeTimePicker()" class="text-sm text-gray-500">取消</button>
-                <span class="text-sm font-bold text-gray-800">選擇時間</span>
-                <button onclick="window.clearTime()" class="text-sm text-red-400">清除</button>
-            `;
-            container.appendChild(header);
-
-            // Time slots list
-            const list = document.createElement('div');
-            list.className = "overflow-y-auto flex-1 p-2"; // Allow this part to scroll
-            
-            for (let h = 0; h < 24; h++) {
-                for (let m = 0; m < 60; m += 30) {
-                    const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-                    const isSelected = currentVal === timeStr;
-                    
-                    const item = document.createElement('div');
-                    item.className = `time-option rounded-lg ${isSelected ? 'selected' : ''}`;
-                    item.textContent = timeStr;
-                    item.onclick = () => window.selectTime(timeStr);
-                    list.appendChild(item);
-                }
-            }
-            container.appendChild(list);
-
-            const m = document.getElementById('time-picker-modal');
-            m.classList.remove('hidden');
-            setTimeout(() => m.classList.add('visible'), 10);
-            
-            // Scroll to selected
-            if (currentVal) {
-                setTimeout(() => {
-                    const selectedEl = list.querySelector('.selected');
-                    if (selectedEl) selectedEl.scrollIntoView({ block: 'center' });
-                }, 50);
-            }
-        };
-
-        window.closeTimePicker = function() {
-            const m = document.getElementById('time-picker-modal');
-            m.classList.remove('visible');
-            setTimeout(() => m.classList.add('hidden'), 200);
-        };
-
-        window.selectTime = function(timeStr) {
-            document.getElementById(`input-time-${timePickerTarget}`).value = timeStr;
-            window.updateTimeDisplay(timePickerTarget, timeStr);
-            window.closeTimePicker();
-            
-            // Auto Update End Time logic
-            if (timePickerTarget === 'start' || timePickerTarget === 'todo') {
-                if (window.autoUpdateEnd) window.autoUpdateEnd();
-            }
-        };
-
-        window.clearTime = function() {
-            document.getElementById(`input-time-${timePickerTarget}`).value = '';
-            window.updateTimeDisplay(timePickerTarget, ''); 
-            window.closeTimePicker();
-        };
-
-        /* =========================================
-           身分強制檢查機制
-           ========================================= */
-        window.checkRoleEnforcement = function() {
-            if (!currentUserRole) {
-                // 1. 強制切換到設定頁 (開啟 Modal)
-                window.openSettingsModal();
-                
-                // 2. 跳出提示
-                window.showToast('👋 請先告訴我您是誰？');
-                
-                // 3. 視覺引導：讓選擇區塊閃爍一下
-                const roleSection = document.getElementById('role-selection-section');
-                if(roleSection) {
-                    roleSection.classList.add('ring-2', 'ring-ttgreen', 'bg-green-50');
-                    setTimeout(() => roleSection.classList.remove('ring-2', 'ring-ttgreen', 'bg-green-50'), 600);
-                }
-                
-                return false; // 阻擋後續操作
-            }
-            return true; // 通行
-        };
+        // --- IMPORTANT: Modal Closing Functions Defined Globally Here ---
         
-        window.openSettingsModal = function() {
-            const m = document.getElementById('settings-modal');
-            m.classList.remove('hidden');
-            setTimeout(() => m.classList.add('visible'), 10);
+        window.closeAddModal = function() {
+          window.__savingEvent = false;
+          const m = document.getElementById('add-modal');
+          if(m) {
+              m.classList.remove('visible');
+              setTimeout(() => m.classList.add('hidden'), 200);
+          }
         };
 
-        window.closeSettingsModal = function() {
-            // 如果沒選身分，不准關閉
-            if (!currentUserRole) {
-                window.showToast('請先選擇一個身分 🙏');
-                const roleSection = document.getElementById('role-selection-section');
-                if(roleSection) {
-                    roleSection.classList.add('animate-pulse');
-                    setTimeout(() => roleSection.classList.remove('animate-pulse'), 500);
-                }
-                return;
+        window.closeAddTodoModal = function() { 
+            const m = document.getElementById('add-todo-modal'); 
+            if(m) {
+                m.classList.remove('visible'); 
+                setTimeout(()=>m.classList.add('hidden'),200); 
             }
-            
-            const m = document.getElementById('settings-modal');
-            m.classList.remove('visible');
-            setTimeout(() => m.classList.add('hidden'), 200);
         };
+
+        // --- Core Action Functions Moved Up ---
         
-        window.updateDateDisplay = function(type, dateStr) {
-            const displayEl = (type === 'recur') ? document.getElementById('display-recur-until') : (type === 'todo' ? document.getElementById('display-date-todo') : document.getElementById(`display-date-${type}`));
-            
-            if(!displayEl) return;
-            if(!dateStr) { 
-                // Empty state styling
-                if (type === 'recur' || type.startsWith('recur-')) displayEl.textContent = "設定日期"; 
-                else if (type === 'todo') {
-                    displayEl.textContent = "請選擇"; 
-                    displayEl.classList.add('dt-text-placeholder');
-                    displayEl.classList.remove('dt-text-value');
-                }
-                else {
-                    displayEl.textContent = "請選擇"; // Unified placeholder
-                    displayEl.classList.add('dt-text-placeholder');
-                    displayEl.classList.remove('dt-text-value');
-                }
-                return; 
-            }
-            
-            // Value state styling
-            displayEl.classList.remove('dt-text-placeholder');
-            displayEl.classList.add('dt-text-value');
-
-            const date = new Date(dateStr); 
-            const weekDays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
-            if (type === 'recur' || type === 'todo' || type.startsWith('recur-')) displayEl.textContent = `${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()} (${weekDays[date.getDay()]})`;
-            else displayEl.textContent = `${date.getFullYear()}年${date.getMonth()+1}月${date.getDate()}日(${weekDays[date.getDay()]})`;
+        window.openAddModal = function () {
+          if (!window.checkRoleEnforcement()) return;
+          editingEventId = null;
+          document.getElementById('input-title').value = '';
+          document.getElementById('input-note').value = '';
+          document.getElementById('input-date-start').value = '';
+          const dD = document.getElementById('display-date-start'); dD.textContent = '請選擇'; dD.classList.add('dt-text-placeholder'); dD.classList.remove('dt-text-value');
+          const t = document.getElementById('input-time-start'); if (t) t.value = '';
+          const td = document.getElementById('display-time-start'); if (td) { td.textContent = '請選擇'; td.classList.add('dt-text-placeholder'); td.classList.remove('dt-text-value'); }
+          const de = document.getElementById('input-date-end'); if (de) de.value = '';
+          const dde = document.getElementById('display-date-end'); if (dde) { dde.textContent = '請選擇'; dde.classList.add('dt-text-placeholder'); dde.classList.remove('dt-text-value'); }
+          const te = document.getElementById('input-time-end'); if (te) te.value = '';
+          const tde = document.getElementById('display-time-end'); if (tde) { tde.textContent = '請選擇'; tde.classList.add('dt-text-placeholder'); tde.classList.remove('dt-text-value'); }
+          const loc = document.getElementById('input-location'); if (loc) loc.value = '';
+          const partner = document.getElementById('check-partner'); partner.checked = false;
+          
+          document.getElementById('check-recur-event').checked = false; window.toggleRecurOptions('event');
+          window.selectRecurFreq('event', 'daily'); document.querySelectorAll('.day-circle').forEach(b => b.classList.remove('active'));
+          window.setStatus('confirmed');
+          currentSelectedColor = roleColors[currentUserRole]; colorPickerTarget = 'event';
+          const delBtn = document.getElementById('btn-delete-event'); if(delBtn) delBtn.classList.add('hidden');
+          const m = document.getElementById('add-modal'); m.classList.remove('hidden'); setTimeout(() => m.classList.add('visible'), 10);
+          
+          window.updateParticipantsPreview();
         };
 
-        window.updateTimeDisplay = function(type, timeStr) { 
-            const el = document.getElementById(`display-time-${type}`); 
-            if(el) { 
-                if(!timeStr) {
-                    el.textContent = '請選擇';
-                    el.classList.add('dt-text-placeholder');
-                    el.classList.remove('dt-text-value');
-                } else {
-                    el.textContent = timeStr;
-                    el.value = timeStr; 
-                    el.classList.remove('dt-text-placeholder');
-                    el.classList.add('dt-text-value');
-                }
-            } 
-        }; 
-        
-        window.checkRecurValidity = function() { const eD = document.getElementById('input-date-end')?.value; const rD = document.getElementById('input-recur-until')?.value; if(rD && eD && new Date(rD) < new Date(eD)) { const el = document.getElementById('input-recur-until'); if(el) el.value = eD; window.updateDateDisplay('recur', eD); } };
-        // FIX: Safer Auto Update
-        window.autoUpdateEnd = function() { 
-            try {
-                // Determine source: Event or Todo
-                let sT, endInputT, endDisplayType;
-                
-                // Try Event Inputs first
-                if (document.getElementById('input-time-start') && document.getElementById('input-time-start').offsetParent !== null) {
-                    sT = document.getElementById('input-time-start').value;
-                    endInputT = document.getElementById('input-time-end');
-                    endDisplayType = 'end';
-                } 
-                // Try Todo Inputs
-                else if (document.getElementById('input-time-todo') && document.getElementById('input-time-todo').offsetParent !== null) {
-                    sT = document.getElementById('input-time-todo').value;
-                    endInputT = document.getElementById('input-time-todo-end');
-                    endDisplayType = 'todo-end';
-                }
-
-                if (!sT || !endInputT) return;
-
-                // Add 1 hour logic
-                const [h, m] = sT.split(':').map(Number);
-                const endH = (h + 1) % 24;
-                const endTStr = `${String(endH).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-                
-                // Only update if empty
-                if (!endInputT.value) {
-                     endInputT.value = endTStr;
-                     window.updateTimeDisplay(endDisplayType, endTStr);
-                }
-            } catch (e) {
-                console.warn("Auto update end failed silently", e);
-            }
-        };
-        window.checkEndDateValidity = function() { const sD = document.getElementById('input-date-start').value; const sT = document.getElementById('input-time-start').value; const eD = document.getElementById('input-date-end').value; const eT = document.getElementById('input-time-end').value; if(new Date(`${eD}T${eT}`) < new Date(`${sD}T${sT}`)) { window.autoUpdateEnd(); } else { window.checkRecurValidity(); } };
-        window.setNowToInputs = function() { const now = new Date(); const dStr = now.toISOString().split('T')[0]; let h = now.getHours(), m = now.getMinutes(); if(m < 30) { m = 30; } else { m = 0; h += 1; } if(h > 23) h = 0; const tStr = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`; const startEl = document.getElementById('input-date-start'); if(startEl) { startEl.value = dStr; document.getElementById('input-time-start').value = tStr; window.updateDateDisplay('start', dStr); window.updateTimeDisplay('start', tStr); const endD = document.getElementById('input-date-end'); if(endD) endD.value = dStr; const endT = document.getElementById('input-time-end'); if(endT) endT.value = tStr; window.updateDateDisplay('end', dStr); window.updateTimeDisplay('end', tStr); } };
-        
-        // 修改：身分切換時，全面更新 UI 提示
-        window.updateRoleUI = function() {
-            // 1. 設定頁按鈕狀態
-            const btnHaohao = document.getElementById('role-haohao');
-            const btnMaomao = document.getElementById('role-maomao');
-            
-            if (btnHaohao) {
-                const activeClass = "flex-1 py-3 rounded-xl text-sm font-bold border-2 border-ttgreen bg-green-50 text-ttgreen transition shadow-sm";
-                const inactiveClass = "flex-1 py-3 rounded-xl text-sm font-medium border border-gray-200 text-gray-400 bg-white transition";
-                
-                if (currentUserRole === 'haohao') {
-                    btnHaohao.className = activeClass;
-                    btnMaomao.className = inactiveClass;
-                } else if (currentUserRole === 'maomao') {
-                    btnHaohao.className = inactiveClass;
-                    btnMaomao.className = activeClass;
-                } else {
-                    // 都沒選：兩個都是未選取狀態
-                    btnHaohao.className = inactiveClass;
-                    btnMaomao.className = inactiveClass;
-                }
-                
-                const ptText = document.getElementById('partner-toggle-text');
-                if (ptText && currentUserRole) ptText.textContent = (currentUserRole === 'haohao' ? '與毛毛一起' : '與皓皓一起');
-            }
-
-            // 2. Header 身分膠囊
-            const badge = document.getElementById('header-role-badge');
-            const badgeName = document.getElementById('header-role-name');
-            if (badge && badgeName) {
-                if (currentUserRole) {
-                    const name = currentUserRole === 'haohao' ? '皓皓' : '毛毛';
-                    const color = roleColors[currentUserRole];
-                    badgeName.textContent = name;
-                    badge.style.backgroundColor = color;
-                    badge.classList.remove('opacity-0');
-                } else {
-                    // 未選擇狀態
-                    badgeName.textContent = '請選擇';
-                    badge.style.backgroundColor = '#9ca3af'; // 灰色
-                    badge.classList.remove('opacity-0');
-                    // 加個小動畫吸引注意
-                    badge.classList.add('animate-pulse');
-                }
-            }
-
-            // 3. 便利貼輸入框提示 & 發送按鈕顏色同步
-            const noteInput = document.getElementById('note-input');
-            const noteSendBtn = document.getElementById('note-send-btn');
-            
-            if (noteInput) {
-                if (currentUserRole) {
-                    const name = currentUserRole === 'haohao' ? '皓皓' : '毛毛';
-                    const color = roleColors[currentUserRole];
-                    
-                    noteInput.placeholder = `${name}，說點什麼...`;
-                    noteInput.disabled = false;
-                    
-                    // 輸入框外框變色 (border color)
-                    if(noteInput.parentElement) {
-                        noteInput.parentElement.style.borderColor = color;
-                    }
-                    
-                    // 發送按鈕變色
-                    if(noteSendBtn) {
-                        noteSendBtn.style.backgroundColor = color;
-                        noteSendBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
-                        noteSendBtn.disabled = false;
-                    }
-
-                } else {
-                    noteInput.placeholder = '請先選擇身分...';
-                    noteInput.disabled = true;
-                    
-                    if(noteInput.parentElement) {
-                        noteInput.parentElement.style.borderColor = '#e5e7eb';
-                    }
-                    
-                    if(noteSendBtn) {
-                        noteSendBtn.style.backgroundColor = '#d1d5db'; // gray-300
-                        noteSendBtn.classList.add('cursor-not-allowed');
-                        noteSendBtn.disabled = true;
-                    }
-                }
-            }
-            
-            // 4. 同步 Active Tab 顏色
-            if (currentUserRole) {
-                document.documentElement.style.setProperty('--active-tab-color', roleColors[currentUserRole]);
-                // 移除 header 閃爍動畫
-                if(badge) badge.classList.remove('animate-pulse');
-            }
-            
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+        window.openEditModal = function (id) {
+          const evt = allEventsCache.find(e => e.id === id);
+          if (!evt) { window.showToast('找不到行程'); return; }
+          editingEventId = id;
+          document.getElementById('input-title').value = evt.title || '';
+          if (evt.startDate) { document.getElementById('input-date-start').value = evt.startDate; window.updateDateDisplay('start', evt.startDate); } 
+          else if (evt.timestamp) { const d = new Date(evt.timestamp); const ds = d.toISOString().split('T')[0]; document.getElementById('input-date-start').value = ds; window.updateDateDisplay('start', ds); }
+          const timeInput = document.getElementById('input-time-start');
+          if (evt.allDay) { timeInput.value = ''; window.updateTimeDisplay('start', ''); window.updateTimeDisplay('end', ''); } 
+          else if (evt.timestamp) { const d = new Date(evt.timestamp); const hours = d.getHours().toString().padStart(2, '0'); const minutes = d.getMinutes().toString().padStart(2, '0'); const timeStr = `${hours}:${minutes}`; timeInput.value = timeStr; window.updateTimeDisplay('start', timeStr); }
+          if (evt.endDate) { document.getElementById('input-date-end').value = evt.endDate; window.updateDateDisplay('end', evt.endDate); } 
+          else { const sD = document.getElementById('input-date-start').value; document.getElementById('input-date-end').value = sD; window.updateDateDisplay('end', sD); }
+          if (evt.endTime) { document.getElementById('input-time-end').value = evt.endTime; window.updateTimeDisplay('end', evt.endTime); } 
+          else { document.getElementById('input-time-end').value = ''; window.updateTimeDisplay('end', ''); }
+          document.getElementById('input-location').value = evt.location || '';
+          const partner = document.getElementById('check-partner'); partner.checked = !!evt.isJoint;
+          window.setStatus(evt.status || 'confirmed');
+          document.getElementById('input-note').value = evt.note || '';
+          document.getElementById('check-recur-event').checked = false; window.toggleRecurOptions('event');
+          currentSelectedColor = evt.color || roleColors[evt.creator] || roleColors[currentUserRole]; colorPickerTarget = 'event';
+          const delBtn = document.getElementById('btn-delete-event'); if(delBtn) delBtn.classList.remove('hidden');
+          const m = document.getElementById('add-modal'); m.classList.remove('hidden'); setTimeout(() => m.classList.add('visible'), 10);
+          
+          window.updateParticipantsPreview();
         };
 
-        window.updateSettingsColorUI = function() { const h = document.getElementById('setting-color-haohao'); if(h) { h.style.backgroundColor = roleColors.haohao; document.getElementById('setting-color-maomao').style.backgroundColor = roleColors.maomao; document.getElementById('setting-color-joint').style.backgroundColor = roleColors.joint; } };
-        window.setStatus = function(s) { document.getElementById('input-status').value = s; document.querySelectorAll('.status-btn').forEach(b=>{ if(b.dataset.status===s) b.classList.add('active'); else b.classList.remove('active'); }); };
-        window.showToast = function(msg) { const t = document.getElementById('toast-container'); const m = document.getElementById('toast-message'); m.textContent = msg; t.classList.add('visible'); setTimeout(() => t.classList.remove('visible'), 2000); };
-        window.updateParticipantsPreview = function() { const container = document.getElementById('participants-preview'); const isP = document.getElementById('check-partner').checked; let html = ''; html += `<div class="avatar-sm z-20" style="background-color:${roleColors[currentUserRole]}">${currentUserRole==='haohao'?'皓':'毛'}</div>`; if(isP) { const p = currentUserRole==='haohao'?'maomao':'haohao'; html += `<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[p]}">${p==='haohao'?'皓':'毛'}</div>`; } container.innerHTML = html; };
-  window.setRole = function(role) {
-  localStorage.setItem('user_role', role);
-  currentUserRole = role;
-  window.updateRoleUI();
-
-  // ⭐ Active Tab 指示線顏色跟角色同步
-  document.documentElement.style.setProperty(
-    '--active-tab-color',
-    roleColors[role]
-  );
-};
-        window.updateMyStatus = function(status) {
-             // === 加入這行 ===
+        window.openAddTodoModal = function() { 
+            // === 加入這行 ===
             if (!window.checkRoleEnforcement()) return;
             // ===============
-             if(!db) return; const moods = ['normal', 'charging', 'sleepy', 'love', 'busy']; 
-             // If status is passed, use it, otherwise random (legacy support if needed, but UI passes 'charging' etc now)
-             // Actually UI passes specific status now? The UI calls updateMyStatus('charging')
-             // But the original code was random. Let's fix it to use the passed status if available.
-             
-             let moodToSet = status;
-             if (!moodToSet || !moodMap[moodToSet]) {
-                 moodToSet = moods[Math.floor(Math.random() * moods.length)];
-             }
-             
-             const d = {}; d[currentUserRole] = moodToSet; db.collection('status').doc('current').set(d, { merge: true }); 
+            editingTodoId = null; document.getElementById('todo-modal-title').textContent = '新增待辦事項'; document.getElementById('todo-modal-btn').textContent = '新增'; document.getElementById('todo-input-title').value = ''; document.getElementById('input-date-todo').value = ''; document.getElementById('input-time-todo').value = ''; 
+            const dd = document.getElementById('display-date-todo'); dd.textContent = '請選擇'; dd.classList.add('dt-text-placeholder'); dd.classList.remove('dt-text-value');
+            const dt = document.getElementById('display-time-todo'); dt.textContent = '請選擇'; dt.classList.add('dt-text-placeholder'); dt.classList.remove('dt-text-value');
+            
+            // Reset End Date
+            document.getElementById('input-date-todo-end').value = '';
+            const dde = document.getElementById('display-date-todo-end');
+            dde.textContent = '請選擇'; dde.classList.add('dt-text-placeholder'); dde.classList.remove('dt-text-value');
+
+            // Reset End Time
+            document.getElementById('input-time-todo-end').value = '';
+            const dte = document.getElementById('display-time-todo-end');
+            dte.textContent = '請選擇'; dte.classList.add('dt-text-placeholder'); dte.classList.remove('dt-text-value');
+
+            // FIX: 移除了對不存在元素 'todo-check-calendar' 的引用
+            document.getElementById('todo-check-joint').checked = false; 
+            
+            // Reset recurrence
+            document.getElementById('check-recur-todo').checked = false;
+            window.toggleRecurOptions('todo');
+            window.selectRecurFreq('todo', 'daily');
+            document.querySelectorAll('.day-circle').forEach(b => b.classList.remove('active'));
+            
+            const btn=document.getElementById('btn-delete-todo'); if(btn) btn.classList.add('hidden'); const m = document.getElementById('add-todo-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); 
         };
-        window.toggleGlobalColorPicker = function(show) { const el = document.getElementById('global-color-picker'); const grid = document.getElementById('global-color-grid'); if(show) { grid.innerHTML = ''; timeTreeColors.forEach(color => { const row = document.createElement('div'); row.className = "flex items-center p-2 rounded hover:bg-gray-50 cursor-pointer transition"; row.onclick = () => window.selectGlobalColor(color); row.innerHTML = `<div class="w-5 h-5 rounded-full mr-3 shadow-sm" style="background-color: ${color.hex}"></div><span class="text-sm text-gray-700">${color.name}</span>`; grid.appendChild(row); }); el.classList.remove('hidden'); setTimeout(() => el.classList.add('visible'), 10); } else { el.classList.remove('visible'); setTimeout(() => el.classList.add('hidden'), 200); colorPickerTarget = null; } };
 
-        window.selectGlobalColor = function(c) {
-            // 1. 如果是在「新增/編輯行程」時選顏色 (維持原樣)
-            if (colorPickerTarget === 'event') {
-                currentSelectedColor = c.hex;
-                document.getElementById('selected-color-name').textContent = c.name;
-                document.getElementById('selected-color-dot').style.backgroundColor = c.hex;
-            } 
-            // 2. 如果是在「設定頁面」選代表色 (修改邏輯)
-            else if (colorPickerTarget) {
-                const newHex = c.hex;
-                const targetRole = colorPickerTarget; // 目前正在修改的角色 (haohao, maomao, joint)
-                const oldHex = roleColors[targetRole]; // 該角色原本的顏色 (用來交換用)
-
-                // === 步驟 A: 檢查衝突 ===
-                let conflictRole = null;
-                for (let key in roleColors) {
-                    // 如果不是自己，且顏色跟新選的一樣，就是衝突者
-                    if (key !== targetRole && roleColors[key] === newHex) {
-                        conflictRole = key;
-                        break;
-                    }
-                }
-
-                // === 步驟 B: 更新目標角色的顏色 ===
-                roleColors[targetRole] = newHex;
-                localStorage.setItem(`color_${targetRole}`, newHex);
-
-                // === 步驟 C: 處理衝突 (自動交換) ===
-                if (conflictRole) {
-                    // 把衝突者的顏色換成舊顏色
-                    roleColors[conflictRole] = oldHex;
-                    localStorage.setItem(`color_${conflictRole}`, oldHex);
-                    
-                    // 顯示提示訊息
-                    const roleNames = { haohao: '皓皓', maomao: '毛毛', joint: '共同行程' };
-                    window.showToast(`顏色重複，已與「${roleNames[conflictRole]}」交換顏色！`);
-                }
-
-                // === 步驟 D: 更新介面 ===
-                // 1. 更新設定頁面的三個圓圈
-                window.updateSettingsColorUI();
-
-                // 2. 檢查是否影響到底部導航列 (Active Tab) 的顏色
-                // (無論是「直接修改自己」或是「因為交換而改變了自己」都要更新)
-                if (targetRole === currentUserRole || conflictRole === currentUserRole) {
-                    if (currentUserRole) {
-                        document.documentElement.style.setProperty(
-                            '--active-tab-color',
-                            roleColors[currentUserRole]
-                        );
-                    }
-                }
-            }
-            
-            // 關閉選色視窗
-            window.toggleGlobalColorPicker(false);
-        };
-        window.openColorConfig = function(target) { colorPickerTarget = target; window.toggleGlobalColorPicker(true); };
-        window.syncSelectedColorUI = function() {
-            const dot = document.getElementById('selected-color-dot');
-            const name = document.getElementById('selected-color-name');
-
-  if (!dot || !name) return;
-
-  // 從目前選擇的顏色找對應名稱
-  const found = timeTreeColors.find(c => c.hex === currentSelectedColor);
-
-  dot.style.backgroundColor = currentSelectedColor;
-  name.textContent = found ? found.name : '自訂顏色';
-};
-
-        // --- 3. RENDERERS ---
-        window.renderEvents = function(ignored) { const items = window.getCalendarItems(); const now = new Date(); const future = items.filter(e => { const date = new Date(e.timestamp); if(e.isTodo && e.done) return false; return !isNaN(date) && date >= now; }); const titleEl = document.getElementById('next-event-title'); if(titleEl && future.length > 0) { const n = future[0], d = new Date(n.timestamp); titleEl.textContent = n.title; const timeStr = n.allDay ? "All Day" : d.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',hour12:false}); document.getElementById('next-event-time').textContent = timeStr; document.getElementById('next-event-date').textContent = d.toLocaleDateString('zh-TW',{month:'numeric',day:'numeric',weekday:'short'}); const diff = Math.ceil((d-now)/(1000*60*60*24)); document.getElementById('countdown').textContent = diff<=0?"TODAY":`D - ${diff}`; } else if(titleEl) { titleEl.textContent = "No Upcoming Events"; } const listEl = document.getElementById('event-list'); if(listEl) { if (items.length === 0) listEl.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">無行程</div>`; else window.renderEventListItems(items, listEl); } };
-        window.getCalendarItems = function() { const events = allEventsCache.map(e => ({...e, type: 'event'})); const todos = allTodosCache.filter(t => t.timestamp).map(t => ({ id: t.id, title: t.title, timestamp: t.timestamp, color: null, allDay: !t.dueTime, isTodo: true, done: t.done, type: 'todo', creator: t.creator, isJoint: t.isJoint })); return [...events, ...todos].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)); };
-        
-        window.renderDashboardNextUp = function(items) {
-            const now = new Date();
-            const next7Days = new Date();
-            next7Days.setDate(now.getDate() + 7);
-            
-            const upcoming = items.filter(item => {
-                const t = new Date(item.timestamp);
-                if (item.isTodo && item.done) return false;
-                return !isNaN(t) && t >= now && t <= next7Days;
-            });
-
-            const countEl = document.getElementById('dashboard-countdown');
-            if (upcoming.length > 0) {
-                const first = upcoming[0];
-                const d = new Date(first.timestamp);
-                const diff = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
-                countEl.textContent = diff <= 0 ? "TODAY" : `D - ${diff}`;
-            } else {
-                countEl.textContent = "FREE";
-            }
-
-            const container = document.getElementById('dashboard-next-list');
-            if (!container) return;
-            
-            container.innerHTML = '';
-            
-            if (upcoming.length === 0) {
-                container.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">未來 7 天沒有行程 😴</div>`;
-            } else {
-                let html = '';
-                upcoming.forEach(item => {
-                    const date = new Date(item.timestamp);
-                    let timeStr = item.allDay ? "All Day" : date.toLocaleTimeString('zh-TW', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
-                    });
-                    
-                    // Show End Time if exists
-                    const endTime = item.endTime || item.dueTimeEnd;
-                    if (endTime && !item.allDay) {
-                        timeStr += ` - ${endTime}`;
-                    }
-
-                    const dateStr = date.toLocaleDateString('zh-TW', {
-                        month: 'numeric',
-                        day: 'numeric',
-                        weekday: 'short'
-                    });
-
-                    // === 修改處：強制顏色邏輯 ===
-                    // 1. 如果是共同行程 -> 用 joint 顏色
-                    // 2. 否則 -> 用建立者的顏色 (皓皓/毛毛)
-                    let color;
-                    if (item.isJoint) {
-                        color = roleColors.joint;
-                    } else {
-                        color = (item.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
-                    }
-                    // ===========================
-
-                    let tagHtml = item.isTodo ? `<span class="ml-2 text-[10px] border border-gray-200 text-gray-400 px-1 rounded flex-shrink-0">待辦</span>` : '';
-                    
-                    // 補上 TBC/TBD 標籤
-                    if (!item.isTodo) {
-                        if (item.status === 'tbc') tagHtml = `<span class="ml-2 status-tag tbc">TBC</span>`;
-                        else if (item.status === 'tbd') tagHtml = `<span class="ml-2 status-tag tbd">TBD</span>`;
-                    }
-
-                    // === 新增：備註顯示 (如果有) ===
-                    let noteDisplay = '';
-                    if (item.note && item.note.trim()) {
-                        noteDisplay = `<div class="text-xs text-gray-400 mt-1 flex items-start gap-1"><i data-lucide="sticky-note" class="w-3 h-3 mt-0.5 flex-shrink-0"></i><span class="truncate">${item.note}</span></div>`;
-                    }
-
-                    let clickAction = item.isTodo ? `window.openEditTodoModal('${item.id}')` : `window.openEditModal('${item.id}')`;
-                    
-                    html += `
-                    <div class="flex items-center p-3 hover:bg-gray-50 cursor-pointer" onclick="${clickAction}">
-                        <div class="w-1 self-stretch rounded-full mr-3" style="background-color: ${color}"></div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center">
-                                <span class="text-sm font-bold text-gray-800 truncate">${item.title}</span>
-                                ${tagHtml}
-                            </div>
-                            <div class="text-xs text-gray-500 mt-0.5">${dateStr} · ${timeStr} ${item.location ? `· ${item.location}` : ''}</div>
-                            ${noteDisplay}
-                        </div>
-                    </div>`;
-                });
-                container.innerHTML = html;
-                if (typeof lucide !== 'undefined') {
-                    lucide.createIcons({ root: container });
-                }
-            }
-        };
-        window.renderCalendarListView = function() { const items = window.getCalendarItems(); const listEl = document.getElementById('event-list'); if(!listEl) return; if (items.length === 0) { listEl.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">無行程</div>`; } else { window.renderEventListItems(items, listEl); } };
-        window.renderEventListItems = function(items, container) {
-            let html = '';
-            items.forEach(e => {
-                const date = new Date(e.timestamp);
-                if (isNaN(date)) return;
-                let timeStr = e.allDay ? "All Day" : date.toLocaleTimeString('zh-TW', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false
-                });
-
-                // Show End Time if exists
-                const endTime = e.endTime || e.dueTimeEnd;
-                if (endTime && !e.allDay) {
-                    timeStr += ` - ${endTime}`;
-                }
-
-                // === 修改處：統一計算顏色邏輯 ===
-                // 優先判斷是否為共同行程，是則強制使用 joint 顏色
-                let displayColor;
-                if (e.isJoint) {
-                    displayColor = roleColors.joint;
-                } else {
-                    displayColor = (e.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
-                }
-                // ============================
-
-                if (e.isTodo) {
-                    // === 待辦事項 ===
-                    const statusClass = e.done ? "line-through text-gray-400" : "text-gray-800";
-                    const checkIcon = e.done ? '<i data-lucide="check-square" class="w-5 h-5 text-green-500"></i>' : '<i data-lucide="square" class="w-5 h-5 text-gray-400"></i>';
-                    
-                    html += `
-                    <div class="flex p-4 items-center gap-4 hover:bg-gray-50 transition cursor-pointer">
-                        <div class="flex flex-col items-center w-10">
-                            <span class="text-xs text-gray-400 font-medium uppercase">${date.toLocaleDateString('en-US',{weekday:'short'})}</span>
-                            <span class="text-xl font-bold text-gray-800 leading-none">${date.getDate()}</span>
-                        </div>
-                        <!-- 使用計算好的顏色 -->
-                        <div class="w-1 self-stretch rounded-full" style="background-color: ${displayColor}"></div>
-                        <div class="flex-1 min-w-0 flex items-center justify-between" onclick="window.openEditTodoModal('${e.id}')">
-                            <div>
-                                <div class="flex items-center ${statusClass}">
-                                    <span class="font-bold truncate block">${e.title}</span>
-                                    <span class="ml-2 text-[10px] border border-gray-200 px-1 rounded text-gray-400 flex-shrink-0">待辦</span>
-                                </div>
-                                <div class="text-xs text-gray-500">${timeStr}</div>
-                            </div>
-                        </div>
-                        <div class="flex-none p-2 cursor-pointer" onclick="window.toggleTodo('${e.id}', ${!e.done}); event.stopPropagation();">
-                            ${checkIcon}
-                        </div>
-                    </div>`;
-                } else {
-                    // === 一般行程 ===
-                    let ic = '';
-                    if (e.category === 'travel') ic = 'plane';
-                    else if (e.category === 'appointment') ic = 'scissors';
-                    else if (e.category === 'gathering') ic = 'users';
-                    else if (e.category === 'vacation') ic = 'palmtree';
-
-                    let ico = ic ? `<i data-lucide="${ic}" class="w-3 h-3 text-gray-400 mr-1"></i>` : '';
-
-                    let st = '';
-                    if (e.status === 'tbc') st = `<span class="ml-2 status-tag tbc">TBC</span>`;
-                    else if (e.status === 'tbd') st = `<span class="ml-2 status-tag tbd">TBD</span>`;
-
-                    // 小頭像邏輯 (如果是共同行程，顯示兩個頭像)
-                    let av = `<div class="avatar-sm z-20" style="background-color:${roleColors[e.creator]||'#2cc998'}">${e.creator==='haohao'?'皓':'毛'}</div>`;
-                    if (e.isJoint) {
-                        const partner = e.creator === 'haohao' ? 'maomao' : 'haohao';
-                        const partnerName = partner === 'haohao' ? '皓' : '毛';
-                        av += `<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[partner]}">${partnerName}</div>`;
-                    }
-
-                    // === 新增：備註顯示 (如果有) ===
-                    let noteDisplay = '';
-                    if (e.note && e.note.trim()) {
-                        noteDisplay = `<div class="text-xs text-gray-400 mt-1 flex items-start gap-1"><i data-lucide="sticky-note" class="w-3 h-3 mt-0.5 flex-shrink-0"></i><span class="truncate">${e.note}</span></div>`;
-                    }
-
-                    html += `
-                    <div class="flex p-4 items-start gap-4 hover:bg-gray-50 transition cursor-pointer card-press" onclick="window.openEditModal('${e.id}')">
-                        <div class="flex flex-col items-center w-10 pt-1">
-                            <span class="text-xs text-gray-400 font-medium uppercase">${date.toLocaleDateString('en-US',{weekday:'short'})}</span>
-                            <!-- 日期數字顏色也跟著變 -->
-                            <span class="text-xl font-bold leading-none" style="color:${displayColor}">${date.getDate()}</span>
-                        </div>
-                        <!-- 側邊條顏色 -->
-                        <div class="w-1 self-stretch rounded-full" style="background-color:${displayColor}"></div>
-                        <div class="flex-1 min-w-0 pt-1">
-                            <div class="flex items-center">
-                                ${ico}
-                                <h4 class="font-bold text-gray-800 truncate">${e.title}</h4>
-                                ${st}
-                            </div>
-                            <div class="text-xs text-gray-500">${timeStr} ${e.location?'· '+e.location:''}</div>
-                            ${noteDisplay}
-                        </div>
-                        <div class="flex items-center self-center -space-x-1 pl-2">${av}</div>
-                    </div>`;
-                }
-            });
-            container.innerHTML = html;
-            if (typeof lucide !== 'undefined') lucide.createIcons({
-                root: container
-            });
-        };
-        window.toggleAllDay = function() { const isChecked = document.getElementById('check-allday').checked; document.querySelectorAll('.dt-wrapper-time').forEach(d => d.style.display = isChecked ? 'none' : 'block'); };
-        window.toggleRecurring = function() { const isChecked = document.getElementById('check-recurring').checked; const opts = document.getElementById('recurring-options'); if(isChecked) { opts.classList.remove('hidden'); if(!document.getElementById('input-recur-until').value) document.getElementById('input-recur-until').value = document.getElementById('input-date-end').value; } else opts.classList.add('hidden'); };
-        window.toggleTravelFields = function() { const type = document.getElementById('input-transport-type').value; const isPlane = type === 'plane'; document.getElementById('travel-region-intl').classList.toggle('hidden', !isPlane); document.getElementById('travel-region-tw').classList.toggle('hidden', isPlane); };
-        window.toggleBooked = function() { const isChecked = document.getElementById('check-booked').checked; const txt = document.getElementById('appoint-status-text'); txt.textContent = isChecked ? "已預約" : "未完成"; txt.className = isChecked ? "text-xs font-bold text-purple-600" : "text-xs text-gray-500"; };
-window.togglePartner = function() {
-  const isChecked = document.getElementById('check-partner').checked;
-  updateParticipantsPreview();
-
-  colorPickerTarget = 'event';
-
-  if (isChecked) {
-    currentSelectedColor = roleColors.joint;
-  } else {
-    currentSelectedColor = roleColors[currentUserRole];
-  }
-
-};
-window.saveEvent = function () {
-  if (!db) {
-    window.showToast('資料庫尚未連線');
-    return;
-  }
-
-  // 防連點
-  if (window.__savingEvent) return;
-  window.__savingEvent = true;
-
-  const saveBtn = document.querySelector(
-    '#add-modal button[onclick="window.saveEvent()"]'
-  );
-  if (saveBtn) {
-    saveBtn.disabled = true;
-    saveBtn.textContent = '儲存中…';
-    saveBtn.classList.add('opacity-60');
-  }
-
-  try {
-    const title = document.getElementById('input-title')?.value?.trim();
-    if (!title) {
-      window.showToast('請填寫標題');
-      throw new Error('Missing title');
-    }
-
-    const startDate = document.getElementById('input-date-start')?.value;
-    if (!startDate) {
-      window.showToast('請選擇日期');
-      throw new Error('Missing date');
-    }
-
-    const time = document.getElementById('input-time-start')?.value || '00:00'; // Default time if missing
-    // FIX: 如果全天行程，timestamp 以 startDateT00:00 為準
-    const timestamp = new Date(`${startDate}T${time}:00`).toISOString();
-    const isAllDay = !document.getElementById('input-time-start').value;
-    
-    // NEW: Get End Time
-    const endTime = document.getElementById('input-time-end')?.value || '';
-
-    const baseData = {
-      title,
-      allDay: isAllDay, // 寫入全天旗標
-      isJoint: document.getElementById('check-partner')?.checked || false,
-      status: document.getElementById('input-status')?.value || 'confirmed',
-      note: document.getElementById('input-note')?.value || '',
-      creator: currentUserRole,
-      color: currentSelectedColor,
-      location: document.getElementById('input-location')?.value || '',
-      endTime: endTime, // Save End Time
-      createdAt: new Date().toISOString()
-    };
-
-    // --- RECURRENCE LOGIC ---
-    const isRecur = document.getElementById('check-recur-event').checked;
-    
-    if (editingEventId && !isRecur) {
-        // Edit Mode (Single Event)
-        db.collection('events').doc(editingEventId).update({
-            ...baseData,
-            startDate,
-            timestamp
-        }).then(() => {
-            window.showToast('行程已儲存');
-            window.closeAddModal();
-        }).catch(err => { console.error(err); window.showToast('儲存失敗'); })
-        .finally(() => {
-            window.__savingEvent = false;
-            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '保存'; saveBtn.classList.remove('opacity-60'); }
-        });
-    } else {
-        // Add Mode (Single or Recurring)
-        let batchEvents = [];
-        
-        if (isRecur) {
-            // FIX: Read from the new custom picker hidden input
-            const endDateStr = document.getElementById('input-date-recur-event').value;
-            if (!endDateStr) {
-                window.showToast('請選擇重複結束日期');
-                throw new Error('Missing end date');
-            }
-            
-            // Get selected days for weekly/biweekly
-            const dayBtns = document.querySelectorAll('#recur-days-row-event .day-circle.active');
-            const selectedDays = Array.from(dayBtns).map(b => parseInt(b.dataset.d));
-            
-            // Generate dates
-            const dateList = window.generateRecurringDates(startDate, endDateStr, currentRecurFreq.event, selectedDays);
-            
-            if (dateList.length === 0) {
-                 window.showToast('區間內沒有符合的日期');
-                 throw new Error('No dates generated');
-            }
-            
-            const groupId = crypto.randomUUID(); // Group ID for future reference
-            
-            batchEvents = dateList.map(d => {
-                const dStr = d.toISOString().split('T')[0];
-                const ts = new Date(`${dStr}T${time}:00`).toISOString();
-                return {
-                    ...baseData,
-                    startDate: dStr,
-                    timestamp: ts,
-                    groupId: groupId
-                };
-            });
-            
-        } else {
-            // Single Event
-            batchEvents.push({
-                ...baseData,
-                startDate,
-                timestamp
-            });
-        }
-
-        // Batch Save
-        const batchPromise = Promise.all(batchEvents.map(evt => db.collection('events').add(evt)));
-        
-        batchPromise.then(() => {
-            const msg = isRecur ? `已建立 ${batchEvents.length} 個重複行程` : '行程已儲存';
-            window.showToast(msg);
-            window.closeAddModal();
-        }).catch(err => {
-            console.error(err);
-            window.showToast('儲存失敗');
-        }).finally(() => {
-            window.__savingEvent = false;
-            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '保存'; saveBtn.classList.remove('opacity-60'); }
-        });
-    }
-
-  } catch (err) {
-    window.__savingEvent = false;
-    if (saveBtn) {
-      saveBtn.disabled = false;
-      saveBtn.textContent = '保存';
-      saveBtn.classList.remove('opacity-60');
-    }
-  }
-};
-        window.deleteCurrentEvent = function() { if(!editingEventId){ window.showToast("無法識別 ID"); return; } deleteTarget='event'; window.confirmDelete(); };
-        window.deleteCurrentTodo = function() { if(!editingTodoId){ window.showToast("無法識別 ID"); return; } deleteTarget='todo'; window.confirmDelete(); };
-        window.confirmDelete = function() { const m = document.getElementById('confirm-modal'); m.classList.remove('hidden'); setTimeout(() => m.classList.add('visible'), 10); };
-        window.closeConfirmModal = function() { const m = document.getElementById('confirm-modal'); m.classList.remove('visible'); setTimeout(() => m.classList.add('hidden'), 200); };
-        window.executeDelete = function() { 
-            if(deleteTarget === 'event' && editingEventId) { 
-                db.collection('events').doc(editingEventId).delete().then(() => { window.closeConfirmModal(); window.closeAddModal(); window.showToast('行程已刪除'); }).catch(e => { console.error(e); window.showToast('刪除失敗'); }); 
-            } else if (deleteTarget === 'todo' && editingTodoId) {
-                db.collection('todos').doc(editingTodoId).delete().then(() => { window.closeConfirmModal(); window.closeAddTodoModal(); window.showToast('待辦已刪除'); }).catch(e => { console.error(e); window.showToast('刪除失敗'); });
-            } else if (deleteTarget === 'note' && noteToDelete) {
-                window.deleteNote(noteToDelete);
-                window.closeConfirmModal();
-            }
-        };
-window.openAddModal = function () {
-  // === 加入這行 ===
-  if (!window.checkRoleEnforcement()) return;
-  // ===============
-
-  editingEventId = null;
-
-  // === 基本欄位（都存在）===
-  document.getElementById('input-title').value = '';
-  document.getElementById('input-note').value = '';
-  document.getElementById('input-date-start').value = '';
-  
-  // FIX: Reset displays style
-  const dD = document.getElementById('display-date-start');
-  dD.textContent = '請選擇';
-  dD.classList.add('dt-text-placeholder');
-  dD.classList.remove('dt-text-value');
-
-  const t = document.getElementById('input-time-start');
-  if (t) t.value = '';
-  const td = document.getElementById('display-time-start');
-  if (td) { 
-      td.textContent = '請選擇';
-      td.classList.add('dt-text-placeholder');
-      td.classList.remove('dt-text-value');
-  }
-
-  // End Time Reset
-  const te = document.getElementById('input-time-end');
-  if (te) te.value = '';
-  const tde = document.getElementById('display-time-end');
-  if (tde) {
-      tde.textContent = '請選擇';
-      tde.classList.add('dt-text-placeholder');
-      tde.classList.remove('dt-text-value');
-  }
-
-  const loc = document.getElementById('input-location');
-  if (loc) loc.value = '';
-
-  // 一起 / 不一起
-  const partner = document.getElementById('check-partner');
-  partner.checked = false;
-  
-  // 重置重複選項
-  document.getElementById('check-recur-event').checked = false;
-  window.toggleRecurOptions('event');
-  // Reset buttons
-  window.selectRecurFreq('event', 'daily');
-  document.querySelectorAll('.day-circle').forEach(b => b.classList.remove('active'));
-
-  // 狀態預設 confirmed
-  window.setStatus('confirmed');
-
-  // 顏色邏輯（保留，但不碰 UI）
-  currentSelectedColor = roleColors[currentUserRole];
-  colorPickerTarget = 'event';
-
-  // 刪除按鈕：新增模式下隱藏
-  const delBtn = document.getElementById('btn-delete-event');
-  if(delBtn) delBtn.classList.add('hidden');
-
-  // 🔓 開 modal
-  const m = document.getElementById('add-modal');
-  m.classList.remove('hidden');
-  setTimeout(() => m.classList.add('visible'), 10);
-};
-window.openEditModal = function (id) {
-  const evt = allEventsCache.find(e => e.id === id);
-  if (!evt) {
-    window.showToast('找不到行程');
-    return;
-  }
-
-  editingEventId = id;
-
-  // === 標題 ===
-  document.getElementById('input-title').value = evt.title || '';
-
-  // === 日期 ===
-  if (evt.startDate) {
-    document.getElementById('input-date-start').value = evt.startDate;
-    window.updateDateDisplay('start', evt.startDate);
-  } else if (evt.timestamp) {
-    const d = new Date(evt.timestamp);
-    const ds = d.toISOString().split('T')[0];
-    document.getElementById('input-date-start').value = ds;
-    window.updateDateDisplay('start', ds);
-  }
-
-  // === 時間 (若為 All Day 則清空，否則解析顯示) ===
-  const timeInput = document.getElementById('input-time-start');
-  
-  if (evt.allDay) {
-      // 1. 如果是全天行程，清空時間欄位
-      timeInput.value = '';
-      // 2. 顯示文字設為預設 (通常是 '請選擇'，這代表無時間=全天)
-      window.updateTimeDisplay('start', ''); 
-      window.updateTimeDisplay('end', ''); // also clear end time display
-  } else if (evt.timestamp) {
-      // 3. 一般行程，解析時間並顯示
-      const d = new Date(evt.timestamp);
-      const hours = d.getHours().toString().padStart(2, '0');
-      const minutes = d.getMinutes().toString().padStart(2, '0');
-      const timeStr = `${hours}:${minutes}`;
-      timeInput.value = timeStr;
-      window.updateTimeDisplay('start', timeStr);
-  }
-
-  // === 結束時間 ===
-  if (evt.endTime) {
-      document.getElementById('input-time-end').value = evt.endTime;
-      window.updateTimeDisplay('end', evt.endTime);
-  } else {
-      document.getElementById('input-time-end').value = '';
-      window.updateTimeDisplay('end', '');
-  }
-  
-  // === 地點 ===
-  document.getElementById('input-location').value = evt.location || '';
-  
-  // === 一起 / 不一起 ===
-  const partner = document.getElementById('check-partner');
-  partner.checked = !!evt.isJoint;
-
-  // === 狀態 ===
-  window.setStatus(evt.status || 'confirmed');
-
-  // === 備註 ===
-  document.getElementById('input-note').value = evt.note || '';
-  
-  // 編輯模式隱藏重複選項 (保持簡單)
-  document.getElementById('check-recur-event').checked = false;
-  window.toggleRecurOptions('event');
-
-  // === 顏色邏輯（只保留資料，不碰 UI）===
-  currentSelectedColor = evt.color || roleColors[evt.creator] || roleColors[currentUserRole];
-  colorPickerTarget = 'event';
-
-  // 刪除按鈕：編輯模式下顯示
-  const delBtn = document.getElementById('btn-delete-event');
-  if(delBtn) delBtn.classList.remove('hidden');
-
-  // === 開 modal ===
-  const m = document.getElementById('add-modal');
-  m.classList.remove('hidden');
-  setTimeout(() => m.classList.add('visible'), 10);
-};
- window.openAddTodoModal = function() { 
-    // === 加入這行 ===
-    if (!window.checkRoleEnforcement()) return;
-    // ===============
-    editingTodoId = null; document.getElementById('todo-modal-title').textContent = '新增待辦事項'; document.getElementById('todo-modal-btn').textContent = '新增'; document.getElementById('todo-input-title').value = ''; document.getElementById('input-date-todo').value = ''; document.getElementById('input-time-todo').value = ''; 
-    const dd = document.getElementById('display-date-todo'); dd.textContent = '請選擇'; dd.classList.add('dt-text-placeholder'); dd.classList.remove('dt-text-value');
-    const dt = document.getElementById('display-time-todo'); dt.textContent = '請選擇'; dt.classList.add('dt-text-placeholder'); dt.classList.remove('dt-text-value');
-    
-    // Reset End Time
-    document.getElementById('input-time-todo-end').value = '';
-    const dte = document.getElementById('display-time-todo-end');
-    dte.textContent = '請選擇'; dte.classList.add('dt-text-placeholder'); dte.classList.remove('dt-text-value');
-
-    // FIX: 移除了對不存在元素 'todo-check-calendar' 的引用
-    document.getElementById('todo-check-joint').checked = false; 
-    
-    // Reset recurrence
-    document.getElementById('check-recur-todo').checked = false;
-    window.toggleRecurOptions('todo');
-    window.selectRecurFreq('todo', 'daily');
-    document.querySelectorAll('.day-circle').forEach(b => b.classList.remove('active'));
-    
-    const btn=document.getElementById('btn-delete-todo'); if(btn) btn.classList.add('hidden'); const m = document.getElementById('add-todo-modal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('visible'),10); 
- };
- window.closeAddModal = function() {
-  window.__savingEvent = false; // 🔒 保險重置
-  const m=document.getElementById('add-modal');
-  m.classList.remove('visible');
-  setTimeout(()=>m.classList.add('hidden'),200);
-};
         window.openEditTodoModal = function(id) { 
             editingTodoId = id; 
             const todo = allTodosCache.find(t => t.id === id); 
@@ -2255,6 +1167,17 @@ window.openEditModal = function (id) {
             } else { 
                 document.getElementById('input-time-todo').value = ''; 
                 window.updateTimeDisplay('todo', ''); 
+            }
+
+            // End Date
+            if (todo.dueDateEnd) {
+                document.getElementById('input-date-todo-end').value = todo.dueDateEnd;
+                window.updateDateDisplay('todo-end', todo.dueDateEnd);
+            } else {
+                // Default to start date if existing
+                const sD = document.getElementById('input-date-todo').value;
+                document.getElementById('input-date-todo-end').value = sD;
+                window.updateDateDisplay('todo-end', sD);
             }
 
             // End Time
@@ -2278,394 +1201,835 @@ window.openEditModal = function (id) {
             m.classList.remove('hidden'); 
             setTimeout(()=>m.classList.add('visible'),10); 
         };
-        window.closeAddTodoModal = function() { const m = document.getElementById('add-todo-modal'); m.classList.remove('visible'); setTimeout(()=>m.classList.add('hidden'),200); };       
-        // 4. 儲存待辦事項 (修復：清除日期後無法存檔的問題)
-        window.isSavingTodo = false;
+
+        window.saveEvent = function () {
+          if (!db) { window.showToast('資料庫尚未連線'); return; }
+          if (window.__savingEvent) return;
+          window.__savingEvent = true;
+
+          const saveBtn = document.querySelector('#add-modal button[onclick="window.saveEvent()"]');
+          if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '儲存中…'; saveBtn.classList.add('opacity-60'); }
+
+          try {
+            const title = document.getElementById('input-title').value.trim();
+            if (!title) { window.showToast('請填寫標題'); throw new Error('Missing title'); }
+
+            const startDate = document.getElementById('input-date-start').value;
+            if (!startDate) { window.showToast('請選擇日期'); throw new Error('Missing date'); }
+
+            let endDate = document.getElementById('input-date-end').value;
+            if (!endDate) endDate = startDate;
+
+            const time = document.getElementById('input-time-start').value || '00:00'; 
+            const timestamp = new Date(`${startDate}T${time}:00`).toISOString();
+            const isAllDay = !document.getElementById('input-time-start').value;
+            const endTime = document.getElementById('input-time-end').value || '';
+
+            const baseData = {
+              title, allDay: isAllDay, isJoint: document.getElementById('check-partner').checked || false,
+              status: document.getElementById('input-status').value || 'confirmed',
+              note: document.getElementById('input-note').value || '',
+              creator: currentUserRole, color: currentSelectedColor,
+              location: document.getElementById('input-location').value || '',
+              endDate: endDate, endTime: endTime, createdAt: new Date().toISOString()
+            };
+
+            const isRecur = document.getElementById('check-recur-event').checked;
+            
+            if (editingEventId && !isRecur) {
+                db.collection('events').doc(editingEventId).update({ ...baseData, startDate, timestamp })
+                .then(() => { window.showToast('行程已儲存'); window.closeAddModal(); })
+                .catch(err => { console.error(err); window.showToast('儲存失敗'); })
+                .finally(() => { window.__savingEvent = false; if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '保存'; saveBtn.classList.remove('opacity-60'); } });
+            } else {
+                let batchEvents = [];
+                if (isRecur) {
+                    const recurEndDateStr = document.getElementById('input-date-recur-event').value;
+                    if (!recurEndDateStr) { window.showToast('請選擇重複結束日期'); throw new Error('Missing end date'); }
+                    const dayBtns = document.querySelectorAll('#recur-days-row-event .day-circle.active');
+                    const selectedDays = Array.from(dayBtns).map(b => parseInt(b.dataset.d));
+                    const dateList = window.generateRecurringDates(startDate, recurEndDateStr, currentRecurFreq.event, selectedDays);
+                    if (dateList.length === 0) { window.showToast('區間內沒有符合的日期'); throw new Error('No dates generated'); }
+                    const groupId = crypto.randomUUID(); 
+                    const startObj = new Date(startDate);
+                    const endObj = new Date(endDate);
+                    const durationMs = endObj - startObj;
+                    const durationDays = Math.round(durationMs / (1000 * 60 * 60 * 24));
+
+                    batchEvents = dateList.map(d => {
+                        const dStr = d.toISOString().split('T')[0];
+                        const ts = new Date(`${dStr}T${time}:00`).toISOString();
+                        const newEndObj = new Date(d);
+                        newEndObj.setDate(newEndObj.getDate() + durationDays);
+                        const newEndDateStr = newEndObj.toISOString().split('T')[0];
+                        return { ...baseData, startDate: dStr, endDate: newEndDateStr, timestamp: ts, groupId: groupId };
+                    });
+                } else {
+                    batchEvents.push({ ...baseData, startDate, timestamp });
+                }
+                Promise.all(batchEvents.map(evt => db.collection('events').add(evt)))
+                .then(() => { const msg = isRecur ? `已建立 ${batchEvents.length} 個重複行程` : '行程已儲存'; window.showToast(msg); window.closeAddModal(); })
+                .catch(err => { console.error(err); window.showToast('儲存失敗'); })
+                .finally(() => { window.__savingEvent = false; if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '保存'; saveBtn.classList.remove('opacity-60'); } });
+            }
+          } catch (err) {
+            window.__savingEvent = false;
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '保存'; saveBtn.classList.remove('opacity-60'); }
+          }
+        };
 
         window.saveTodoItem = function() {
             if (window.isSavingTodo) return;
-
-            const title = document.getElementById('todo-input-title').value;
-            if (!title) {
-                window.showToast('請輸入內容');
-                return;
-            }
-
-            // 鎖定按鈕
+            const title = document.getElementById('todo-input-title').value.trim();
+            if (!title) { window.showToast('請輸入內容'); return; }
             window.isSavingTodo = true;
             const btn = document.getElementById('todo-modal-btn');
             const originalText = btn ? btn.textContent : '儲存';
-            if (btn) {
-                btn.textContent = '儲存中...';
-                btn.style.opacity = '0.5';
-            }
+            if (btn) { btn.textContent = '儲存中...'; btn.style.opacity = '0.5'; }
 
             const date = document.getElementById('input-date-todo').value || null;
             const time = document.getElementById('input-time-todo').value || null;
             const isJoint = document.getElementById('todo-check-joint').checked;
             const isRecur = document.getElementById('check-recur-todo').checked;
-            
-            // New: End Time
+            let dateEnd = document.getElementById('input-date-todo-end').value || null;
+            if (date && !dateEnd) dateEnd = date;
             const timeEnd = document.getElementById('input-time-todo-end').value || null;
-
-            // 若有日期則自動標記需同步
             const addToCalendar = !!date; 
 
             const baseData = {
-                title,
-                done: false,
-                creator: currentUserRole,
-                isJoint: isJoint,
-                addToCalendar: addToCalendar,
-                dueDate: date,
-                dueTime: (date && time) ? time : null,
-                dueTimeEnd: (date && timeEnd) ? timeEnd : null, // Save End Time
-                timestamp: null, // calculated below
-                createdAt: new Date().toISOString() 
+                title, done: false, creator: currentUserRole, isJoint: isJoint, addToCalendar: addToCalendar,
+                dueDate: date, dueTime: (date && time) ? time : null,
+                dueDateEnd: dateEnd, dueTimeEnd: (date && timeEnd) ? timeEnd : null, 
+                timestamp: null, createdAt: new Date().toISOString() 
             };
-
-            // Calculate base timestamp
             if (date) {
                 const tStr = time || "00:00";
                 try { baseData.timestamp = new Date(`${date}T${tStr}`).toISOString(); } catch(e){}
             }
 
             const finish = (msg) => {
-                if (typeof window.closeAddTodoModal === 'function') {
-                    window.closeAddTodoModal();
-                }
-                window.showToast(msg);
-                window.isSavingTodo = false;
+                if (typeof window.closeAddTodoModal === 'function') window.closeAddTodoModal();
+                window.showToast(msg); window.isSavingTodo = false;
                 if (btn) { btn.textContent = originalText; btn.style.opacity = '1'; }
             };
-            
             const onError = (err) => {
-                console.error("Save Error:", err);
-                window.showToast('儲存失敗');
-                window.isSavingTodo = false;
+                console.error("Save Error:", err); window.showToast('儲存失敗'); window.isSavingTodo = false;
                 if (btn) { btn.textContent = originalText; btn.style.opacity = '1'; }
             };
 
-            // Recurrence Logic for Todos
             if (editingTodoId && !isRecur) {
-                db.collection('todos').doc(editingTodoId).update(baseData)
-                    .then(() => finish('待辦事項已更新'))
-                    .catch(onError);
+                db.collection('todos').doc(editingTodoId).update(baseData).then(() => finish('待辦事項已更新')).catch(onError);
             } else if (!isRecur) {
-                db.collection('todos').add(baseData)
-                    .then(() => finish('待辦事項已新增'))
-                    .catch(onError);
+                db.collection('todos').add(baseData).then(() => finish('待辦事項已新增')).catch(onError);
             } else {
-                // Recurring Todo
-                if (!date) {
-                    window.showToast('重複待辦需要設定開始日期');
-                    window.isSavingTodo = false;
-                    if (btn) { btn.textContent = originalText; btn.style.opacity = '1'; }
-                    return;
-                }
-                
-                // FIX: Read from the new custom picker hidden input
+                if (!date) { window.showToast('重複待辦需要設定開始日期'); window.isSavingTodo = false; if (btn) { btn.textContent = originalText; btn.style.opacity = '1'; } return; }
                 const endDateStr = document.getElementById('input-date-recur-todo').value;
-                if (!endDateStr) {
-                    window.showToast('請選擇重複結束日期');
-                    window.isSavingTodo = false;
-                    if (btn) { btn.textContent = originalText; btn.style.opacity = '1'; }
-                    return;
-                }
-
-                // Get selected days
+                if (!endDateStr) { window.showToast('請選擇重複結束日期'); window.isSavingTodo = false; if (btn) { btn.textContent = originalText; btn.style.opacity = '1'; } return; }
                 const dayBtns = document.querySelectorAll('#recur-days-row-todo .day-circle.active');
                 const selectedDays = Array.from(dayBtns).map(b => parseInt(b.dataset.d));
-
                 const dateList = window.generateRecurringDates(date, endDateStr, currentRecurFreq.todo, selectedDays);
-                
-                if (dateList.length === 0) {
-                     window.showToast('區間內沒有符合的日期');
-                     window.isSavingTodo = false;
-                     if (btn) { btn.textContent = originalText; btn.style.opacity = '1'; }
-                     return;
-                }
-
+                if (dateList.length === 0) { window.showToast('區間內沒有符合的日期'); window.isSavingTodo = false; if (btn) { btn.textContent = originalText; btn.style.opacity = '1'; } return; }
                 const groupId = crypto.randomUUID();
+                const startObj = new Date(date);
+                const endObj = new Date(dateEnd);
+                const durationMs = endObj - startObj;
+                const durationDays = Math.round(durationMs / (1000 * 60 * 60 * 24));
                 const batchEvents = dateList.map(d => {
                     const dStr = d.toISOString().split('T')[0];
                     let ts = null;
-                    if(time) ts = new Date(`${dStr}T${time}`).toISOString();
-                    else ts = new Date(`${dStr}T00:00`).toISOString();
-
-                    return {
-                        ...baseData,
-                        dueDate: dStr,
-                        timestamp: ts,
-                        groupId: groupId
-                    };
+                    if(time) ts = new Date(`${dStr}T${time}`).toISOString(); else ts = new Date(`${dStr}T00:00`).toISOString();
+                    const newEndObj = new Date(d);
+                    newEndObj.setDate(newEndObj.getDate() + durationDays);
+                    const newEndDateStr = newEndObj.toISOString().split('T')[0];
+                    return { ...baseData, dueDate: dStr, dueDateEnd: newEndDateStr, timestamp: ts, groupId: groupId };
                 });
-
-                Promise.all(batchEvents.map(evt => db.collection('todos').add(evt)))
-                    .then(() => finish(`已建立 ${batchEvents.length} 個重複待辦`))
-                    .catch(onError);
+                Promise.all(batchEvents.map(evt => db.collection('todos').add(evt))).then(() => finish(`已建立 ${batchEvents.length} 個重複待辦`)).catch(onError);
             }
         };
 
-        window.toggleTodo = function(id,s) { db.collection('todos').doc(id).update({done:s}); };
-        window.deleteTodo = function(id) { if(confirm('刪除?')) db.collection('todos').doc(id).delete(); };
-        window.renderTodos = function(todos) { const jointList=document.getElementById('todo-list-joint'), haohaoList=document.getElementById('todo-list-haohao'), maomaoList=document.getElementById('todo-list-maomao'), dashboardList=document.getElementById('dashboard-todo-list'); if(!jointList) return; jointList.innerHTML=''; haohaoList.innerHTML=''; maomaoList.innerHTML=''; dashboardList.innerHTML=''; let pendingCount=0; todos.forEach(t => { let colorHex = roleColors.haohao; let container = haohaoList; if (t.isJoint) { colorHex = roleColors.joint; container = jointList; } else if (t.creator === 'maomao') { colorHex = roleColors.maomao; container = maomaoList; } let checkStyle = t.done ? `background-color: #d1d5db; border-color: #d1d5db;` : `border-color: ${colorHex};`; let titleClass = t.done ? "text-gray-400 line-through" : "text-gray-800"; if (t.done) { } else { pendingCount++; } let calInfo = t.dueDate ? `<span class="text-[10px] ${t.done?'text-gray-300':'text-gray-400'} ml-2 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${t.dueDate}</span>` : ''; const html = `<div class="todo-item flex items-center p-3 bg-white rounded-xl border border-gray-100 shadow-sm"><div class="flex-none p-2 cursor-pointer" onclick="window.toggleTodo('${t.id}', ${!t.done}); event.stopPropagation();"><div class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors text-white" style="${checkStyle}">${t.done?'<i data-lucide="check" class="w-3 h-3"></i>':''}</div></div><div class="flex-1 px-2 cursor-pointer overflow-hidden" onclick="window.openEditTodoModal('${t.id}')"><span class="${titleClass} font-medium truncate block">${t.title}</span>${calInfo}</div><button onclick="window.deleteTodo('${t.id}'); event.stopPropagation();" class="flex-none p-2 text-gray-300 hover:text-red-400"><i data-lucide="x" class="w-4 h-4"></i></button></div>`; container.innerHTML += html; }); if (pendingCount === 0) dashboardList.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">沒有未完成的待辦事項 🎉</p>`; else { const pendings = todos.filter(t => !t.done).slice(0, 3); pendings.forEach(t => { let dotColor = t.isJoint ? roleColors.joint : (t.creator==='haohao' ? roleColors.haohao : roleColors.maomao); dashboardList.innerHTML += `<div class="flex items-center gap-2 text-sm bg-gray-50 p-2 rounded-lg border border-gray-100"><div class="w-2 h-2 rounded-full" style="background-color: ${dotColor}"></div><span class="truncate text-gray-700">${t.title}</span></div>`; }); if (todos.filter(t => !t.done).length > 3) dashboardList.innerHTML += `<div class="text-center text-xs text-gray-400 mt-1">還有 ${todos.filter(t => !t.done).length - 3} 個項目...</div>`; } if(typeof lucide !== 'undefined') lucide.createIcons(); };
-        
-
-        /* =========================================
-           便利貼 (Status Note) 功能邏輯
-           ========================================= */
-
-        // 1. 發送便利貼
-        window.sendNote = function() {
-            // === 加入這行 ===
-            if (!window.checkRoleEnforcement()) return;
-            // ===============
-            const input = document.getElementById('note-input');
-            const text = input.value.trim();
-
-            if (!text) return;
-
-            // === 關鍵修正：樂觀更新 (Optimistic UI) ===
-            // 1. 先清空輸入框，讓使用者感覺「已送出」
-            input.value = ''; 
-            input.blur(); 
-
-            // 2. 先手動更新畫面 (不用等資料庫回傳)
-            const mockData = {
-                text: text,
-                timestamp: new Date().toISOString(),
-                creator: currentUserRole
-            };
-            window.renderNoteBubble(currentUserRole, mockData);
-
-            // 3. 背景執行資料庫寫入
-            db.collection('notes').doc(currentUserRole).set(mockData)
-            .then(() => {
-                window.showToast('心情已發送 💬');
-            }).catch(err => {
-                console.error(err);
-                window.showToast('發送失敗');
-            });
-        };
-
-        // 2. 聚焦輸入框 (點擊頭像時觸發)
-        window.setNoteInputFocus = function() {
-            const input = document.getElementById('note-input');
-            input.focus();
-        };
-        
-        // 新增：計算相對時間的輔助函式
-        window.getRelativeTimeStr = function(timestamp) {
-            const now = new Date();
-            const date = new Date(timestamp);
-            const diffMs = now - date;
-            const diffMins = Math.floor(diffMs / (1000 * 60));
-            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-
-            if (diffMins < 1) return '剛剛';
-            if (diffMins < 60) return `${diffMins}分鐘前`;
-            if (diffHours < 24) return `${diffHours}小時前`;
-            return '1天前';
-        };
-
-        // 3. 渲染便利貼 (更新：加入時間顯示與 7字寬度控制)
-        window.renderNoteBubble = function(role, data) {
-            const bubbleId = `note-bubble-${role}`;
-            const textId = `note-text-${role}`;
-            const dotId = `status-dot-${role}`;
-            const timeId = `note-time-${role}`; // 新增時間 ID
-            
-            const bubbleEl = document.getElementById(bubbleId);
-            const textEl = document.getElementById(textId);
-            const dotEl = document.getElementById(dotId);
-            const timeEl = document.getElementById(timeId);
-
-            if (!bubbleEl || !textEl) return;
-
-            if (!data || !data.text || !data.timestamp) {
-                hideBubble(bubbleEl, dotEl, timeEl, role);
-                return;
-            }
-
-            const now = new Date();
-            const noteTime = new Date(data.timestamp);
-            const diffHours = (now - noteTime) / (1000 * 60 * 60);
-
-            if (diffHours < 24) {
-                textEl.textContent = data.text;
-                if(timeEl) {
-                    timeEl.textContent = window.getRelativeTimeStr(data.timestamp);
-                    // FIX: 確保移除 hidden，否則之前刪除或初始隱藏後會顯示不出來
-                    timeEl.classList.remove('hidden');
-                    timeEl.classList.remove('opacity-0');
-                }
-                
-                // 顯示
-                bubbleEl.classList.remove('hidden');
-                if(dotEl) dotEl.classList.remove('hidden');
-                
-                // 動畫：左右滑入
-                requestAnimationFrame(() => {
-                    bubbleEl.classList.remove('opacity-0');
-                    if (role === 'haohao') {
-                        bubbleEl.classList.remove('-translate-x-2'); 
-                    } else {
-                        bubbleEl.classList.remove('translate-x-2'); 
-                    }
-                });
-            } else {
-                hideBubble(bubbleEl, dotEl, timeEl, role);
-            }
-        };
-
-        // 更新隱藏函式，加入時間標籤的處理
-        function hideBubble(bubbleEl, dotEl, timeEl, role) {
-            bubbleEl.classList.add('opacity-0');
-            if (role === 'haohao') {
-                bubbleEl.classList.add('-translate-x-2');
-            } else {
-                bubbleEl.classList.add('translate-x-2');
-            }
-            
-            if(dotEl) dotEl.classList.add('hidden');
-            // 也把時間隱藏
-            if(timeEl) timeEl.classList.add('opacity-0', 'hidden'); 
-            
-            setTimeout(() => {
-                bubbleEl.classList.add('hidden');
-            }, 300);
-        }
-
-        // 4. 更新頭像顏色 (配合設定頁面的顏色)
-        window.syncNoteAvatarColors = function() {
-            const h = document.getElementById('avatar-note-haohao');
-            const m = document.getElementById('avatar-note-maomao');
-            if(h) h.style.backgroundColor = roleColors.haohao;
-            if(m) m.style.backgroundColor = roleColors.maomao;
-        };
-        
         window.confirmDeleteNote = function(role) {
             if (!window.checkRoleEnforcement()) return;
-            
             deleteTarget = 'note';
             noteToDelete = role;
-            
-            // Update modal text for context
             const m = document.getElementById('confirm-modal');
             const title = m.querySelector('h3');
             const desc = m.querySelector('p');
             if(title) title.textContent = '刪除心情？';
             if(desc) desc.textContent = '確定要刪除這則留言嗎？';
-            
             window.confirmDelete();
         };
 
         window.deleteNote = function(role) {
-            // === 加入這行 ===
             if (!window.checkRoleEnforcement()) return;
-            // ===============
-            
-            // === 關鍵修正：立即隱藏 (消除殘影與等待感) ===
-            const bubbleEl = document.getElementById(`note-bubble-${role}`);
-            if(bubbleEl) {
-                // 直接隱藏，不要等待動畫淡出，避免按鈕紅色狀態殘留
-                bubbleEl.classList.add('hidden');
-            }
-            
-            const dotEl = document.getElementById(`status-dot-${role}`);
-            if(dotEl) dotEl.classList.add('hidden');
-            
-            const timeEl = document.getElementById(`note-time-${role}`);
-            if(timeEl) timeEl.classList.add('hidden');
-
-            // 背景刪除資料庫
-            db.collection('notes').doc(role).delete()
-                .then(() => {
-                    window.showToast('心情已刪除 💨');
-                })
-                .catch(err => {
-                    console.error(err);
-                    window.showToast('刪除失敗');
-                });
+            const bubbleEl = document.getElementById(`note-bubble-${role}`); if(bubbleEl) bubbleEl.classList.add('hidden');
+            const dotEl = document.getElementById(`status-dot-${role}`); if(dotEl) dotEl.classList.add('hidden');
+            const timeEl = document.getElementById(`note-time-${role}`); if(timeEl) timeEl.classList.add('hidden');
+            db.collection('notes').doc(role).delete().then(() => { window.showToast('心情已刪除 💨'); }).catch(err => { console.error(err); window.showToast('刪除失敗'); });
         };
         
-        window.clearDate = function() {
-            // 1. 如果是待辦事項 (todo)
-            if (calTargetInput === 'todo') {
-                // 清空日期與時間的隱藏值
-                document.getElementById('input-date-todo').value = '';
-                document.getElementById('input-time-todo').value = '';
-                
-                // 使用現有的 helper 函式來重置顯示文字 (變回「請選擇」)
-                if (window.updateDateDisplay) window.updateDateDisplay('todo', '');
-                if (window.updateTimeDisplay) window.updateTimeDisplay('todo', '');
-            } 
-            // 2. 如果是其他 (例如一般行程，雖然通常必填，但也提供清除功能)
-            else {
-                const el = document.getElementById(`input-date-${calTargetInput}`);
-                if (el) el.value = '';
-                if (window.updateDateDisplay) window.updateDateDisplay(calTargetInput, '');
-                
-                // 如果是開始日期被清除，可能需要連動結束日期檢查，但因為是清空，暫不處理自動計算
-            }
+        window.syncNoteAvatarColors = function() { 
+            const h = document.getElementById('avatar-note-haohao'); 
+            const m = document.getElementById('avatar-note-maomao'); 
+            if(h) h.style.backgroundColor = roleColors.haohao; 
+            if(m) m.style.backgroundColor = roleColors.maomao; 
+        };
 
-            // 3. 關閉視窗
+        window.openCalendar = function(type) {
+            calTargetInput = type;
+            const val = document.getElementById(`input-date-${type}`).value;
+            if (val) calCurrentDate = new Date(val);
+            else calCurrentDate = new Date();
+            window.renderCalendarPicker();
+            const m = document.getElementById('calendar-picker-modal');
+            m.classList.remove('hidden');
+            setTimeout(() => m.classList.add('visible'), 10);
+        };
+
+        window.closeCalendar = function() {
+            const m = document.getElementById('calendar-picker-modal');
+            m.classList.remove('visible');
+            setTimeout(() => m.classList.add('hidden'), 200);
+        };
+
+        window.changeCalMonth = function(delta) {
+            calCurrentDate.setMonth(calCurrentDate.getMonth() + delta);
+            window.renderCalendarPicker();
+        };
+
+        window.renderCalendarPicker = function() {
+            const y = calCurrentDate.getFullYear();
+            const m = calCurrentDate.getMonth();
+            document.getElementById('cal-month-title').textContent = `${y}年${m + 1}月`;
+            const firstDay = new Date(y, m, 1).getDay();
+            const daysInMonth = new Date(y, m + 1, 0).getDate();
+            const grid = document.getElementById('calendar-days');
+            grid.innerHTML = '';
+            for (let i = 0; i < firstDay; i++) grid.innerHTML += `<div class="cal-day empty"></div>`;
+            const todayStr = new Date().toDateString();
+            const inputVal = document.getElementById(`input-date-${calTargetInput}`).value;
+            const selectedDateStr = inputVal ? new Date(inputVal).toDateString() : '';
+            for (let d = 1; d <= daysInMonth; d++) {
+                const thisDate = new Date(y, m, d);
+                const thisDateStr = thisDate.toDateString();
+                let classes = "cal-day";
+                if (thisDateStr === todayStr) classes += " today";
+                if (thisDateStr === selectedDateStr) classes += " selected";
+                const el = document.createElement('div');
+                el.className = classes;
+                el.textContent = d;
+                el.onclick = () => window.selectDate(y, m, d);
+                grid.appendChild(el);
+            }
+        };
+
+        window.selectDate = function(y, m, d) {
+            const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            document.getElementById(`input-date-${calTargetInput}`).value = dateStr;
+            window.updateDateDisplay(calTargetInput, dateStr);
+            if (calTargetInput === 'start') {
+                const endInput = document.getElementById('input-date-end');
+                if (endInput && !endInput.value) { endInput.value = dateStr; window.updateDateDisplay('end', dateStr); }
+                if(window.autoUpdateEnd) window.autoUpdateEnd(); 
+            } else if (calTargetInput === 'todo') {
+                 const endInput = document.getElementById('input-date-todo-end');
+                 if (endInput && !endInput.value) { endInput.value = dateStr; window.updateDateDisplay('todo-end', dateStr); }
+            }
             window.closeCalendar();
         };
 
-        // ===== MISSING NAVIGATION & CALENDAR RENDER FUNCTIONS =====
+        window.selectToday = function() {
+            const now = new Date();
+            window.selectDate(now.getFullYear(), now.getMonth(), now.getDate());
+        };
+
+        window.openTimePicker = function(type) {
+            timePickerTarget = type;
+            const container = document.getElementById('time-list-container');
+            container.innerHTML = '';
+            const currentVal = document.getElementById(`input-time-${type}`).value;
+            const header = document.createElement('div');
+            header.className = "sticky top-0 bg-white border-b border-gray-100 flex justify-between items-center px-4 py-3 z-10 flex-none";
+            header.innerHTML = `<button onclick="window.closeTimePicker()" class="text-sm text-gray-500">取消</button><span class="text-sm font-bold text-gray-800">選擇時間</span><button onclick="window.clearTime()" class="text-sm text-red-400">清除</button>`;
+            container.appendChild(header);
+            const list = document.createElement('div');
+            list.className = "overflow-y-auto flex-1 p-2";
+            for (let h = 0; h < 24; h++) {
+                for (let m = 0; m < 60; m += 30) {
+                    const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                    const isSelected = currentVal === timeStr;
+                    const item = document.createElement('div');
+                    item.className = `time-option rounded-lg ${isSelected ? 'selected' : ''}`;
+                    item.textContent = timeStr;
+                    item.onclick = () => window.selectTime(timeStr);
+                    list.appendChild(item);
+                }
+            }
+            container.appendChild(list);
+            const m = document.getElementById('time-picker-modal');
+            m.classList.remove('hidden');
+            setTimeout(() => m.classList.add('visible'), 10);
+            if (currentVal) { setTimeout(() => { const selectedEl = list.querySelector('.selected'); if (selectedEl) selectedEl.scrollIntoView({ block: 'center' }); }, 50); }
+        };
+
+        window.closeTimePicker = function() {
+            const m = document.getElementById('time-picker-modal');
+            m.classList.remove('visible');
+            setTimeout(() => m.classList.add('hidden'), 200);
+        };
+
+        window.selectTime = function(timeStr) {
+            document.getElementById(`input-time-${timePickerTarget}`).value = timeStr;
+            window.updateTimeDisplay(timePickerTarget, timeStr);
+            window.closeTimePicker();
+            if (timePickerTarget === 'start' || timePickerTarget === 'todo') { if (window.autoUpdateEnd) window.autoUpdateEnd(); }
+        };
+
+        window.clearTime = function() {
+            document.getElementById(`input-time-${timePickerTarget}`).value = '';
+            window.updateTimeDisplay(timePickerTarget, ''); 
+            window.closeTimePicker();
+        };
+
+        window.checkRoleEnforcement = function() {
+            if (!currentUserRole) {
+                window.openSettingsModal();
+                window.showToast('👋 請先告訴我您是誰？');
+                const roleSection = document.getElementById('role-selection-section');
+                if(roleSection) { roleSection.classList.add('ring-2', 'ring-ttgreen', 'bg-green-50'); setTimeout(() => roleSection.classList.remove('ring-2', 'ring-ttgreen', 'bg-green-50'), 600); }
+                return false; 
+            }
+            return true;
+        };
+        
+        window.openSettingsModal = function() {
+            const m = document.getElementById('settings-modal');
+            m.classList.remove('hidden');
+            setTimeout(() => m.classList.add('visible'), 10);
+        };
+
+        window.closeSettingsModal = function() {
+            if (!currentUserRole) {
+                window.showToast('請先選擇一個身分 🙏');
+                const roleSection = document.getElementById('role-selection-section');
+                if(roleSection) { roleSection.classList.add('animate-pulse'); setTimeout(() => roleSection.classList.remove('animate-pulse'), 500); }
+                return;
+            }
+            const m = document.getElementById('settings-modal');
+            m.classList.remove('visible');
+            setTimeout(() => m.classList.add('hidden'), 200);
+        };
+        
+        window.updateDateDisplay = function(type, dateStr) {
+            let targetEl = (type === 'recur') ? document.getElementById('display-recur-until') : (type === 'todo' ? document.getElementById('display-date-todo') : document.getElementById(`display-date-${type}`));
+            if (!targetEl) {
+                 if (type === 'end') targetEl = document.getElementById('display-date-end');
+                 else if (type === 'todo-end') targetEl = document.getElementById('display-date-todo-end');
+                 else if (type.startsWith('recur-')) targetEl = document.getElementById(`display-date-${type}`);
+            }
+            if(!targetEl) return;
+            if(!dateStr) { 
+                if (type === 'recur' || type.startsWith('recur-')) targetEl.textContent = "設定日期"; 
+                else { targetEl.textContent = "請選擇"; targetEl.classList.add('dt-text-placeholder'); targetEl.classList.remove('dt-text-value'); }
+                return; 
+            }
+            targetEl.classList.remove('dt-text-placeholder'); targetEl.classList.add('dt-text-value');
+            const date = new Date(dateStr); 
+            const weekDays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+            if (type === 'recur' || type.startsWith('recur-')) targetEl.textContent = `${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()} (${weekDays[date.getDay()]})`;
+            else targetEl.textContent = `${date.getFullYear()}年${date.getMonth()+1}月${date.getDate()}日(${weekDays[date.getDay()]})`;
+        };
+
+        window.updateTimeDisplay = function(type, timeStr) { 
+            const el = document.getElementById(`display-time-${type}`); 
+            if(el) { 
+                if(!timeStr) { el.textContent = '請選擇'; el.classList.add('dt-text-placeholder'); el.classList.remove('dt-text-value'); } 
+                else { el.textContent = timeStr; el.value = timeStr; el.classList.remove('dt-text-placeholder'); el.classList.add('dt-text-value'); }
+            } 
+        }; 
+        
+        window.checkRecurValidity = function() { const eD = document.getElementById('input-date-end')?.value; const rD = document.getElementById('input-recur-until')?.value; if(rD && eD && new Date(rD) < new Date(eD)) { const el = document.getElementById('input-recur-until'); if(el) el.value = eD; window.updateDateDisplay('recur', eD); } };
+        
+        window.autoUpdateEnd = function() { 
+            try {
+                let sT, endInputT, endDisplayType;
+                if (document.getElementById('input-time-start') && document.getElementById('input-time-start').offsetParent !== null) {
+                    sT = document.getElementById('input-time-start').value;
+                    endInputT = document.getElementById('input-time-end');
+                    endDisplayType = 'end';
+                } 
+                else if (document.getElementById('input-time-todo') && document.getElementById('input-time-todo').offsetParent !== null) {
+                    sT = document.getElementById('input-time-todo').value;
+                    endInputT = document.getElementById('input-time-todo-end');
+                    endDisplayType = 'todo-end';
+                }
+                if (!sT || !endInputT) return;
+                const [h, m] = sT.split(':').map(Number);
+                const endH = (h + 1) % 24;
+                const endTStr = `${String(endH).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+                if (!endInputT.value) { endInputT.value = endTStr; window.updateTimeDisplay(endDisplayType, endTStr); }
+            } catch (e) { console.warn("Auto update end failed silently", e); }
+        };
+        window.checkEndDateValidity = function() { const sD = document.getElementById('input-date-start').value; const sT = document.getElementById('input-time-start').value; const eD = document.getElementById('input-date-end').value; const eT = document.getElementById('input-time-end').value; if(new Date(`${eD}T${eT}`) < new Date(`${sD}T${sT}`)) { window.autoUpdateEnd(); } else { window.checkRecurValidity(); } };
+        window.setNowToInputs = function() { const now = new Date(); const dStr = now.toISOString().split('T')[0]; let h = now.getHours(), m = now.getMinutes(); if(m < 30) { m = 30; } else { m = 0; h += 1; } if(h > 23) h = 0; const tStr = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`; const startEl = document.getElementById('input-date-start'); if(startEl) { startEl.value = dStr; document.getElementById('input-time-start').value = tStr; window.updateDateDisplay('start', dStr); window.updateTimeDisplay('start', tStr); const endD = document.getElementById('input-date-end'); if(endD) endD.value = dStr; const endT = document.getElementById('input-time-end'); if(endT) endT.value = tStr; window.updateDateDisplay('end', dStr); window.updateTimeDisplay('end', tStr); } };
+        
+        window.updateRoleUI = function() {
+            const btnHaohao = document.getElementById('role-haohao');
+            const btnMaomao = document.getElementById('role-maomao');
+            if (btnHaohao) {
+                const activeClass = "flex-1 py-3 rounded-xl text-sm font-bold border-2 border-ttgreen bg-green-50 text-ttgreen transition shadow-sm";
+                const inactiveClass = "flex-1 py-3 rounded-xl text-sm font-medium border border-gray-200 text-gray-400 bg-white transition";
+                if (currentUserRole === 'haohao') { btnHaohao.className = activeClass; btnMaomao.className = inactiveClass; } 
+                else if (currentUserRole === 'maomao') { btnHaohao.className = inactiveClass; btnMaomao.className = activeClass; } 
+                else { btnHaohao.className = inactiveClass; btnMaomao.className = inactiveClass; }
+            }
+            const badge = document.getElementById('header-role-badge');
+            const badgeName = document.getElementById('header-role-name');
+            if (badge && badgeName) {
+                if (currentUserRole) {
+                    const name = currentUserRole === 'haohao' ? '皓皓' : '毛毛';
+                    const color = roleColors[currentUserRole];
+                    badgeName.textContent = name;
+                    badge.style.backgroundColor = color;
+                    badge.classList.remove('opacity-0');
+                } else {
+                    badgeName.textContent = '請選擇';
+                    badge.style.backgroundColor = '#9ca3af';
+                    badge.classList.remove('opacity-0');
+                    badge.classList.add('animate-pulse');
+                }
+            }
+            const noteInput = document.getElementById('note-input');
+            const noteSendBtn = document.getElementById('note-send-btn');
+            if (noteInput) {
+                if (currentUserRole) {
+                    const name = currentUserRole === 'haohao' ? '皓皓' : '毛毛';
+                    const color = roleColors[currentUserRole];
+                    noteInput.placeholder = `${name}，說點什麼...`;
+                    noteInput.disabled = false;
+                    if(noteInput.parentElement) noteInput.parentElement.style.borderColor = color;
+                    if(noteSendBtn) { noteSendBtn.style.backgroundColor = color; noteSendBtn.classList.remove('bg-gray-300', 'cursor-not-allowed'); noteSendBtn.disabled = false; }
+                } else {
+                    noteInput.placeholder = '請先選擇身分...';
+                    noteInput.disabled = true;
+                    if(noteInput.parentElement) noteInput.parentElement.style.borderColor = '#e5e7eb';
+                    if(noteSendBtn) { noteSendBtn.style.backgroundColor = '#d1d5db'; noteSendBtn.classList.add('cursor-not-allowed'); noteSendBtn.disabled = true; }
+                }
+            }
+            if (currentUserRole) {
+                document.documentElement.style.setProperty('--active-tab-color', roleColors[currentUserRole]);
+                if(badge) badge.classList.remove('animate-pulse');
+            }
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        };
+
+        window.updateSettingsColorUI = function() { const h = document.getElementById('setting-color-haohao'); if(h) { h.style.backgroundColor = roleColors.haohao; document.getElementById('setting-color-maomao').style.backgroundColor = roleColors.maomao; document.getElementById('setting-color-joint').style.backgroundColor = roleColors.joint; } };
+        window.setStatus = function(s) { document.getElementById('input-status').value = s; document.querySelectorAll('.status-btn').forEach(b=>{ if(b.dataset.status===s) b.classList.add('active'); else b.classList.remove('active'); }); };
+        window.showToast = function(msg) { const t = document.getElementById('toast-container'); const m = document.getElementById('toast-message'); m.textContent = msg; t.classList.add('visible'); setTimeout(() => t.classList.remove('visible'), 2000); };
+        
+        window.updateParticipantsPreview = function() { 
+            const container = document.getElementById('participants-preview'); 
+            if(!container) return; 
+            const isP = document.getElementById('check-partner').checked; 
+            let html = ''; 
+            html += `<div class="avatar-sm z-20" style="background-color:${roleColors[currentUserRole]}">${currentUserRole==='haohao'?'皓':'毛'}</div>`; 
+            if(isP) { 
+                const p = currentUserRole==='haohao'?'maomao':'haohao'; 
+                html += `<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[p]}">${p==='haohao'?'皓':'毛'}</div>`; 
+            } 
+            container.innerHTML = html; 
+        };
+
+        window.togglePartner = function() {
+          const isChecked = document.getElementById('check-partner').checked;
+          window.updateParticipantsPreview();
+          colorPickerTarget = 'event';
+          if (isChecked) currentSelectedColor = roleColors.joint;
+          else currentSelectedColor = roleColors[currentUserRole];
+        };
+
+        window.setRole = function(role) { localStorage.setItem('user_role', role); currentUserRole = role; window.updateRoleUI(); document.documentElement.style.setProperty('--active-tab-color', roleColors[role]); };
+        window.updateMyStatus = function(status) {
+            if (!window.checkRoleEnforcement()) return;
+             if(!db) return; const moods = ['normal', 'charging', 'sleepy', 'love', 'busy']; 
+             let moodToSet = status;
+             if (!moodToSet || !moodMap[moodToSet]) { moodToSet = moods[Math.floor(Math.random() * moods.length)]; }
+             const d = {}; d[currentUserRole] = moodToSet; db.collection('status').doc('current').set(d, { merge: true }); 
+        };
+        window.toggleGlobalColorPicker = function(show) { const el = document.getElementById('global-color-picker'); const grid = document.getElementById('global-color-grid'); if(show) { grid.innerHTML = ''; timeTreeColors.forEach(color => { const row = document.createElement('div'); row.className = "flex items-center p-2 rounded hover:bg-gray-50 cursor-pointer transition"; row.onclick = () => window.selectGlobalColor(color); row.innerHTML = `<div class="w-5 h-5 rounded-full mr-3 shadow-sm" style="background-color: ${color.hex}"></div><span class="text-sm text-gray-700">${color.name}</span>`; grid.appendChild(row); }); el.classList.remove('hidden'); setTimeout(() => el.classList.add('visible'), 10); } else { el.classList.remove('visible'); setTimeout(() => el.classList.add('hidden'), 200); colorPickerTarget = null; } };
+
+        window.selectGlobalColor = function(c) {
+            if (colorPickerTarget === 'event') {
+                currentSelectedColor = c.hex;
+                document.getElementById('selected-color-name').textContent = c.name;
+                document.getElementById('selected-color-dot').style.backgroundColor = c.hex;
+            } 
+            else if (colorPickerTarget) {
+                const newHex = c.hex;
+                const targetRole = colorPickerTarget; 
+                const oldHex = roleColors[targetRole]; 
+                let conflictRole = null;
+                for (let key in roleColors) { if (key !== targetRole && roleColors[key] === newHex) { conflictRole = key; break; } }
+                roleColors[targetRole] = newHex;
+                localStorage.setItem(`color_${targetRole}`, newHex);
+                if (conflictRole) {
+                    roleColors[conflictRole] = oldHex;
+                    localStorage.setItem(`color_${conflictRole}`, oldHex);
+                    window.showToast(`顏色重複，已與「${conflictRole==='haohao'?'皓皓':(conflictRole==='maomao'?'毛毛':'共同行程')}」交換顏色！`);
+                }
+                window.updateSettingsColorUI();
+                if (targetRole === currentUserRole || conflictRole === currentUserRole) { if (currentUserRole) { document.documentElement.style.setProperty('--active-tab-color', roleColors[currentUserRole]); } }
+            }
+            window.toggleGlobalColorPicker(false);
+        };
+        window.openColorConfig = function(target) { colorPickerTarget = target; window.toggleGlobalColorPicker(true); };
+        window.syncSelectedColorUI = function() {
+            const dot = document.getElementById('selected-color-dot');
+            const name = document.getElementById('selected-color-name');
+            if (!dot || !name) return;
+            const found = timeTreeColors.find(c => c.hex === currentSelectedColor);
+            dot.style.backgroundColor = currentSelectedColor;
+            name.textContent = found ? found.name : '自訂顏色';
+        };
+
+        window.renderEvents = function(ignored) { const items = window.getCalendarItems(); const now = new Date(); const future = items.filter(e => { const date = new Date(e.timestamp); if(e.isTodo && e.done) return false; return !isNaN(date) && date >= now; }); const titleEl = document.getElementById('next-event-title'); if(titleEl && future.length > 0) { const n = future[0], d = new Date(n.timestamp); titleEl.textContent = n.title; const timeStr = n.allDay ? "All Day" : d.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',hour12:false}); document.getElementById('next-event-time').textContent = timeStr; document.getElementById('next-event-date').textContent = d.toLocaleDateString('zh-TW',{month:'numeric',day:'numeric',weekday:'short'}); const diff = Math.ceil((d-now)/(1000*60*60*24)); document.getElementById('countdown').textContent = diff<=0?"TODAY":`D - ${diff}`; } else if(titleEl) { titleEl.textContent = "No Upcoming Events"; } const listEl = document.getElementById('event-list'); if(listEl) { if (items.length === 0) listEl.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">無行程</div>`; else window.renderEventListItems(items, listEl); } };
+        window.getCalendarItems = function() { const events = allEventsCache.map(e => ({...e, type: 'event'})); const todos = allTodosCache.filter(t => t.timestamp).map(t => ({ id: t.id, title: t.title, timestamp: t.timestamp, color: null, allDay: !t.dueTime, isTodo: true, done: t.done, type: 'todo', creator: t.creator, isJoint: t.isJoint })); return [...events, ...todos].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)); };
+        
+        window.renderDashboardNextUp = function(items) {
+            const now = new Date();
+            const next7Days = new Date();
+            next7Days.setDate(now.getDate() + 7);
+            const upcoming = items.filter(item => {
+                const t = new Date(item.timestamp);
+                if (item.isTodo && item.done) return false;
+                return !isNaN(t) && t >= now && t <= next7Days;
+            });
+            const countEl = document.getElementById('dashboard-countdown');
+            if (upcoming.length > 0) {
+                const first = upcoming[0];
+                const d = new Date(first.timestamp);
+                const diff = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
+                countEl.textContent = diff <= 0 ? "TODAY" : `D - ${diff}`;
+            } else { countEl.textContent = "FREE"; }
+
+            const container = document.getElementById('dashboard-next-list');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            if (upcoming.length === 0) { container.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">未來 7 天沒有行程 😴</div>`; } 
+            else {
+                let html = '';
+                upcoming.forEach(item => {
+                    const date = new Date(item.timestamp);
+                    let timeStr = item.allDay ? "All Day" : date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+                    const endTime = item.endTime || item.dueTimeEnd;
+                    if (endTime && !item.allDay) timeStr += ` - ${endTime}`;
+
+                    const startDateStr = item.startDate || item.dueDate;
+                    const endDateStr = item.endDate || item.dueDateEnd;
+                    const effectiveEndDateStr = endDateStr || startDateStr;
+                    const dateObjStart = new Date(startDateStr);
+                    const dateObjEnd = new Date(effectiveEndDateStr);
+                    let dateDisplay = dateObjStart.toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric', weekday: 'short' });
+
+                    if (startDateStr !== effectiveEndDateStr) {
+                         const endPart = dateObjEnd.toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' });
+                         if (item.allDay) { dateDisplay = `${dateObjStart.toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' })} - ${endPart}`; timeStr = "All Day"; } 
+                         else {
+                             const startT = date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+                             const endT = endTime ? endTime : "??:??";
+                             timeStr = `${startT} - ${endPart} ${endT}`;
+                         }
+                    }
+
+                    // --- KEYWORD DETECTION FOR ICON ---
+                    let displayIcon = '';
+                    if (isLeaveEvent(item.title)) {
+                         displayIcon = '🏖️ ';
+                    }
+
+                    let color;
+                    if (item.isJoint) color = roleColors.joint; else color = (item.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
+                    let tagHtml = item.isTodo ? `<span class="ml-2 text-[10px] border border-gray-200 text-gray-400 px-1 rounded flex-shrink-0">待辦</span>` : '';
+                    if (!item.isTodo) {
+                        if (item.status === 'tbc') tagHtml = `<span class="ml-2 status-tag tbc">TBC</span>`;
+                        else if (item.status === 'tbd') tagHtml = `<span class="ml-2 status-tag tbd">TBD</span>`;
+                    }
+                    let noteDisplay = '';
+                    if (item.note && item.note.trim()) noteDisplay = `<div class="text-xs text-gray-400 mt-1 flex items-start gap-1"><i data-lucide="sticky-note" class="w-3 h-3 mt-0.5 flex-shrink-0"></i><span class="truncate">${item.note}</span></div>`;
+
+                    let clickAction = item.isTodo ? `window.openEditTodoModal('${item.id}')` : `window.openEditModal('${item.id}')`;
+                    
+                    html += `
+                    <div class="flex items-center p-3 hover:bg-gray-50 cursor-pointer" onclick="${clickAction}">
+                        <div class="w-1 self-stretch rounded-full mr-3" style="background-color: ${color}"></div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center">
+                                <span class="text-sm font-bold text-gray-800 truncate">${displayIcon}${item.title}</span>
+                                ${tagHtml}
+                            </div>
+                            <div class="text-xs text-gray-500 mt-0.5">${dateDisplay} · ${timeStr} ${item.location ? `· ${item.location}` : ''}</div>
+                            ${noteDisplay}
+                        </div>
+                    </div>`;
+                });
+                container.innerHTML = html;
+                if (typeof lucide !== 'undefined') lucide.createIcons({ root: container });
+            }
+        };
+        window.renderCalendarListView = function() { const items = window.getCalendarItems(); const listEl = document.getElementById('event-list'); if(!listEl) return; if (items.length === 0) { listEl.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">無行程</div>`; } else { window.renderEventListItems(items, listEl); } };
+        window.renderEventListItems = function(items, container) {
+            let html = '';
+            items.forEach(e => {
+                const date = new Date(e.timestamp);
+                if (isNaN(date)) return;
+                let timeStr = e.allDay ? "All Day" : date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+                const endTime = e.endTime || e.dueTimeEnd;
+                if (endTime && !e.allDay) timeStr += ` - ${endTime}`;
+                
+                const startDateStr = e.startDate || e.dueDate;
+                const endDateStr = e.endDate || e.dueDateEnd; 
+                const effectiveEndDateStr = endDateStr || startDateStr; 
+
+                const dateObjStart = new Date(startDateStr);
+                const dateObjEnd = new Date(effectiveEndDateStr);
+                let dayNum = dateObjStart.getDate();
+                let dayName = dateObjStart.toLocaleDateString('en-US',{weekday:'short'});
+                
+                if (startDateStr !== effectiveEndDateStr) {
+                    const endPart = dateObjEnd.toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' });
+                    if (e.allDay) timeStr = `${dateObjStart.toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' })} - ${endPart}`;
+                    else {
+                         const startT = date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+                         const endT = endTime ? endTime : "??:??";
+                         timeStr = `${startT} - ${endPart} ${endT}`;
+                    }
+                }
+
+                let displayIcon = '';
+                if (isLeaveEvent(e.title)) {
+                        displayIcon = '🏖️ ';
+                }
+
+                let displayColor;
+                if (e.isJoint) displayColor = roleColors.joint; else displayColor = (e.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
+
+                if (e.isTodo) {
+                    const statusClass = e.done ? "line-through text-gray-400" : "text-gray-800";
+                    const checkIcon = e.done ? '<i data-lucide="check-square" class="w-5 h-5 text-green-500"></i>' : '<i data-lucide="square" class="w-5 h-5 text-gray-400"></i>';
+                    html += `
+                    <div class="flex p-4 items-center gap-4 hover:bg-gray-50 transition cursor-pointer">
+                        <div class="flex flex-col items-center w-10">
+                            <span class="text-xs text-gray-400 font-medium uppercase">${dayName}</span>
+                            <span class="text-xl font-bold text-gray-800 leading-none">${dayNum}</span>
+                        </div>
+                        <div class="w-1 self-stretch rounded-full" style="background-color: ${displayColor}"></div>
+                        <div class="flex-1 min-w-0 flex items-center justify-between" onclick="window.openEditTodoModal('${e.id}')">
+                            <div>
+                                <div class="flex items-center ${statusClass}">
+                                    <span class="font-bold truncate block">${displayIcon}${e.title}</span>
+                                    <span class="ml-2 text-[10px] border border-gray-200 px-1 rounded text-gray-400 flex-shrink-0">待辦</span>
+                                </div>
+                                <div class="text-xs text-gray-500">${timeStr}</div>
+                            </div>
+                        </div>
+                        <div class="flex-none p-2 cursor-pointer" onclick="window.toggleTodo('${e.id}', ${!e.done}); event.stopPropagation();">
+                            ${checkIcon}
+                        </div>
+                    </div>`;
+                } else {
+                    let ic = '';
+                    if (e.category === 'travel') ic = 'plane';
+                    else if (e.category === 'appointment') ic = 'scissors';
+                    else if (e.category === 'gathering') ic = 'users';
+                    else if (e.category === 'vacation') ic = 'palmtree';
+                    let ico = ic ? `<i data-lucide="${ic}" class="w-3 h-3 text-gray-400 mr-1"></i>` : '';
+                    let st = '';
+                    if (e.status === 'tbc') st = `<span class="ml-2 status-tag tbc">TBC</span>`;
+                    else if (e.status === 'tbd') st = `<span class="ml-2 status-tag tbd">TBD</span>`;
+                    let av = `<div class="avatar-sm z-20" style="background-color:${roleColors[e.creator]||'#2cc998'}">${e.creator==='haohao'?'皓':'毛'}</div>`;
+                    if (e.isJoint) {
+                        const partner = e.creator === 'haohao' ? 'maomao' : 'haohao';
+                        const partnerName = partner === 'haohao' ? '皓' : '毛';
+                        av += `<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[partner]}">${partnerName}</div>`;
+                    }
+                    let noteDisplay = '';
+                    if (e.note && e.note.trim()) noteDisplay = `<div class="text-xs text-gray-400 mt-1 flex items-start gap-1"><i data-lucide="sticky-note" class="w-3 h-3 mt-0.5 flex-shrink-0"></i><span class="truncate">${e.note}</span></div>`;
+
+                    html += `
+                    <div class="flex p-4 items-start gap-4 hover:bg-gray-50 transition cursor-pointer card-press" onclick="window.openEditModal('${e.id}')">
+                        <div class="flex flex-col items-center w-10 pt-1">
+                            <span class="text-xs text-gray-400 font-medium uppercase">${dayName}</span>
+                            <span class="text-xl font-bold leading-none" style="color:${displayColor}">${dayNum}</span>
+                        </div>
+                        <div class="w-1 self-stretch rounded-full" style="background-color:${displayColor}"></div>
+                        <div class="flex-1 min-w-0 pt-1">
+                            <div class="flex items-center">
+                                ${ico}
+                                <h4 class="font-bold text-gray-800 truncate">${displayIcon}${e.title}</h4>
+                                ${st}
+                            </div>
+                            <div class="text-xs text-gray-500">${timeStr} ${e.location?'· '+e.location:''}</div>
+                            ${noteDisplay}
+                        </div>
+                        <div class="flex items-center self-center -space-x-1 pl-2">${av}</div>
+                    </div>`;
+                }
+            });
+            container.innerHTML = html;
+            if (typeof lucide !== 'undefined') lucide.createIcons({ root: container });
+        };
+        window.toggleAllDay = function() { const isChecked = document.getElementById('check-allday').checked; document.querySelectorAll('.dt-wrapper-time').forEach(d => d.style.display = isChecked ? 'none' : 'block'); };
+        window.toggleRecurring = function() { const isChecked = document.getElementById('check-recurring').checked; const opts = document.getElementById('recurring-options'); if(isChecked) { opts.classList.remove('hidden'); if(!document.getElementById('input-recur-until').value) document.getElementById('input-recur-until').value = document.getElementById('input-date-end').value; } else opts.classList.add('hidden'); };
+        window.toggleTravelFields = function() { const type = document.getElementById('input-transport-type').value; const isPlane = type === 'plane'; document.getElementById('travel-region-intl').classList.toggle('hidden', !isPlane); document.getElementById('travel-region-tw').classList.toggle('hidden', isPlane); };
+        window.toggleBooked = function() { const isChecked = document.getElementById('check-booked').checked; const txt = document.getElementById('appoint-status-text'); txt.textContent = isChecked ? "已預約" : "未完成"; txt.className = isChecked ? "text-xs font-bold text-purple-600" : "text-xs text-gray-500"; };
+
+        window.toggleTodo = function(id,s) { db.collection('todos').doc(id).update({done:s}); };
+
+        window.deleteTodo = function(id) {
+            editingTodoId = id;
+            deleteTarget = 'todo';
+            const m = document.getElementById('confirm-modal');
+            const title = m.querySelector('h3');
+            const desc = m.querySelector('p');
+            if(title) title.textContent = '刪除待辦？';
+            if(desc) desc.textContent = '確定要刪除這個待辦事項嗎？';
+            
+            window.confirmDelete();
+        };
+
+        window.renderTodos = function(todos) {
+            const jointList = document.getElementById('todo-list-joint');
+            const haohaoList = document.getElementById('todo-list-haohao');
+            const maomaoList = document.getElementById('todo-list-maomao');
+            const dashboardList = document.getElementById('dashboard-todo-list');
+            
+            if(!jointList || !haohaoList || !maomaoList || !dashboardList) return;
+            
+            jointList.innerHTML = '';
+            haohaoList.innerHTML = '';
+            maomaoList.innerHTML = '';
+            dashboardList.innerHTML = '';
+            
+            let pendingCount = 0;
+            
+            todos.forEach(t => {
+                let colorHex = roleColors.haohao;
+                let container = haohaoList;
+                
+                if (t.isJoint) {
+                    colorHex = roleColors.joint;
+                    container = jointList;
+                } else if (t.creator === 'maomao') {
+                    colorHex = roleColors.maomao;
+                    container = maomaoList;
+                }
+                
+                let checkStyle = t.done ? `background-color: #d1d5db; border-color: #d1d5db;` : `border-color: ${colorHex};`;
+                let titleClass = t.done ? "text-gray-400 line-through" : "text-gray-800";
+                
+                if (!t.done) pendingCount++;
+                
+                // Calendar Icon logic for list
+                let calInfo = '';
+                if (t.dueDate) {
+                    calInfo = `<span class="text-[10px] ${t.done?'text-gray-300':'text-gray-400'} ml-2 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${t.dueDate}</span>`;
+                }
+
+                // --- KEYWORD DETECTION FOR ICON ---
+                let displayIcon = '';
+                if (isLeaveEvent(t.title)) {
+                        displayIcon = '🏖️ ';
+                }
+
+                const html = `
+                <div class="todo-item flex items-center p-3 bg-white rounded-xl border border-gray-100 shadow-sm mb-2">
+                    <div class="flex-none p-2 cursor-pointer" onclick="window.toggleTodo('${t.id}', ${!t.done}); event.stopPropagation();">
+                        <div class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors text-white" style="${checkStyle}">
+                            ${t.done ? '<i data-lucide="check" class="w-3 h-3"></i>' : ''}
+                        </div>
+                    </div>
+                    <div class="flex-1 px-2 cursor-pointer overflow-hidden" onclick="window.openEditTodoModal('${t.id}')">
+                        <span class="${titleClass} font-medium truncate block">${displayIcon}${t.title}</span>
+                        ${calInfo}
+                    </div>
+                    <button onclick="window.deleteTodo('${t.id}'); event.stopPropagation();" class="flex-none p-2 text-gray-300 hover:text-red-400 transition">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>`;
+                
+                container.innerHTML += html;
+            });
+            
+            // Dashboard Summary
+            if (pendingCount === 0) {
+                dashboardList.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">沒有未完成的待辦事項 🎉</p>`;
+            } else {
+                const pendings = todos.filter(t => !t.done).slice(0, 3);
+                pendings.forEach(t => {
+                    let dotColor = t.isJoint ? roleColors.joint : (t.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
+                    dashboardList.innerHTML += `
+                    <div class="flex items-center gap-2 text-sm bg-gray-50 p-2 rounded-lg border border-gray-100 mb-1">
+                        <div class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: ${dotColor}"></div>
+                        <span class="truncate text-gray-700 flex-1">${t.title}</span>
+                    </div>`;
+                });
+                
+                if (todos.filter(t => !t.done).length > 3) {
+                    dashboardList.innerHTML += `<div class="text-center text-xs text-gray-400 mt-1">還有 ${todos.filter(t => !t.done).length - 3} 個項目...</div>`;
+                }
+            }
+            
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        };
+
+        window.confirmDelete = function() { const m = document.getElementById('confirm-modal'); m.classList.remove('hidden'); setTimeout(() => m.classList.add('visible'), 10); };
+        window.closeConfirmModal = function() { const m = document.getElementById('confirm-modal'); m.classList.remove('visible'); setTimeout(() => m.classList.add('hidden'), 200); };
+        window.executeDelete = function() { 
+            if(deleteTarget === 'event' && editingEventId) { 
+                db.collection('events').doc(editingEventId).delete().then(() => { window.closeConfirmModal(); window.closeAddModal(); window.showToast('行程已刪除'); }).catch(e => { console.error(e); window.showToast('刪除失敗'); }); 
+            } else if (deleteTarget === 'todo' && editingTodoId) {
+                db.collection('todos').doc(editingTodoId).delete().then(() => { window.closeConfirmModal(); window.closeAddTodoModal(); window.showToast('待辦已刪除'); }).catch(e => { console.error(e); window.showToast('刪除失敗'); });
+            } else if (deleteTarget === 'note' && noteToDelete) {
+                window.deleteNote(noteToDelete);
+                window.closeConfirmModal();
+            }
+        };
+
+        window.clearDate = function() {
+            if (calTargetInput === 'todo') { document.getElementById('input-date-todo').value = ''; document.getElementById('input-time-todo').value = ''; if (window.updateDateDisplay) window.updateDateDisplay('todo', ''); if (window.updateTimeDisplay) window.updateTimeDisplay('todo', ''); } 
+            else { const el = document.getElementById(`input-date-${calTargetInput}`); if (el) el.value = ''; if (window.updateDateDisplay) window.updateDateDisplay(calTargetInput, ''); }
+            window.closeCalendar();
+        };
+
         window.switchTab = function(tabId) {
-            // 1. Pages
             document.querySelectorAll('.page-content').forEach(el => el.classList.remove('active'));
             const target = document.getElementById('page-' + tabId);
             if(target) target.classList.add('active');
-            
-            // 2. Nav
             const tabs = ['dashboard', 'calendar', 'todo', 'settings'];
             document.querySelectorAll('.nav-item').forEach((el, idx) => {
                 if(tabs[idx] === tabId) el.classList.add('active');
                 else el.classList.remove('active');
             });
-
-            // 3. Special Logic
-            if(tabId === 'calendar' && currentViewMode === 'month') {
-                window.renderBigCalendar();
-            }
+            if(tabId === 'calendar' && currentViewMode === 'month') { window.renderBigCalendar(); }
         };
 
         window.switchCalendarView = function(mode) {
             currentViewMode = mode;
             const vList = document.getElementById('calendar-view-list');
-            // 注意：vMonth (calendar-view-month) 現在是父容器，不應該被隱藏
             const bList = document.getElementById('btn-view-list');
             const bMonth = document.getElementById('btn-view-month');
             const calendarViewMonthContainer = document.getElementById('calendar-view-month-container');
             
             if(mode === 'list') {
                 vList.classList.remove('hidden');
-                // FIX: 不要隱藏父容器 vMonth，否則列表也會不見
-                // vMonth.classList.add('hidden'); 
-                
-                // 隱藏月曆內容
                 if(calendarViewMonthContainer) calendarViewMonthContainer.classList.add('hidden');
-                
-                bList.classList.add('bg-white','shadow-sm','text-ttgreen','font-bold');
-                bList.classList.remove('text-gray-500','font-medium');
-                bMonth.classList.remove('bg-white','shadow-sm','text-ttgreen','font-bold');
-                bMonth.classList.add('text-gray-500','font-medium');
+                bList.classList.add('bg-white','shadow-sm','text-ttgreen','font-bold'); bList.classList.remove('text-gray-500','font-medium');
+                bMonth.classList.remove('bg-white','shadow-sm','text-ttgreen','font-bold'); bMonth.classList.add('text-gray-500','font-medium');
             } else {
                 vList.classList.add('hidden');
-                // FIX: 同上
-                // vMonth.classList.remove('hidden');
-                
-                // 顯示月曆內容
                 if(calendarViewMonthContainer) calendarViewMonthContainer.classList.remove('hidden');
-                
-                bMonth.classList.add('bg-white','shadow-sm','text-ttgreen','font-bold');
-                bMonth.classList.remove('text-gray-500','font-medium');
-                bList.classList.remove('bg-white','shadow-sm','text-ttgreen','font-bold');
-                bList.classList.add('text-gray-500','font-medium');
+                bMonth.classList.add('bg-white','shadow-sm','text-ttgreen','font-bold'); bMonth.classList.remove('text-gray-500','font-medium');
+                bList.classList.remove('bg-white','shadow-sm','text-ttgreen','font-bold'); bList.classList.add('text-gray-500','font-medium');
                 window.renderBigCalendar();
             }
         };
@@ -2677,266 +2041,110 @@ window.openEditModal = function (id) {
         
         window.selectBigCalendarDate = function(y,m,d) { document.querySelectorAll('.big-cal-cell.selected').forEach(e=>e.classList.remove('selected')); if(m===bigCalDate.getMonth()) { const el=document.getElementById(`big-cal-day-${d}`); if(el) el.classList.add('selected'); } document.getElementById('selected-date-label').textContent = `${y}年${m+1}月${d}日`; const listEl = document.getElementById('month-event-list'); if(!listEl) return; const items = window.getCalendarItems(); const ds=new Date(y, m, d), de=new Date(y, m, d, 23,59,59); const dayEvents = items.filter(e => { const t = new Date(e.timestamp); return t>=ds && t<=de; }); if(dayEvents.length===0) listEl.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs">這天沒有安排行程 😴</div>`; else window.renderEventListItems(dayEvents, listEl); };
         
-        // === New Function: Handle Double Click ===
         window.handleBigCalDbClick = function(y, m, d) {
-            // 1. 建立日期字串
             const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-            
-            // 2. 開啟新增視窗 (會先重置欄位)
             window.openAddModal();
-            
-            // 3. 設定日期
             const dateInput = document.getElementById('input-date-start');
-            if (dateInput) {
-                dateInput.value = dateStr;
-            }
-            
-            // 4. 更新顯示文字
+            if (dateInput) { dateInput.value = dateStr; }
             window.updateDateDisplay('start', dateStr);
-            
-            // 5. 連動結束時間 (如果有的話)
             if(window.autoUpdateEnd) window.autoUpdateEnd();
         };
 
-        // === New Function: Handle Swipe Logic ===
-        let touchStartX = 0;
-        let touchStartY = 0;
-
+        let touchStartX = 0; let touchStartY = 0;
         window.initSwipe = function() {
             const el = document.getElementById('calendar-view-month');
             if(!el) return;
-
-            el.addEventListener('touchstart', e => {
-                touchStartX = e.changedTouches[0].screenX;
-                touchStartY = e.changedTouches[0].screenY;
-            }, {passive: true});
-
+            el.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY; }, {passive: true});
             el.addEventListener('touchend', e => {
-                // FIX: 只有在月曆模式下才啟用滑動切換
                 if (currentViewMode !== 'month') return;
-
-                const touchEndX = e.changedTouches[0].screenX;
-                const touchEndY = e.changedTouches[0].screenY;
-                
-                const diffX = touchStartX - touchEndX;
-                const diffY = touchStartY - touchEndY;
-
-                // 判斷條件：水平移動 > 垂直移動 且 移動距離 > 50px
+                const touchEndX = e.changedTouches[0].screenX; const touchEndY = e.changedTouches[0].screenY;
+                const diffX = touchStartX - touchEndX; const diffY = touchStartY - touchEndY;
                 if(Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
-                    if(diffX > 0) {
-                        // 左滑 (Next)
-                        window.changeBigCalMonth(1);
-                    } else {
-                        // 右滑 (Prev)
-                        window.changeBigCalMonth(-1);
-                    }
+                    if(diffX > 0) window.changeBigCalMonth(1); else window.changeBigCalMonth(-1);
                 }
             }, {passive: true});
         };
 
         window.renderBigCalendar = function() {
-            const y = bigCalDate.getFullYear();
-            const m = bigCalDate.getMonth();
-            const title = document.getElementById('big-cal-title');
-            if(title) title.textContent = `${y}年${m+1}月`;
-            
-            const firstDay = new Date(y, m, 1).getDay();
-            const daysInMonth = new Date(y, m+1, 0).getDate();
-            
+            const y = bigCalDate.getFullYear(); const m = bigCalDate.getMonth();
+            const title = document.getElementById('big-cal-title'); if(title) title.textContent = `${y}年${m+1}月`;
+            const firstDay = new Date(y, m, 1).getDay(); const daysInMonth = new Date(y, m+1, 0).getDate();
             let html = '';
-            for(let i=0; i<firstDay; i++) {
-                html += `<div class="big-cal-cell bg-gray-50/50"></div>`;
-            }
-            
+            for(let i=0; i<firstDay; i++) { html += `<div class="big-cal-cell bg-gray-50/50"></div>`; }
             const nowStr = new Date().toDateString();
             const items = window.getCalendarItems ? window.getCalendarItems() : [];
-
             for(let d=1; d<=daysInMonth; d++) {
                 const dateObj = new Date(y, m, d);
                 const isToday = dateObj.toDateString() === nowStr;
+                const dayEvents = items.filter(e => { const t = new Date(e.timestamp); return t.getDate() === d && t.getMonth() === m && t.getFullYear() === y; });
                 
-                // Filter events for this day
-                const dayEvents = items.filter(e => {
-                    const t = new Date(e.timestamp);
-                    return t.getDate() === d && t.getMonth() === m && t.getFullYear() === y;
+                // SORTING: Put "Leave" events first
+                dayEvents.sort((a, b) => {
+                    const aLeave = isLeaveEvent(a.title);
+                    const bLeave = isLeaveEvent(b.title);
+                    if (aLeave && !bLeave) return -1;
+                    if (!aLeave && bLeave) return 1;
+                    return 0; // Maintain original time sort for others
                 });
 
-                // Bars HTML
                 let bars = '';
                 dayEvents.slice(0, 3).forEach(e => {
-                    // === 修改處：強制顏色邏輯 ===
-                    let bg;
-                    if (e.isJoint) {
-                        bg = roleColors.joint;
-                    } else {
-                        bg = (e.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
+                    let bg; if (e.isJoint) bg = roleColors.joint; else bg = (e.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
+                    
+                    // Style for Leave
+                    let extraClass = '';
+                    let styleAttr = `background-color:${bg};`;
+                    if (isLeaveEvent(e.title)) {
+                        extraClass = 'leave';
+                        styleAttr = `color:${bg}; border-color:${bg};`; // Override for hollow style
                     }
-                    // =========================
 
-                    bars += `<div class="event-bar ${e.isTodo&&e.done?'done':''}" style="background-color:${bg}">${e.title}</div>`;
+                    bars += `<div class="event-bar ${e.isTodo&&e.done?'done':''} ${extraClass}" style="${styleAttr}">${e.title}</div>`;
                 });
-                if(dayEvents.length > 3) {
-                    bars += `<div class="more-events">+${dayEvents.length-3}</div>`;
-                }
-
-                // Add ondblclick handler here
-                html += `<div class="big-cal-cell ${isToday?'today':''}" id="big-cal-day-${d}" onclick="window.selectBigCalendarDate(${y},${m},${d})" ondblclick="window.handleBigCalDbClick(${y},${m},${d})">
-                    <div class="big-cal-day-num">${d}</div>
-                    <div class="w-full px-1 space-y-px">${bars}</div>
-                </div>`;
+                if(dayEvents.length > 3) { bars += `<div class="more-events">+${dayEvents.length-3}</div>`; }
+                html += `<div class="big-cal-cell ${isToday?'today':''}" id="big-cal-day-${d}" onclick="window.selectBigCalendarDate(${y},${m},${d})" ondblclick="window.handleBigCalDbClick(${y},${m},${d})"><div class="big-cal-day-num">${d}</div><div class="w-full px-1 space-y-px">${bars}</div></div>`;
             }
-            
-            const grid = document.getElementById('big-cal-grid');
-            if(grid) grid.innerHTML = html;
+            const grid = document.getElementById('big-cal-grid'); if(grid) grid.innerHTML = html;
         };
 
-function initApp(db) {
-  if (!db) {
-    console.error("Firebase not initialized");
-    return;
-  }
+        function initApp(db) {
+            if (!db) { console.error("Firebase not initialized"); return; }
+            const conn = document.getElementById('connection-status'); if (conn) { conn.className = "w-2 h-2 rounded-full bg-ttgreen shadow-[0_0_8px_#2cc998]"; }
+            bindSnapshot(db.collection('events').orderBy('timestamp', 'asc'), (snapshot) => {
+              const events = []; snapshot.forEach(doc => events.push({ id: doc.id, ...doc.data() }));
+              allEventsCache = events;
+              safeRun(() => window.renderDashboardNextUp(window.getCalendarItems()), 'dashboard-events');
+              safeRun(() => window.renderCalendarListView(), 'calendar-list');
+              if (currentViewMode === 'month') safeRun(() => window.renderBigCalendar(), 'big-calendar');
+            }, 'events');
+            bindSnapshot(db.collection('todos').orderBy('createdAt', 'desc'), (snapshot) => {
+              const todos = []; snapshot.forEach(doc => todos.push({ id: doc.id, ...doc.data() }));
+              allTodosCache = todos;
+              safeRun(() => window.renderTodos(todos), 'todos');
+              safeRun(() => window.renderDashboardNextUp(window.getCalendarItems()), 'dashboard-todos');
+              safeRun(() => window.renderCalendarListView(), 'calendar-list-from-todos');
+              if (currentViewMode === 'month') safeRun(() => window.renderBigCalendar(), 'big-calendar-from-todos');
+            }, 'todos');
+            bindSnapshot(db.collection('status').doc('current'), (doc) => { if (doc.exists) safeRun(() => window.renderStatus?.(doc.data()), 'status'); }, 'status');
+            db.collection('notes').onSnapshot(snapshot => { snapshot.forEach(doc => { window.renderNoteBubble(doc.id, doc.data()); }); window.syncNoteAvatarColors(); });
+        }
 
-  // connection indicator
-  const conn = document.getElementById('connection-status');
-  if (conn) {
-    conn.className = "w-2 h-2 rounded-full bg-ttgreen shadow-[0_0_8px_#2cc998]";
-  }
+        document.addEventListener('DOMContentLoaded', () => {
+          safeRun(() => {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            window.updateRoleUI();
+            window.updateSettingsColorUI();
+            if (!currentUserRole) { window.switchTab('settings'); setTimeout(() => window.showToast('歡迎！請先選擇您的身分 👋'), 500); } 
+            else { document.documentElement.style.setProperty('--active-tab-color', roleColors[currentUserRole]); }
+            if (db) initApp(db);
+            window.initSwipe();
+          }, 'bootstrap');
+        });
 
-  /* ===== STABLE PATCH: Events Snapshot ===== */
-  bindSnapshot(
-    db.collection('events').orderBy('timestamp', 'asc'),
-    (snapshot) => {
-      const events = [];
-      snapshot.forEach(doc =>
-        events.push({ id: doc.id, ...doc.data() })
-      );
-      allEventsCache = events;
-
-      safeRun(
-        () => window.renderDashboardNextUp(window.getCalendarItems()),
-        'dashboard-events'
-      );
-      safeRun(
-        () => window.renderCalendarListView(),
-        'calendar-list'
-      );
-
-      // Big Calendar 只在月曆模式才渲染
-      if (currentViewMode === 'month') {
-        safeRun(() => window.renderBigCalendar(), 'big-calendar');
-      }
-    },
-    'events'
-  );
-
-  /* ===== STABLE PATCH: Todos Snapshot ===== */
-  bindSnapshot(
-    db.collection('todos').orderBy('createdAt', 'desc'),
-    (snapshot) => {
-      const todos = [];
-      snapshot.forEach(doc =>
-        todos.push({ id: doc.id, ...doc.data() })
-      );
-      allTodosCache = todos;
-
-      safeRun(() => window.renderTodos(todos), 'todos');
-      safeRun(
-        () => window.renderDashboardNextUp(window.getCalendarItems()),
-        'dashboard-todos'
-      );
-      
-      safeRun(
-        () => window.renderCalendarListView(),
-        'calendar-list-from-todos'
-      );
-
-      // 4. === 新增：如果當前在看月曆，也要更新月曆上的小橫條 ===
-      if (currentViewMode === 'month') {
-        safeRun(() => window.renderBigCalendar(), 'big-calendar-from-todos');
-      }
-    },
-    'todos'
-  );
-
-  /* ===== STABLE PATCH: Status Snapshot ===== */
-  bindSnapshot(
-    db.collection('status').doc('current'),
-    (doc) => {
-      if (doc.exists) {
-        safeRun(() => window.renderStatus?.(doc.data()), 'status');
-      }
-    },
-    'status'
-  );
-  
-  /* ===== STABLE PATCH: Notes Listener (便利貼) ===== */
-  db.collection('notes').onSnapshot(snapshot => {
-      snapshot.forEach(doc => {
-          // doc.id 會是 'haohao' 或 'maomao'
-          window.renderNoteBubble(doc.id, doc.data());
-      });
-      // 順便同步一下頭像顏色
-      window.syncNoteAvatarColors();
-  });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  safeRun(() => {
-    if (typeof lucide !== 'undefined') {
-      lucide.createIcons();
-    }
-
-    // 初始化介面
-    window.updateRoleUI();
-    
-    // === 新增這行：啟動時同步設定頁的顏色圈圈 ===
-    window.updateSettingsColorUI();
-    // ==========================================
-
-    // === 新增：啟動時檢查 ===
-    if (!currentUserRole) {
-        // 如果沒有身分，直接跳轉到設定頁
-        window.switchTab('settings');
-        // 顯示提示
-        setTimeout(() => window.showToast('歡迎！請先選擇您的身分 👋'), 500);
-    } else {
-        // 有身分，正常設定顏色
-        document.documentElement.style.setProperty(
-          '--active-tab-color',
-          roleColors[currentUserRole]
-        );
-    }
-
-    if (db) {
-      initApp(db);
-    }
-    
-    // 初始化滑動偵測
-    window.initSwipe();
-  }, 'bootstrap');
-});
-
-if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.protocol === 'http:')) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(reg => console.log('SW registered', reg))
-      .catch(err => console.error('SW failed', err));
-  });
-}
-
-/* ===== PWA Resume Guard (iOS) ===== */
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) {
-    safeRun(() => {
-      if (typeof lucide !== 'undefined') lucide.createIcons();
-      if (currentViewMode === 'month') {
-        window.renderBigCalendar();
-      }
-    }, 'resume');
-  }
-});
-
-</script>
-
+        if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.protocol === 'http:')) {
+          window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').then(reg => console.log('SW registered', reg)).catch(err => console.error('SW failed', err)); });
+        }
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) { safeRun(() => { if (typeof lucide !== 'undefined') lucide.createIcons(); if (currentViewMode === 'month') { window.renderBigCalendar(); } }, 'resume'); } });
+    </script>
 </body>
 </html>
