@@ -197,22 +197,6 @@
             font-weight: bold;
         }
         
-        /* Event Bar Styles */
-        .event-bar { 
-            width: 100%; font-size: 9px; line-height: 1.2; padding: 2px 3px; border-radius: 2px; 
-            background-color: #2cc998; color: white; margin-bottom: 1px; white-space: nowrap; 
-            overflow: hidden; text-overflow: ellipsis; text-align: left; box-shadow: 0 1px 1px rgba(0,0,0,0.05); 
-        }
-        .event-bar.done { text-decoration: line-through; opacity: 0.6; }
-        
-        /* Leave/Vacation Style (Hollow/Outlined) */
-        .event-bar.leave {
-            background-color: white !important;
-            border: 1px solid currentColor;
-            font-weight: bold;
-        }
-        .more-events { font-size: 9px; color: #9ca3af; margin-top: 1px; }
-
         /* Custom Calendar Styles */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
         .cal-day-header { font-size: 12px; color: #9ca3af; padding-bottom: 8px; }
@@ -224,50 +208,89 @@
         .cal-day:nth-child(7n), .cal-day-header:nth-child(7) { color: #f87171; } 
         .cal-day:nth-child(7n+1), .cal-day-header:nth-child(1) { color: #f87171; } 
 
-        /* 修正：加入月曆視圖 (Big Calendar) 的專用樣式 */
+        /* === TimeTree 風格月曆樣式 (固定網格版) === */
         .big-cal-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             width: 100%;
             background-color: #fff;
+            border-top: 1px solid #f0f0f0; /* 頂部邊界 */
         }
+        
         .big-cal-cell {
-            min-height: 85px;
-            border-bottom: 1px solid #f3f4f6;
-            border-right: 1px solid #f3f4f6;
-            padding: 4px;
+            /* 關鍵：固定高度，讓每個格子一樣大 */
+            height: 110px; 
+            border-bottom: 1px solid #f0f0f0;
+            border-right: 1px solid #f0f0f0; /* 垂直分隔線 */
+            padding: 2px 0 0 0; /* 減少內距，爭取空間 */
             display: flex;
             flex-direction: column;
-            align-items: center;
             position: relative;
+            overflow: hidden; /* 超出範圍隱藏，避免撐開 */
         }
+
+        /* 移除最右邊的線，讓畫面更乾淨 */
         .big-cal-cell:nth-child(7n) {
             border-right: none;
         }
+
         .big-cal-day-num {
-            width: 24px;
-            height: 24px;
-            line-height: 24px;
-            text-align: center;
-            border-radius: 50%;
-            font-size: 12px;
-            font-weight: 500;
+            font-size: 10px; /* 縮小日期數字 */
             color: #374151;
+            font-weight: 500;
+            text-align: center;
             margin-bottom: 2px;
+            height: 20px;
+            line-height: 20px;
         }
+        
         .big-cal-cell.today .big-cal-day-num {
             background-color: #2cc998;
             color: white;
+            border-radius: 50%;
+            width: 20px;
+            margin: 0 auto 2px auto; /* 居中 */
+        }
+        
+        /* 讓內容區塊變成絕對佈局的容器 */
+        .big-cal-content-wrapper {
+            flex: 1;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1px; /* 行程之間的微小間距 */
+        }
+
+        /* 行程條樣式：更扁、文字更小 */
+        .event-bar { 
+            height: 18px; /* 固定高度 */
+            line-height: 18px;
+            font-size: 10px; 
+            padding: 0 4px; 
+            color: white; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            text-align: left; 
+            position: relative;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+
+        /* 休假樣式優化 */
+        .event-bar.leave {
+            background-color: white !important;
+            border: 1px solid currentColor;
             font-weight: bold;
+            line-height: 16px; /* 扣掉邊框高度 */
         }
-        .big-cal-cell.selected {
-            background-color: #f0fdf9;
-        }
-        .big-cal-header {
-            font-size: 13px;
-            font-weight: 500;
-            color: #9ca3af;
-            padding-bottom: 4px;
+
+        /* "+N" 的提示改為放在格子底部中央 */
+        .more-events { 
+            font-size: 9px; 
+            color: #9ca3af; 
+            text-align: center;
+            margin-top: 1px;
         }
 
         .avatar-sm { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: white; font-weight: bold; border: 1px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
@@ -2242,8 +2265,9 @@
             const daysInMonth = new Date(y, m+1, 0).getDate();
             
             let html = '';
+            // 填補前面的空白天數
             for(let i=0; i<firstDay; i++) {
-                html += `<div class="big-cal-cell bg-gray-50/50"></div>`;
+                html += `<div class="big-cal-cell bg-gray-50/30"></div>`;
             }
             
             const nowStr = new Date().toDateString();
@@ -2263,30 +2287,30 @@
                     return current >= s && current <= end;
                 });
 
-                // 2. 排序優化：長行程優先 (解決跳動問題的關鍵！)
+                // 2. 排序 (長行程優先)
                 dayEvents.sort((a, b) => {
-                    // 計算持續天數
                     const getDuration = (evt) => {
                         const s = new Date(evt.startDate || evt.timestamp);
                         const eStr = evt.endDate || evt.dueDateEnd || (evt.startDate || evt.dueDate);
-                        const e = new Date(eStr);
-                        return e.getTime() - s.getTime();
+                        return new Date(eStr) - s;
                     };
                     const durA = getDuration(a);
                     const durB = getDuration(b);
-
-                    // 規則A：持續時間長的排前面 (讓長條置頂)
-                    if (durB !== durA) return durB - durA;
-
-                    // 規則B：如果天數一樣，早開始的排前面
-                    const startA = new Date(a.startDate || a.timestamp).getTime();
-                    const startB = new Date(b.startDate || b.timestamp).getTime();
-                    return startA - startB;
+                    if (durB !== durA) return durB - durA; // 長的在上面
+                    
+                    // 次要排序：時間早的在上面
+                    const timeA = new Date(a.timestamp).getTime();
+                    const timeB = new Date(b.timestamp).getTime();
+                    return timeA - timeB;
                 });
 
-                // 3. 產生行程條
+                // 3. 限制顯示數量 (Max 4)
+                const MAX_VISIBLE = 4;
+                const visibleEvents = dayEvents.slice(0, MAX_VISIBLE);
+                const hiddenCount = dayEvents.length - MAX_VISIBLE;
+
                 let bars = '';
-                dayEvents.slice(0, 3).forEach(e => {
+                visibleEvents.forEach(e => {
                     let bg;
                     if (e.isJoint) bg = roleColors.joint;
                     else bg = (e.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
@@ -2299,44 +2323,44 @@
                     const isEnd = current.getTime() === end.getTime();
                     const isSingle = isStart && isEnd;
 
-                    // 樣式設定
                     const isVac = window.isLeaveEvent(e.title);
-                    let extraClass = '';
                     let styleAttr = `background-color:${bg};`;
                     let content = e.title;
-                    let shapeClass = 'rounded-[2px] mx-0'; 
+                    let shapeClass = 'rounded-[3px] mx-[2px]'; // 預設留一點空隙
 
-                    // 連續行程形狀處理
+                    // 連續行程處理 (TimeTree 風格：貼齊邊緣)
                     if (!isSingle) {
                         if (isStart) {
-                            shapeClass = 'rounded-l-[2px] rounded-r-none mr-[-4px] pr-2 z-10 relative'; 
-                            content = `${e.title} →`;
+                            shapeClass = 'rounded-l-[3px] rounded-r-none mr-[-1px] pr-2 z-10 ml-[2px]'; 
+                            content = `${e.title}`;
                         } else if (isEnd) {
-                            shapeClass = 'rounded-l-none rounded-r-[2px] ml-[-4px] pl-2 z-10 relative';
+                            shapeClass = 'rounded-l-none rounded-r-[3px] ml-[-1px] pl-2 z-10 mr-[2px]';
                         } else {
-                            shapeClass = 'rounded-none mx-[-4px] z-0 relative';
+                            shapeClass = 'rounded-none mx-[-1px] z-0';
                             content = '&nbsp;'; 
                         }
                     }
 
-                    // 休假樣式優化 (稍微輕量化一點，減少擁擠感)
                     if (isVac) {
-                        extraClass = 'leave';
                         styleAttr = `color:${bg}; border: 1px solid ${bg}; background-color: white;`; 
-                        // 如果是單日才顯示 Icon，跨日中間不顯示以保持乾淨
                         content = (isStart || isSingle) ? `🏖 ${e.title}` : (isEnd ? '' : '&nbsp;');
                     }
 
-                    bars += `<div class="event-bar ${e.isTodo&&e.done?'done':''} ${extraClass} ${shapeClass} truncate" style="${styleAttr}">${content}</div>`;
+                    bars += `<div class="event-bar ${e.isTodo&&e.done?'done':''} ${shapeClass}" style="${styleAttr}">${content}</div>`;
                 });
                 
-                if(dayEvents.length > 3) {
-                    bars += `<div class="more-events pl-1">+${dayEvents.length-3}</div>`;
+                // 如果被隱藏的數量 > 0，顯示提示
+                let moreHtml = '';
+                if(hiddenCount > 0) {
+                    moreHtml = `<div class="more-events">${hiddenCount} more</div>`;
                 }
 
                 html += `<div class="big-cal-cell ${isToday?'today':''}" id="big-cal-day-${d}" onclick="window.selectBigCalendarDate(${y},${m},${d})" ondblclick="window.handleBigCalDbClick(${y},${m},${d})">
                     <div class="big-cal-day-num">${d}</div>
-                    <div class="w-full px-1 space-y-px overflow-hidden relative">${bars}</div>
+                    <div class="big-cal-content-wrapper">
+                        ${bars}
+                        ${moreHtml}
+                    </div>
                 </div>`;
             }
             
