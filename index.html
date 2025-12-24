@@ -1765,82 +1765,141 @@
             const now = new Date();
             const next7Days = new Date();
             next7Days.setDate(now.getDate() + 7);
+            
             const upcoming = items.filter(item => {
                 const t = new Date(item.timestamp);
                 if (item.isTodo && item.done) return false;
                 return !isNaN(t) && t >= now && t <= next7Days;
             });
+
             const countEl = document.getElementById('dashboard-countdown');
             if (upcoming.length > 0) {
                 const first = upcoming[0];
                 const d = new Date(first.timestamp);
                 const diff = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
                 countEl.textContent = diff <= 0 ? "TODAY" : `D - ${diff}`;
-            } else { countEl.textContent = "FREE"; }
+            } else {
+                countEl.textContent = "FREE";
+            }
 
             const container = document.getElementById('dashboard-next-list');
             if (!container) return;
+            
             container.innerHTML = '';
             
-            if (upcoming.length === 0) { container.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">未來 7 天沒有行程 😴</div>`; } 
-            else {
+            if (upcoming.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">未來 7 天沒有行程 😴</div>`;
+            } else {
                 let html = '';
                 upcoming.forEach(item => {
                     const date = new Date(item.timestamp);
-                    let timeStr = item.allDay ? "All Day" : date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
-                    const endTime = item.endTime || item.dueTimeEnd;
-                    if (endTime && !item.allDay) timeStr += ` - ${endTime}`;
-
                     const startDateStr = item.startDate || item.dueDate;
                     const endDateStr = item.endDate || item.dueDateEnd;
                     const effectiveEndDateStr = endDateStr || startDateStr;
-                    const dateObjStart = new Date(startDateStr);
-                    const dateObjEnd = new Date(effectiveEndDateStr);
-                    let dateDisplay = dateObjStart.toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric', weekday: 'short' });
 
-                    if (startDateStr !== effectiveEndDateStr) {
-                         const endPart = dateObjEnd.toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' });
-                         if (item.allDay) { dateDisplay = `${dateObjStart.toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' })} - ${endPart}`; timeStr = "All Day"; } 
-                         else {
-                             const startT = date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
-                             const endT = endTime ? endTime : "??:??";
-                             timeStr = `${startT} - ${endPart} ${endT}`;
-                         }
+                    // 判斷是否跨日
+                    const isCrossDay = startDateStr !== effectiveEndDateStr;
+
+                    // === 1. 建構顯示字串 (Meta HTML) ===
+                    let metaHtml = '';
+
+                    if (isCrossDay) {
+                        // === 跨日行程特別樣式 ===
+                        const startD = new Date(startDateStr);
+                        const endD = new Date(effectiveEndDateStr);
+                        
+                        if (item.allDay) {
+                            // 跨日全天 (例如：12/27 - 12/29)
+                            const sStr = `${startD.getMonth()+1}/${startD.getDate()}`;
+                            const eStr = `${endD.getMonth()+1}/${endD.getDate()}`;
+                            metaHtml = `<span class="font-bold text-gray-600">${sStr}</span> <span class="text-gray-300 mx-1">→</span> <span class="font-bold text-gray-600">${eStr}</span> <span class="text-xs bg-gray-100 text-gray-500 px-1 rounded ml-1">All Day</span>`;
+                        } else {
+                            // 跨日時間 (例如：Party 23:00 -> 隔天 17:00)
+                            // 格式：12/27 23:00 → 12/28 17:00
+                            const sTime = item.timestamp.split('T')[1].substring(0, 5); // 取出 23:00
+                            const eTime = item.endTime || '??:??';
+                            const sStr = `${startD.getMonth()+1}/${startD.getDate()} ${sTime}`;
+                            const eStr = `${endD.getMonth()+1}/${endD.getDate()} ${eTime}`;
+                            
+                            // 使用箭頭 icon 連接
+                            metaHtml = `<span class="font-medium text-gray-600 tracking-tight">${sStr}</span> <i data-lucide="arrow-right" class="w-3 h-3 inline-block mx-0.5 align-middle text-gray-300"></i> <span class="font-medium text-gray-600 tracking-tight">${eStr}</span>`;
+                        }
+                    } else {
+                        // === 一般單日行程 ===
+                        const dateDisplay = new Date(startDateStr).toLocaleDateString('zh-TW', {
+                            month: 'numeric',
+                            day: 'numeric',
+                            weekday: 'short'
+                        });
+                        
+                        let timeStr = item.allDay ? "All Day" : date.toLocaleTimeString('zh-TW', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false
+                        });
+                        
+                        const endTime = item.endTime || item.dueTimeEnd;
+                        if (endTime && !item.allDay) {
+                            timeStr += ` - ${endTime}`;
+                        }
+                        
+                        metaHtml = `${dateDisplay} <span class="text-gray-300 mx-1">|</span> ${timeStr}`;
                     }
 
-                    // --- KEYWORD DETECTION FOR ICON ---
-                    let displayIcon = '';
-                    if (isLeaveEvent(item.title)) {
-                         displayIcon = '🏖️ ';
+                    // 加入地點 (如果有)
+                    if (item.location) {
+                        metaHtml += ` <span class="text-gray-300 mx-1">|</span> ${item.location}`;
                     }
 
+                    // === 2. 顏色與標籤邏輯 ===
                     let color;
-                    if (item.isJoint) color = roleColors.joint; else color = (item.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
-                    let tagHtml = item.isTodo ? `<span class="ml-2 text-[10px] border border-gray-200 text-gray-400 px-1 rounded flex-shrink-0">待辦</span>` : '';
-                    if (!item.isTodo) {
-                        if (item.status === 'tbc') tagHtml = `<span class="ml-2 status-tag tbc">TBC</span>`;
-                        else if (item.status === 'tbd') tagHtml = `<span class="ml-2 status-tag tbd">TBD</span>`;
+                    if (item.isJoint) {
+                        color = roleColors.joint;
+                    } else {
+                        color = (item.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
                     }
+
+                    // 休假偵測
+                    let displayIcon = '';
+                    let isVac = false;
+                    if (typeof window.isLeaveEvent === 'function' && window.isLeaveEvent(item.title)) {
+                        isVac = true;
+                        displayIcon = ''; // 摘要卡片標題通常不放 icon，改用標籤，或者你想放也可以
+                    }
+
+                    let tagHtml = '';
+                    if (item.isTodo) tagHtml = `<span class="ml-2 text-[10px] border border-gray-200 text-gray-400 px-1 rounded flex-shrink-0">待辦</span>`;
+                    else if (isVac) tagHtml = `<span class="ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-500 border border-blue-100 flex-shrink-0">🏖 休假</span>`;
+                    else if (item.status === 'tbc') tagHtml = `<span class="ml-2 status-tag tbc">TBC</span>`;
+                    else if (item.status === 'tbd') tagHtml = `<span class="ml-2 status-tag tbd">TBD</span>`;
+
                     let noteDisplay = '';
-                    if (item.note && item.note.trim()) noteDisplay = `<div class="text-xs text-gray-400 mt-1 flex items-start gap-1"><i data-lucide="sticky-note" class="w-3 h-3 mt-0.5 flex-shrink-0"></i><span class="truncate">${item.note}</span></div>`;
+                    if (item.note && item.note.trim()) {
+                        noteDisplay = `<div class="text-xs text-gray-400 mt-1 flex items-start gap-1"><i data-lucide="sticky-note" class="w-3 h-3 mt-0.5 flex-shrink-0"></i><span class="truncate">${item.note}</span></div>`;
+                    }
 
                     let clickAction = item.isTodo ? `window.openEditTodoModal('${item.id}')` : `window.openEditModal('${item.id}')`;
-                    
+                    const bgClass = isVac ? 'bg-blue-50/30' : 'hover:bg-gray-50';
+
                     html += `
-                    <div class="flex items-center p-3 hover:bg-gray-50 cursor-pointer" onclick="${clickAction}">
+                    <div class="flex items-center p-3 ${bgClass} cursor-pointer transition border-b border-gray-50 last:border-0" onclick="${clickAction}">
                         <div class="w-1 self-stretch rounded-full mr-3" style="background-color: ${color}"></div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center">
                                 <span class="text-sm font-bold text-gray-800 truncate">${displayIcon}${item.title}</span>
                                 ${tagHtml}
                             </div>
-                            <div class="text-xs text-gray-500 mt-0.5">${dateDisplay} · ${timeStr} ${item.location ? `· ${item.location}` : ''}</div>
+                            <div class="text-xs text-gray-500 mt-0.5 flex items-center flex-wrap">
+                                ${metaHtml}
+                            </div>
                             ${noteDisplay}
                         </div>
                     </div>`;
                 });
                 container.innerHTML = html;
-                if (typeof lucide !== 'undefined') lucide.createIcons({ root: container });
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons({ root: container });
+                }
             }
         };
         window.renderCalendarListView = function() { const items = window.getCalendarItems(); const listEl = document.getElementById('event-list'); if(!listEl) return; if (items.length === 0) { listEl.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">無行程</div>`; } else { window.renderEventListItems(items, listEl); } };
