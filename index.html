@@ -2240,45 +2240,134 @@
         };
 
         window.renderBigCalendar = function() {
-            const y = bigCalDate.getFullYear(); const m = bigCalDate.getMonth();
-            const title = document.getElementById('big-cal-title'); if(title) title.textContent = `${y}年${m+1}月`;
-            const firstDay = new Date(y, m, 1).getDay(); const daysInMonth = new Date(y, m+1, 0).getDate();
+            const y = bigCalDate.getFullYear();
+            const m = bigCalDate.getMonth();
+            const title = document.getElementById('big-cal-title');
+            if(title) title.textContent = `${y}年${m+1}月`;
+            
+            const firstDay = new Date(y, m, 1).getDay();
+            const daysInMonth = new Date(y, m+1, 0).getDate();
+            
             let html = '';
-            for(let i=0; i<firstDay; i++) { html += `<div class="big-cal-cell bg-gray-50/50"></div>`; }
+            // 填補前面的空白天數
+            for(let i=0; i<firstDay; i++) {
+                html += `<div class="big-cal-cell bg-gray-50/50"></div>`;
+            }
+            
             const nowStr = new Date().toDateString();
             const items = window.getCalendarItems ? window.getCalendarItems() : [];
+
             for(let d=1; d<=daysInMonth; d++) {
-                const dateObj = new Date(y, m, d);
-                const isToday = dateObj.toDateString() === nowStr;
-                const dayEvents = items.filter(e => { const t = new Date(e.timestamp); return t.getDate() === d && t.getMonth() === m && t.getFullYear() === y; });
+                const current = new Date(y, m, d);
+                // 設定為當天 00:00:00 以便比較
+                current.setHours(0,0,0,0);
                 
-                // SORTING: Put "Leave" events first
+                const isToday = current.toDateString() === nowStr;
+                
+                // 1. 篩選出當天的行程
+                const dayEvents = items.filter(e => {
+                    const t = new Date(e.timestamp);
+                    // 簡單判斷：只要這一天在行程的 Start 到 End 範圍內就算
+                    // (這裡做比較嚴謹的時間物件轉換)
+                    const s = new Date(e.startDate || e.timestamp); s.setHours(0,0,0,0);
+                    const endDateStr = e.endDate || e.dueDateEnd || (e.startDate || e.dueDate);
+                    const end = new Date(endDateStr); end.setHours(0,0,0,0);
+                    
+                    return current >= s && current <= end;
+                });
+
+                // 2. 排序優化 (讓連續行程對齊)
+                // 順序：休假優先 -> 正在進行中(跨日) -> 開始時間早 -> 持續天數長
                 dayEvents.sort((a, b) => {
-                    const aLeave = isLeaveEvent(a.title);
-                    const bLeave = isLeaveEvent(b.title);
+                    // 休假置頂
+                    const aLeave = window.isLeaveEvent(a.title);
+                    const bLeave = window.isLeaveEvent(b.title);
                     if (aLeave && !bLeave) return -1;
                     if (!aLeave && bLeave) return 1;
-                    return 0; // Maintain original time sort for others
+
+                    // 取得開始時間與當天比較
+                    const aStart = new Date(a.startDate || a.timestamp); aStart.setHours(0,0,0,0);
+                    const bStart = new Date(b.startDate || b.timestamp); bStart.setHours(0,0,0,0);
+                    
+                    // "正在進行中" (開始時間早於今天) 的排前面，這樣連續行程才會在同一列
+                    const aOngoing = aStart < current;
+                    const bOngoing = bStart < current;
+                    if (aOngoing && !bOngoing) return -1;
+                    if (!aOngoing && bOngoing) return 1;
+
+                    // 還是分不出勝負，就比開始時間
+                    return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
                 });
 
+                // 3. 產生行程條 HTML
                 let bars = '';
+                // 只顯示前 3 個，超過顯示 +N
                 dayEvents.slice(0, 3).forEach(e => {
-                    let bg; if (e.isJoint) bg = roleColors.joint; else bg = (e.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
+                    let bg;
+                    if (e.isJoint) {
+                        bg = roleColors.joint;
+                    } else {
+                        bg = (e.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
+                    }
                     
-                    // Style for Leave
+                    // === 判斷連續狀態 ===
+                    const s = new Date(e.startDate || e.timestamp); s.setHours(0,0,0,0);
+                    const endDateStr = e.endDate || e.dueDateEnd || (e.startDate || e.dueDate);
+                    const end = new Date(endDateStr); end.setHours(0,0,0,0);
+                    
+                    const isStart = current.getTime() === s.getTime();
+                    const isEnd = current.getTime() === end.getTime();
+                    const isSingle = isStart && isEnd;
+
+                    // 休假特殊樣式
+                    const isVac = window.isLeaveEvent(e.title);
                     let extraClass = '';
                     let styleAttr = `background-color:${bg};`;
-                    if (isLeaveEvent(e.title)) {
-                        extraClass = 'leave';
-                        styleAttr = `color:${bg}; border-color:${bg};`; // Override for hollow style
+                    
+                    // 基礎樣式
+                    let shapeClass = 'rounded-[2px] mx-0'; // 預設單日：圓角，無負邊距
+                    let content = e.title;
+
+                    if (!isSingle) {
+                        // 跨日行程視覺處理
+                        if (isStart) {
+                            // 第一天：右邊平頭，向右延伸 4px (蓋住 padding)
+                            shapeClass = 'rounded-l-[2px] rounded-r-none mr-[-4px] pr-2'; 
+                            content = `${e.title} →`; // 加個箭頭暗示還有
+                        } else if (isEnd) {
+                            // 最後一天：左邊平頭，向左延伸 4px
+                            shapeClass = 'rounded-l-none rounded-r-[2px] ml-[-4px] pl-2';
+                        } else {
+                            // 中間天數：兩邊平頭，撐滿左右
+                            shapeClass = 'rounded-none mx-[-4px]';
+                            content = '&nbsp;'; // 中間不顯示文字，避免重複，或你想顯示 e.title 也可以
+                        }
                     }
 
-                    bars += `<div class="event-bar ${e.isTodo&&e.done?'done':''} ${extraClass}" style="${styleAttr}">${e.title}</div>`;
+                    if (isVac) {
+                        extraClass = 'leave';
+                        styleAttr = `color:${bg}; border-color:${bg};`; 
+                        content = (isStart || isSingle) ? `🏖 ${e.title}` : (isEnd ? '' : '&nbsp;'); 
+                        // 休假如果是中間天數，通常不顯示文字比較乾淨
+                    }
+
+                    // 組合 HTML
+                    // 注意：這裡使用了 Tailwind 的 truncate 確保單行文字不換行
+                    bars += `<div class="event-bar ${e.isTodo&&e.done?'done':''} ${extraClass} ${shapeClass} truncate" style="${styleAttr}">${content}</div>`;
                 });
-                if(dayEvents.length > 3) { bars += `<div class="more-events">+${dayEvents.length-3}</div>`; }
-                html += `<div class="big-cal-cell ${isToday?'today':''}" id="big-cal-day-${d}" onclick="window.selectBigCalendarDate(${y},${m},${d})" ondblclick="window.handleBigCalDbClick(${y},${m},${d})"><div class="big-cal-day-num">${d}</div><div class="w-full px-1 space-y-px">${bars}</div></div>`;
+                
+                if(dayEvents.length > 3) {
+                    bars += `<div class="more-events pl-1">+${dayEvents.length-3}</div>`;
+                }
+
+                html += `<div class="big-cal-cell ${isToday?'today':''}" id="big-cal-day-${d}" onclick="window.selectBigCalendarDate(${y},${m},${d})" ondblclick="window.handleBigCalDbClick(${y},${m},${d})">
+                    <div class="big-cal-day-num">${d}</div>
+                    <div class="w-full px-1 space-y-px overflow-hidden relative">${bars}</div>
+                </div>`;
             }
-            const grid = document.getElementById('big-cal-grid'); if(grid) grid.innerHTML = html;
+            
+            const grid = document.getElementById('big-cal-grid');
+            if(grid) grid.innerHTML = html;
         };
 
         function initApp(db) {
