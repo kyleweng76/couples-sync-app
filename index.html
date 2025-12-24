@@ -1976,8 +1976,8 @@
             // 延遲一點點執行，確保 DOM 已經渲染完成
             setTimeout(() => {
                 // 這裡是一個選擇性的功能，如果你希望每次切換都自動跳到今天，可以把註解打開
-                // const firstFuture = container.querySelector('.flex:not(.opacity-40)');
-                // if(firstFuture) firstFuture.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                const firstFuture = container.querySelector('.flex:not(.opacity-40)');
+                if(firstFuture) firstFuture.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100); 
         };
         window.toggleAllDay = function() { const isChecked = document.getElementById('check-allday').checked; document.querySelectorAll('.dt-wrapper-time').forEach(d => d.style.display = isChecked ? 'none' : 'block'); };
