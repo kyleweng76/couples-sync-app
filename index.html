@@ -1974,12 +1974,11 @@
             
             // 額外的小功能：如果列表很長，自動捲動到今天（第一個未來的行程）
             // 延遲一點點執行，確保 DOM 已經渲染完成
-            /* setTimeout(() => {
+            setTimeout(() => {
                 // 這裡是一個選擇性的功能，如果你希望每次切換都自動跳到今天，可以把註解打開
                 // const firstFuture = container.querySelector('.flex:not(.opacity-40)');
                 // if(firstFuture) firstFuture.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100); 
-            */
         };
         window.toggleAllDay = function() { const isChecked = document.getElementById('check-allday').checked; document.querySelectorAll('.dt-wrapper-time').forEach(d => d.style.display = isChecked ? 'none' : 'block'); };
         window.toggleRecurring = function() { const isChecked = document.getElementById('check-recurring').checked; const opts = document.getElementById('recurring-options'); if(isChecked) { opts.classList.remove('hidden'); if(!document.getElementById('input-recur-until').value) document.getElementById('input-recur-until').value = document.getElementById('input-date-end').value; } else opts.classList.add('hidden'); };
