@@ -1738,8 +1738,29 @@
         };
 
         window.renderEvents = function(ignored) { const items = window.getCalendarItems(); const now = new Date(); const future = items.filter(e => { const date = new Date(e.timestamp); if(e.isTodo && e.done) return false; return !isNaN(date) && date >= now; }); const titleEl = document.getElementById('next-event-title'); if(titleEl && future.length > 0) { const n = future[0], d = new Date(n.timestamp); titleEl.textContent = n.title; const timeStr = n.allDay ? "All Day" : d.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',hour12:false}); document.getElementById('next-event-time').textContent = timeStr; document.getElementById('next-event-date').textContent = d.toLocaleDateString('zh-TW',{month:'numeric',day:'numeric',weekday:'short'}); const diff = Math.ceil((d-now)/(1000*60*60*24)); document.getElementById('countdown').textContent = diff<=0?"TODAY":`D - ${diff}`; } else if(titleEl) { titleEl.textContent = "No Upcoming Events"; } const listEl = document.getElementById('event-list'); if(listEl) { if (items.length === 0) listEl.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">無行程</div>`; else window.renderEventListItems(items, listEl); } };
-        window.getCalendarItems = function() { const events = allEventsCache.map(e => ({...e, type: 'event'})); const todos = allTodosCache.filter(t => t.timestamp).map(t => ({ id: t.id, title: t.title, timestamp: t.timestamp, color: null, allDay: !t.dueTime, isTodo: true, done: t.done, type: 'todo', creator: t.creator, isJoint: t.isJoint })); return [...events, ...todos].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)); };
-        
+        window.getCalendarItems = function() {
+            // 事件直接帶入
+            const events = allEventsCache.map(e => ({...e, type: 'event'}));
+            
+            // 待辦事項：這裡原本漏了欄位，現在改用 ...t 展開所有屬性
+            const todos = allTodosCache
+                .filter(t => t.timestamp) // 只顯示有設定時間的待辦
+                .map(t => ({
+                    ...t, // <--- 關鍵修正：保留原始待辦的所有欄位 (dueDate, etc.)
+                    id: t.id,
+                    title: t.title,
+                    timestamp: t.timestamp,
+                    allDay: !t.dueTime,
+                    isTodo: true,
+                    done: t.done,
+                    type: 'todo',
+                    // 如果沒有設定顏色，這欄位留空交給渲染層判斷
+                    color: null 
+                }));
+
+            // 合併並排序
+            return [...events, ...todos].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        };        
         window.renderDashboardNextUp = function(items) {
             const now = new Date();
             const next7Days = new Date();
@@ -1825,18 +1846,15 @@
         window.renderCalendarListView = function() { const items = window.getCalendarItems(); const listEl = document.getElementById('event-list'); if(!listEl) return; if (items.length === 0) { listEl.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">無行程</div>`; } else { window.renderEventListItems(items, listEl); } };
         window.renderEventListItems = function(items, container) {
             let html = '';
-            let lastMonthLabel = ''; // 用來記錄上一個行程的月份
-            const now = new Date();  // 取得現在時間，用來比對過去或未來
+            let lastMonthLabel = ''; 
+            const now = new Date(); 
 
             items.forEach(e => {
                 const date = new Date(e.timestamp);
                 if (isNaN(date)) return;
 
-                // === 1. 月份標題邏輯 ===
-                // 產生 "2023年 12月" 這樣的字串
+                // === 月份標題 ===
                 const currentMonthLabel = `${date.getFullYear()}年 ${date.getMonth() + 1}月`;
-                
-                // 如果這個行程的月份跟上一個不一樣，就插入標題
                 if (currentMonthLabel !== lastMonthLabel) {
                     html += `
                     <div class="sticky top-0 z-30 bg-gray-100/95 backdrop-blur-sm px-4 py-2 text-xs font-bold text-gray-500 border-b border-gray-200 shadow-sm flex items-center justify-between">
@@ -1846,66 +1864,61 @@
                     lastMonthLabel = currentMonthLabel;
                 }
 
-                // === 2. 判斷是否為「過去」行程 ===
-                // 邏輯：如果是「待辦」且「未完成」，即使過期也不淡化 (避免漏看)
-                // 如果是「行程」且時間小於現在，就視為過去
-                // 如果是「待辦」且「已完成」，就視為過去
+                // === 判斷過去/未來 (透明度) ===
                 let isPast = false;
-                if (e.isTodo) {
-                    isPast = e.done; // 待辦事項看是否完成
-                } else {
-                    // 行程看時間 (這裡簡單用開始時間判斷，你也可以改用結束時間)
-                    isPast = date < now; 
-                }
-
-                // 過去的行程加上 opacity-40 和 grayscale (變灰變淡)
+                if (e.isTodo) isPast = e.done;
+                else isPast = date < now;
                 const opacityClass = isPast ? 'opacity-40 grayscale' : '';
-                
 
-                // === 以下維持原本的顯示邏輯 ===
-                
-                let timeStr = e.allDay ? "All Day" : date.toLocaleTimeString('zh-TW', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false
-                });
-
+                // === 時間顯示字串 ===
+                let timeStr = e.allDay ? "All Day" : date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
                 const endTime = e.endTime || e.dueTimeEnd;
-                if (endTime && !e.allDay) {
-                    timeStr += ` - ${endTime}`;
+                if (endTime && !e.allDay) timeStr += ` - ${endTime}`;
+
+                // === 日期數字計算 (關鍵修正點) ===
+                const startDateStr = e.startDate || e.dueDate;
+                const endDateStr = e.endDate || e.dueDateEnd;
+                const effectiveEndDateStr = endDateStr || startDateStr;
+
+                // 防呆：如果有日期字串就用字串，沒有就用 timestamp 物件
+                let dateObjStart;
+                if (startDateStr) {
+                    dateObjStart = new Date(startDateStr);
+                } else {
+                    dateObjStart = date; // Fallback 使用 timestamp
                 }
                 
-                const startDateStr = e.startDate || e.dueDate;
-                const endDateStr = e.endDate || e.dueDateEnd; 
-                const effectiveEndDateStr = endDateStr || startDateStr; 
+                // 再次防呆：萬一 dateObjStart 是 Invalid Date
+                if (isNaN(dateObjStart)) dateObjStart = date;
 
-                const dateObjStart = new Date(startDateStr);
-                const dateObjEnd = new Date(effectiveEndDateStr);
                 let dayNum = dateObjStart.getDate();
-                let dayName = dateObjStart.toLocaleDateString('en-US',{weekday:'short'});
-                
-                if (startDateStr !== effectiveEndDateStr) {
+                let dayName = dateObjStart.toLocaleDateString('en-US', { weekday: 'short' });
+
+                // 跨日顯示邏輯
+                if (startDateStr && effectiveEndDateStr && startDateStr !== effectiveEndDateStr) {
+                    const dateObjEnd = new Date(effectiveEndDateStr);
                     const endPart = dateObjEnd.toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' });
-                    if (e.allDay) timeStr = `${dateObjStart.toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' })} - ${endPart}`;
-                    else {
-                         const startT = date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
-                         const endT = endTime ? endTime : "??:??";
-                         timeStr = `${startT} - ${endPart} ${endT}`;
+                    
+                    if (e.allDay) {
+                        timeStr = `${dateObjStart.toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' })} - ${endPart}`;
+                    } else {
+                        const startT = date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+                        const endT = endTime ? endTime : "??:??";
+                        timeStr = `${startT} - ${endPart} ${endT}`;
                     }
                 }
 
+                // === 休假偵測 ===
                 let displayIcon = '';
-                // 這裡使用你原本的 isLeaveEvent 函式
                 if (typeof window.isLeaveEvent === 'function' && window.isLeaveEvent(e.title)) {
-                        displayIcon = '🏖️ ';
+                    displayIcon = '🏖️ ';
                 }
 
                 let displayColor;
-                if (e.isJoint) displayColor = roleColors.joint; else displayColor = (e.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
+                if (e.isJoint) displayColor = roleColors.joint; 
+                else displayColor = (e.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
 
-                // --- 渲染 HTML ---
-                // 注意：我在最外層 div 加上了 ${opacityClass}
-                
+                // === HTML 渲染 ===
                 if (e.isTodo) {
                     const statusClass = e.done ? "line-through text-gray-400" : "text-gray-800";
                     const checkIcon = e.done ? '<i data-lucide="check-square" class="w-5 h-5 text-green-500"></i>' : '<i data-lucide="square" class="w-5 h-5 text-gray-400"></i>';
@@ -1971,8 +1984,11 @@
             });
             container.innerHTML = html;
             if (typeof lucide !== 'undefined') lucide.createIcons({ root: container });
-            
+
+            // 額外的小功能：如果列表很長，自動捲動到今天（第一個未來的行程）
+            // 延遲一點點執行，確保 DOM 已經渲染完成
             setTimeout(() => {
+                // 這裡是一個選擇性的功能，如果你希望每次切換都自動跳到今天，可以把註解打開
                 const firstFuture = container.querySelector('.flex:not(.opacity-40)');
                 if(firstFuture) firstFuture.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100); 
