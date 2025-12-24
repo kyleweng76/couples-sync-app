@@ -2287,7 +2287,7 @@
                     return current >= s && current <= end;
                 });
 
-                // 2. 排序 (長行程優先)
+                // 2. 排序 (長行程優先，確保跨日行程在同一行)
                 dayEvents.sort((a, b) => {
                     const getDuration = (evt) => {
                         const s = new Date(evt.startDate || evt.timestamp);
@@ -2298,13 +2298,12 @@
                     const durB = getDuration(b);
                     if (durB !== durA) return durB - durA; // 長的在上面
                     
-                    // 次要排序：時間早的在上面
                     const timeA = new Date(a.timestamp).getTime();
                     const timeB = new Date(b.timestamp).getTime();
                     return timeA - timeB;
                 });
 
-                // 3. 限制顯示數量 (Max 4)
+                // 3. 限制顯示數量
                 const MAX_VISIBLE = 4;
                 const visibleEvents = dayEvents.slice(0, MAX_VISIBLE);
                 const hiddenCount = dayEvents.length - MAX_VISIBLE;
@@ -2326,30 +2325,46 @@
                     const isVac = window.isLeaveEvent(e.title);
                     let styleAttr = `background-color:${bg};`;
                     let content = e.title;
-                    let shapeClass = 'rounded-[3px] mx-[2px]'; // 預設留一點空隙
+                    
+                    // 預設樣式 (單日)
+                    let shapeClass = 'rounded-[3px] mx-[2px] relative z-0'; 
 
-                    // 連續行程處理 (TimeTree 風格：貼齊邊緣)
+                    // === 連續行程無縫處理 ===
                     if (!isSingle) {
                         if (isStart) {
-                            shapeClass = 'rounded-l-[3px] rounded-r-none mr-[-1px] pr-2 z-10 ml-[2px]'; 
+                            // 第一天：右邊要是平的，且往右用力延伸 (-3px) 蓋住邊框
+                            // ml-[2px] 保持左邊有空隙，好看
+                            shapeClass = 'rounded-l-[3px] rounded-r-none mr-[-3px] pr-2 relative z-10 ml-[2px]'; 
                             content = `${e.title}`;
                         } else if (isEnd) {
-                            shapeClass = 'rounded-l-none rounded-r-[3px] ml-[-1px] pl-2 z-10 mr-[2px]';
+                            // 最後一天：左邊要是平的，且往左用力延伸 (-3px) 蓋住邊框
+                            // mr-[2px] 保持右邊有空隙
+                            shapeClass = 'rounded-l-none rounded-r-[3px] ml-[-3px] pl-2 relative z-10 mr-[2px]';
                         } else {
-                            shapeClass = 'rounded-none mx-[-1px] z-0';
+                            // 中間天數：左右都要平，且左右都用力延伸 (-3px)
+                            // 這樣就能完美把左右兩邊的白線蓋掉
+                            shapeClass = 'rounded-none mx-[-3px] relative z-10';
                             content = '&nbsp;'; 
                         }
                     }
 
                     if (isVac) {
+                        // 休假如果是連續的，也套用同樣的邏輯，但背景是白色
                         styleAttr = `color:${bg}; border: 1px solid ${bg}; background-color: white;`; 
+                        // 如果是中間天數，為了讓線條不斷裂，我們把 border-left 和 border-right 拿掉
+                        // 或是利用 z-index 蓋住
+                        if (!isSingle && !isStart && !isEnd) {
+                            styleAttr += ' border-left: none; border-right: none;';
+                        }
+                        if (!isSingle && isStart) styleAttr += ' border-right: none;';
+                        if (!isSingle && isEnd) styleAttr += ' border-left: none;';
+
                         content = (isStart || isSingle) ? `🏖 ${e.title}` : (isEnd ? '' : '&nbsp;');
                     }
 
                     bars += `<div class="event-bar ${e.isTodo&&e.done?'done':''} ${shapeClass}" style="${styleAttr}">${content}</div>`;
                 });
                 
-                // 如果被隱藏的數量 > 0，顯示提示
                 let moreHtml = '';
                 if(hiddenCount > 0) {
                     moreHtml = `<div class="more-events">${hiddenCount} more</div>`;
