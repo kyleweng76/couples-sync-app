@@ -2787,6 +2787,37 @@
               safeRun(() => window.renderCalendarListView(), 'calendar-list-from-todos');
               if (currentViewMode === 'month') safeRun(() => window.renderBigCalendar(), 'big-calendar-from-todos');
             }, 'todos');
+            
+            // ... 在 initApp 函式內 ...
+
+            // === 修改：聊天室監聽 (包含自動刪除過期訊息) ===
+            bindSnapshot(db.collection('messages').orderBy('timestamp', 'desc').limit(50), (snapshot) => {
+                const msgs = [];
+                const now = new Date();
+                const expirationMs = 24 * 60 * 60 * 1000; // 設定過期時間：24 小時 (毫秒)
+                // 如果想要保留 3 天，改成： 3 * 24 * 60 * 60 * 1000
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const msgTime = new Date(data.timestamp);
+                    
+                    // 檢查：如果訊息時間距離現在超過設定的時間
+                    if ((now - msgTime) > expirationMs) {
+                        // 過期了 -> 默默在背景刪除它
+                        db.collection('messages').doc(doc.id).delete()
+                            .catch(err => console.warn("清除舊訊息失敗", err));
+                    } else {
+                        // 沒過期 -> 加入顯示列表
+                        msgs.push({ id: doc.id, ...data });
+                    }
+                });
+
+                // 顯示時反轉 (舊 -> 新)
+                window.renderChat(msgs.reverse());
+            }, 'chat');
+
+            // ... (其他部分保持不變) ...
+
             bindSnapshot(db.collection('status').doc('current'), (doc) => { if (doc.exists) safeRun(() => window.renderStatus?.(doc.data()), 'status'); }, 'status');
             // ... (在 initApp 函式內) ...
             
