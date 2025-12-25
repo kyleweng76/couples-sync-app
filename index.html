@@ -1932,146 +1932,223 @@
         };
     
         window.renderCalendarListView = function() { const items = window.getCalendarItems(); const listEl = document.getElementById('event-list'); if(!listEl) return; if (items.length === 0) { listEl.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">無行程</div>`; } else { window.renderEventListItems(items, listEl); } };
+        // === 列表渲染邏輯 (包含歷史摺疊功能) ===
         window.renderEventListItems = function(items, container) {
-            let html = '';
-            let lastMonthLabel = ''; 
             const now = new Date(); 
+            
+            // 1. 資料分流：分成「過去」與「未來」
+            const pastItems = [];
+            const futureItems = [];
 
             items.forEach(e => {
                 const date = new Date(e.timestamp);
                 if (isNaN(date)) return;
 
-                // 月份標題
-                const currentMonthLabel = `${date.getFullYear()}年 ${date.getMonth() + 1}月`;
-                if (currentMonthLabel !== lastMonthLabel) {
-                    html += `
-                    <div class="sticky top-0 z-30 bg-gray-100/95 backdrop-blur-sm px-4 py-2 text-xs font-bold text-gray-500 border-b border-gray-200 shadow-sm flex items-center justify-between">
-                        <span>${currentMonthLabel}</span>
-                        ${currentMonthLabel === `${now.getFullYear()}年 ${now.getMonth() + 1}月` ? '<span class="text-[10px] bg-ttgreen text-white px-1.5 py-0.5 rounded-full">本月</span>' : ''}
-                    </div>`;
-                    lastMonthLabel = currentMonthLabel;
-                }
-
-                // 過去/未來判定
+                // 判斷邏輯：
+                // 待辦事項：已完成 = 過去
+                // 一般行程：結束時間 < 現在 = 過去
+                // (為了保守起見，如果沒有結束時間，就用開始時間判斷)
                 let isPast = false;
-                if (e.isTodo) isPast = e.done;
-                else isPast = date < now;
-                const opacityClass = isPast ? 'opacity-40 grayscale' : '';
-
-                // === 時間字串處理 (重點修改) ===
-                let timeStr = "";
-                
-                const startDateStr = e.startDate || e.dueDate;
-                const endDateStr = e.endDate || e.dueDateEnd;
-                const effectiveEndDateStr = endDateStr || startDateStr;
-                
-                // 防呆轉換
-                let dateObjStart = startDateStr ? new Date(startDateStr) : date;
-                if (isNaN(dateObjStart)) dateObjStart = date;
-                
-                let dayNum = dateObjStart.getDate();
-                let dayName = dateObjStart.toLocaleDateString('en-US', { weekday: 'short' });
-
-                // 判斷跨日
-                if (startDateStr && effectiveEndDateStr && startDateStr !== effectiveEndDateStr) {
-                    // === 跨日行程格式化 ===
-                    const dateObjEnd = new Date(effectiveEndDateStr);
-                    const sDateDisplay = `${dateObjStart.getMonth()+1}/${dateObjStart.getDate()}`;
-                    const eDateDisplay = `${dateObjEnd.getMonth()+1}/${dateObjEnd.getDate()}`;
-                    
-                    if (e.allDay) {
-                         // 全天跨日: 12/27 - 12/29
-                         timeStr = `${sDateDisplay} - ${eDateDisplay} (All Day)`;
-                    } else {
-                         // 時間跨日: 12/27 23:00 → 12/28 17:00
-                         const sTime = date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
-                         const eTime = (e.endTime || e.dueTimeEnd) || "??:??";
-                         // 使用箭頭符號，並拿掉前面的日期(因為左邊已經有日期大數字了)，只顯示 時間 → 日期 時間
-                         timeStr = `${sTime} <span class="text-gray-400">→</span> ${eDateDisplay} ${eTime}`;
-                    }
-                } else {
-                    // === 單日行程格式化 ===
-                    timeStr = e.allDay ? "All Day" : date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
-                    const endTime = e.endTime || e.dueTimeEnd;
-                    if (endTime && !e.allDay) timeStr += ` - ${endTime}`;
-                }
-
-                // 休假 ICON
-                let displayIcon = '';
-                if (typeof window.isLeaveEvent === 'function' && window.isLeaveEvent(e.title)) {
-                    displayIcon = '🏖️ ';
-                }
-
-                let displayColor;
-                if (e.isJoint) displayColor = roleColors.joint; 
-                else displayColor = (e.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
-
-                // 渲染 HTML
                 if (e.isTodo) {
-                    const statusClass = e.done ? "line-through text-gray-400" : "text-gray-800";
-                    const checkIcon = e.done ? '<i data-lucide="check-square" class="w-5 h-5 text-green-500"></i>' : '<i data-lucide="square" class="w-5 h-5 text-gray-400"></i>';
-                    
-                    html += `
-                    <div class="flex p-4 items-center gap-4 hover:bg-gray-50 transition cursor-pointer border-b border-gray-50 last:border-0 ${opacityClass}">
-                        <div class="flex flex-col items-center w-10">
-                            <span class="text-xs text-gray-400 font-medium uppercase">${dayName}</span>
-                            <span class="text-xl font-bold text-gray-800 leading-none">${dayNum}</span>
-                        </div>
-                        <div class="w-1 self-stretch rounded-full" style="background-color: ${displayColor}"></div>
-                        <div class="flex-1 min-w-0 flex items-center justify-between" onclick="window.openEditTodoModal('${e.id}')">
-                            <div>
-                                <div class="flex items-center ${statusClass}">
-                                    <span class="font-bold truncate block">${displayIcon}${e.title}</span>
-                                    <span class="ml-2 text-[10px] border border-gray-200 px-1 rounded text-gray-400 flex-shrink-0">待辦</span>
-                                </div>
-                                <div class="text-xs text-gray-500">${timeStr}</div>
-                            </div>
-                        </div>
-                        <div class="flex-none p-2 cursor-pointer" onclick="window.toggleTodo('${e.id}', ${!e.done}); event.stopPropagation();">
-                            ${checkIcon}
-                        </div>
-                    </div>`;
+                    isPast = e.done;
                 } else {
-                    let ic = '';
-                    if (e.category === 'travel') ic = 'plane';
-                    else if (e.category === 'appointment') ic = 'scissors';
-                    else if (e.category === 'gathering') ic = 'users';
-                    else if (e.category === 'vacation') ic = 'palmtree';
-                    let ico = ic ? `<i data-lucide="${ic}" class="w-3 h-3 text-gray-400 mr-1"></i>` : '';
-                    let st = '';
-                    if (e.status === 'tbc') st = `<span class="ml-2 status-tag tbc">TBC</span>`;
-                    else if (e.status === 'tbd') st = `<span class="ml-2 status-tag tbd">TBD</span>`;
-                    let av = `<div class="avatar-sm z-20" style="background-color:${roleColors[e.creator]||'#2cc998'}">${e.creator==='haohao'?'皓':'毛'}</div>`;
-                    if (e.isJoint) {
-                        const partner = e.creator === 'haohao' ? 'maomao' : 'haohao';
-                        const partnerName = partner === 'haohao' ? '皓' : '毛';
-                        av += `<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[partner]}">${partnerName}</div>`;
-                    }
-                    let noteDisplay = '';
-                    if (e.note && e.note.trim()) noteDisplay = `<div class="text-xs text-gray-400 mt-1 flex items-start gap-1"><i data-lucide="sticky-note" class="w-3 h-3 mt-0.5 flex-shrink-0"></i><span class="truncate">${e.note}</span></div>`;
-
-                    html += `
-                    <div class="flex p-4 items-start gap-4 hover:bg-gray-50 transition cursor-pointer card-press border-b border-gray-50 last:border-0 ${opacityClass}" onclick="window.openEditModal('${e.id}')">
-                        <div class="flex flex-col items-center w-10 pt-1">
-                            <span class="text-xs text-gray-400 font-medium uppercase">${dayName}</span>
-                            <span class="text-xl font-bold leading-none" style="color:${displayColor}">${dayNum}</span>
-                        </div>
-                        <div class="w-1 self-stretch rounded-full" style="background-color:${displayColor}"></div>
-                        <div class="flex-1 min-w-0 pt-1">
-                            <div class="flex items-center">
-                                ${ico}
-                                <h4 class="font-bold text-gray-800 truncate">${displayIcon}${e.title}</h4>
-                                ${st}
-                            </div>
-                            <div class="text-xs text-gray-500">${timeStr} ${e.location?'· '+e.location:''}</div>
-                            ${noteDisplay}
-                        </div>
-                        <div class="flex items-center self-center -space-x-1 pl-2">${av}</div>
-                    </div>`;
+                    // 取得較精確的結束時間
+                    const endDateStr = e.endDate || e.dueDateEnd || (e.startDate || e.dueDate);
+                    const endTimeStr = e.endTime || e.dueTimeEnd || "23:59";
+                    const endDateTime = new Date(`${endDateStr}T${endTimeStr}`);
+                    
+                    // 如果無法解析，退回使用 timestamp
+                    if(isNaN(endDateTime)) isPast = date < now;
+                    else isPast = endDateTime < now;
                 }
+
+                if (isPast) pastItems.push(e);
+                else futureItems.push(e);
             });
-            container.innerHTML = html;
+
+            // 2. 定義 HTML 生成器 (避免重複寫兩次 code)
+            const generateItemHtml = (listItems) => {
+                let htmlBuffer = '';
+                let lastMonthLabel = '';
+
+                listItems.forEach(e => {
+                    const date = new Date(e.timestamp);
+                    
+                    // 月份標題
+                    const currentMonthLabel = `${date.getFullYear()}年 ${date.getMonth() + 1}月`;
+                    if (currentMonthLabel !== lastMonthLabel) {
+                        htmlBuffer += `
+                        <div class="sticky top-0 z-30 bg-gray-100/95 backdrop-blur-sm px-4 py-2 text-xs font-bold text-gray-500 border-b border-gray-200 shadow-sm flex items-center justify-between">
+                            <span>${currentMonthLabel}</span>
+                            ${currentMonthLabel === `${now.getFullYear()}年 ${now.getMonth() + 1}月` ? '<span class="text-[10px] bg-ttgreen text-white px-1.5 py-0.5 rounded-full">本月</span>' : ''}
+                        </div>`;
+                        lastMonthLabel = currentMonthLabel;
+                    }
+
+                    // 樣式設定
+                    let opacityClass = '';
+                    if (e.isTodo && e.done) opacityClass = 'opacity-40 grayscale';
+                    else if (!e.isTodo && new Date(e.timestamp) < now) opacityClass = 'opacity-50 grayscale';
+
+                    // 時間字串
+                    let timeStr = "";
+                    const startDateStr = e.startDate || e.dueDate;
+                    const endDateStr = e.endDate || e.dueDateEnd;
+                    const effectiveEndDateStr = endDateStr || startDateStr;
+                    
+                    let dateObjStart = startDateStr ? new Date(startDateStr) : date;
+                    if (isNaN(dateObjStart)) dateObjStart = date;
+                    
+                    let dayNum = dateObjStart.getDate();
+                    let dayName = dateObjStart.toLocaleDateString('en-US', { weekday: 'short' });
+
+                    // 判斷跨日與時間顯示
+                    if (startDateStr && effectiveEndDateStr && startDateStr !== effectiveEndDateStr) {
+                        const dateObjEnd = new Date(effectiveEndDateStr);
+                        const sDateDisplay = `${dateObjStart.getMonth()+1}/${dateObjStart.getDate()}`;
+                        const eDateDisplay = `${dateObjEnd.getMonth()+1}/${dateObjEnd.getDate()}`;
+                        
+                        if (e.allDay) {
+                             timeStr = `${sDateDisplay} - ${eDateDisplay} (All Day)`;
+                        } else {
+                             const sTime = date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+                             const eTime = (e.endTime || e.dueTimeEnd) || "??:??";
+                             timeStr = `${sTime} <span class="text-gray-400">→</span> ${eDateDisplay} ${eTime}`;
+                        }
+                    } else {
+                        timeStr = e.allDay ? "All Day" : date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+                        const endTime = e.endTime || e.dueTimeEnd;
+                        if (endTime && !e.allDay) timeStr += ` - ${endTime}`;
+                    }
+
+                    // 休假 ICON
+                    let displayIcon = '';
+                    if (typeof window.isLeaveEvent === 'function' && window.isLeaveEvent(e.title)) {
+                        displayIcon = '🏖️ ';
+                    }
+
+                    let displayColor;
+                    if (e.isJoint) displayColor = roleColors.joint; 
+                    else displayColor = (e.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
+
+                    // 渲染項目
+                    if (e.isTodo) {
+                        const statusClass = e.done ? "line-through text-gray-400" : "text-gray-800";
+                        const checkIcon = e.done ? '<i data-lucide="check-square" class="w-5 h-5 text-green-500"></i>' : '<i data-lucide="square" class="w-5 h-5 text-gray-400"></i>';
+                        
+                        htmlBuffer += `
+                        <div class="flex p-4 items-center gap-4 hover:bg-gray-50 transition cursor-pointer border-b border-gray-50 last:border-0 ${opacityClass}">
+                            <div class="flex flex-col items-center w-10">
+                                <span class="text-xs text-gray-400 font-medium uppercase">${dayName}</span>
+                                <span class="text-xl font-bold text-gray-800 leading-none">${dayNum}</span>
+                            </div>
+                            <div class="w-1 self-stretch rounded-full" style="background-color: ${displayColor}"></div>
+                            <div class="flex-1 min-w-0 flex items-center justify-between" onclick="window.openEditTodoModal('${e.id}')">
+                                <div>
+                                    <div class="flex items-center ${statusClass}">
+                                        <span class="font-bold truncate block">${displayIcon}${e.title}</span>
+                                        <span class="ml-2 text-[10px] border border-gray-200 px-1 rounded text-gray-400 flex-shrink-0">待辦</span>
+                                    </div>
+                                    <div class="text-xs text-gray-500">${timeStr}</div>
+                                </div>
+                            </div>
+                            <div class="flex-none p-2 cursor-pointer" onclick="window.toggleTodo('${e.id}', ${!e.done}); event.stopPropagation();">
+                                ${checkIcon}
+                            </div>
+                        </div>`;
+                    } else {
+                        let ic = '';
+                        if (e.category === 'travel') ic = 'plane';
+                        else if (e.category === 'appointment') ic = 'scissors';
+                        else if (e.category === 'gathering') ic = 'users';
+                        else if (e.category === 'vacation') ic = 'palmtree';
+                        let ico = ic ? `<i data-lucide="${ic}" class="w-3 h-3 text-gray-400 mr-1"></i>` : '';
+                        let st = '';
+                        if (e.status === 'tbc') st = `<span class="ml-2 status-tag tbc">TBC</span>`;
+                        else if (e.status === 'tbd') st = `<span class="ml-2 status-tag tbd">TBD</span>`;
+                        let av = `<div class="avatar-sm z-20" style="background-color:${roleColors[e.creator]||'#2cc998'}">${e.creator==='haohao'?'皓':'毛'}</div>`;
+                        if (e.isJoint) {
+                            const partner = e.creator === 'haohao' ? 'maomao' : 'haohao';
+                            const partnerName = partner === 'haohao' ? '皓' : '毛';
+                            av += `<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[partner]}">${partnerName}</div>`;
+                        }
+                        let noteDisplay = '';
+                        if (e.note && e.note.trim()) noteDisplay = `<div class="text-xs text-gray-400 mt-1 flex items-start gap-1"><i data-lucide="sticky-note" class="w-3 h-3 mt-0.5 flex-shrink-0"></i><span class="truncate">${e.note}</span></div>`;
+
+                        htmlBuffer += `
+                        <div class="flex p-4 items-start gap-4 hover:bg-gray-50 transition cursor-pointer card-press border-b border-gray-50 last:border-0 ${opacityClass}" onclick="window.openEditModal('${e.id}')">
+                            <div class="flex flex-col items-center w-10 pt-1">
+                                <span class="text-xs text-gray-400 font-medium uppercase">${dayName}</span>
+                                <span class="text-xl font-bold leading-none" style="color:${displayColor}">${dayNum}</span>
+                            </div>
+                            <div class="w-1 self-stretch rounded-full" style="background-color:${displayColor}"></div>
+                            <div class="flex-1 min-w-0 pt-1">
+                                <div class="flex items-center">
+                                    ${ico}
+                                    <h4 class="font-bold text-gray-800 truncate">${displayIcon}${e.title}</h4>
+                                    ${st}
+                                </div>
+                                <div class="text-xs text-gray-500">${timeStr} ${e.location?'· '+e.location:''}</div>
+                                ${noteDisplay}
+                            </div>
+                            <div class="flex items-center self-center -space-x-1 pl-2">${av}</div>
+                        </div>`;
+                    }
+                });
+                return htmlBuffer;
+            };
+
+            // 3. 組合 HTML
+            let finalHtml = '';
+
+            // A. 歷史行程區塊 (如果有的話)
+            if (pastItems.length > 0) {
+                // 摺疊按鈕
+                finalHtml += `
+                <div onclick="window.toggleHistory()" class="cursor-pointer bg-gray-50 border-b border-gray-200 py-3 flex items-center justify-center text-xs text-gray-500 hover:bg-gray-100 transition">
+                    <i data-lucide="clock" class="w-3.5 h-3.5 mr-1.5"></i>
+                    <span id="history-btn-text">查看之前的 ${pastItems.length} 筆行程</span>
+                    <i id="history-chevron" data-lucide="chevron-down" class="w-3.5 h-3.5 ml-1 transition-transform duration-300"></i>
+                </div>
+                `;
+                // 歷史清單容器 (預設隱藏)
+                finalHtml += `<div id="history-list-container" class="hidden bg-gray-50/50 border-b border-gray-200 shadow-inner">`;
+                finalHtml += generateItemHtml(pastItems);
+                finalHtml += `</div>`;
+            }
+
+            // B. 未來行程區塊
+            if (futureItems.length > 0) {
+                finalHtml += generateItemHtml(futureItems);
+            } else {
+                finalHtml += `<div class="text-center py-12 text-gray-400 text-sm">接下來沒有安排行程 🎉</div>`;
+            }
+
+            container.innerHTML = finalHtml;
             if (typeof lucide !== 'undefined') lucide.createIcons({ root: container });
+        };
+
+        // === 新增：切換歷史顯示的函式 ===
+        window.toggleHistory = function() {
+            const container = document.getElementById('history-list-container');
+            const chevron = document.getElementById('history-chevron');
+            const btnText = document.getElementById('history-btn-text');
+            
+            if (!container) return;
+
+            if (container.classList.contains('hidden')) {
+                // 展開
+                container.classList.remove('hidden');
+                chevron.classList.add('rotate-180');
+                btnText.textContent = "收起歷史行程";
+            } else {
+                // 收起
+                container.classList.add('hidden');
+                chevron.classList.remove('rotate-180');
+                // 重新計算數量 (這裡偷懶直接讀取原本的字串可能會跑掉，簡單寫死或是重算)
+                // 比較好的做法是保持原樣，或是簡單寫 "查看歷史行程"
+                btnText.textContent = "查看歷史行程";
+            }
         };
        
         window.toggleAllDay = function() { const isChecked = document.getElementById('check-allday').checked; document.querySelectorAll('.dt-wrapper-time').forEach(d => d.style.display = isChecked ? 'none' : 'block'); };
