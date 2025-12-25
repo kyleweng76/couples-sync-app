@@ -119,13 +119,14 @@
         }
         .page-content.active { display: block; }
         
-        #page-calendar.active {
+        /* 讓行事曆跟待辦頁面都使用 Flex 佈局，解決標題穿透問題 */
+        #page-calendar.active, #page-todo.active {
             display: flex;
             flex-direction: column;
             padding: 0;
-            overflow: hidden;
-            padding-top: 70px; 
-            padding-bottom: 70px;
+            overflow: hidden; /* 隱藏整頁捲軸，改用內部捲軸 */
+            padding-top: 70px; /* 避開最上面的 App Header */
+            padding-bottom: 90px; /* 避開底部的導航列 */
         }
         
         .nav-item.active { color: #2cc998; } 
@@ -550,7 +551,8 @@
                     <button onclick="window.switchCalendarView('list')" id="btn-view-list" class="w-16 py-1.5 text-xs font-bold rounded-md bg-white shadow-sm text-ttgreen transition-all">列表</button>
                     <button onclick="window.switchCalendarView('month')" id="btn-view-month" class="w-16 py-1.5 text-xs font-medium rounded-md text-gray-500 transition-all">月曆</button>
                 </div>
-                <button onclick="window.openAddModal()" class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-ttgreen text-white p-2 rounded-lg shadow-sm active:scale-95 transition">
+                
+                <button onclick="window.openAddModal()" class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-ttgreen text-white w-9 h-9 flex items-center justify-center rounded-lg shadow-sm active:scale-95 transition hover:bg-green-500">
                     <i data-lucide="plus" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -598,16 +600,21 @@
                         </div>
                     </div>
                 </div> </div>     </div>         <div id="page-todo" class="page-content">
-            <div class="sticky top-0 bg-white z-10 border-b border-gray-200 px-4 flex items-center h-[60px] relative shadow-sm">
+            
+            <div class="flex-none bg-white z-20 border-b border-gray-200 px-4 flex items-center h-[60px] relative shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
                 <h2 class="text-xl font-bold text-gray-800">待辦清單</h2>
-                 <button onclick="window.openAddTodoModal()" class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-ttgreen text-white p-2 rounded-lg shadow-sm active:scale-95 transition">
+                
+                <button onclick="window.openAddTodoModal()" class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-ttgreen text-white w-9 h-9 flex items-center justify-center rounded-lg shadow-sm active:scale-95 transition hover:bg-green-500">
                     <i data-lucide="plus" class="w-5 h-5"></i>
                 </button>
             </div>
             
-            <div id="todo-category-container" class="p-4 space-y-4 pb-24">
-                <div class="text-center py-10 text-gray-400 text-sm">載入中...</div>
+            <div id="todo-scroll-area" class="flex-1 overflow-y-auto bg-white w-full relative">
+                <div id="todo-category-container" class="p-4 space-y-4 pb-24">
+                    <div class="text-center py-10 text-gray-400 text-sm">載入中...</div>
+                </div>
             </div>
+
         </div>
     </main>
 
