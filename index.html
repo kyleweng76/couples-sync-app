@@ -348,8 +348,9 @@
         .event-bar.leave {
             background-color: white !important;
             border: 1px solid currentColor;
-            font-weight: bold;
-            line-height: 16px; /* 扣掉邊框高度 */
+            font-weight: 800; /* 字加粗 */
+            line-height: 16px; 
+            box-shadow: 0 1px 1px rgba(0,0,0,0.05); /* 加一點點立體感 */
         }
 
         /* "+N" 的提示改為放在格子底部中央 */
@@ -2741,17 +2742,41 @@
                     return current >= s && current <= end;
                 });
 
-                // 2. 排序 (長行程優先，確保跨日行程在同一行)
+                // 2. 排序優化邏輯 (解決跳行與休假置頂問題)
                 dayEvents.sort((a, b) => {
+                    const sA = new Date(a.startDate || a.timestamp); sA.setHours(0,0,0,0);
+                    const sB = new Date(b.startDate || b.timestamp); sB.setHours(0,0,0,0);
+                    
+                    // 邏輯 A：延續性優先 (昨天以前就開始的行程排前面)
+                    // 這樣可以避免跨日行程的線條被切斷
+                    const aIsContinued = sA < current;
+                    const bIsContinued = sB < current;
+                    
+                    if (aIsContinued && !bIsContinued) return -1;
+                    if (!aIsContinued && bIsContinued) return 1;
+                    
+                    // 如果兩者都是延續性行程，或者都是今天新開始的行程，則比較後續邏輯...
+
+                    // 邏輯 B：休假優先 (User 指定需求)
+                    const aIsLeave = window.isLeaveEvent(a.title);
+                    const bIsLeave = window.isLeaveEvent(b.title);
+                    
+                    // 如果 A 是休假且 B 不是 -> A 排前面
+                    if (aIsLeave && !bIsLeave) return -1;
+                    // 如果 A 不是且 B 是 -> B 排前面
+                    if (!aIsLeave && bIsLeave) return 1;
+
+                    // 邏輯 C：長度優先 (越長的行程排越前面，形成視覺長條)
                     const getDuration = (evt) => {
-                        const s = new Date(evt.startDate || evt.timestamp);
-                        const eStr = evt.endDate || evt.dueDateEnd || (evt.startDate || evt.dueDate);
-                        return new Date(eStr) - s;
+                        const start = new Date(evt.startDate || evt.timestamp);
+                        const endStr = evt.endDate || evt.dueDateEnd || (evt.startDate || evt.dueDate);
+                        return new Date(endStr) - start;
                     };
                     const durA = getDuration(a);
                     const durB = getDuration(b);
                     if (durB !== durA) return durB - durA; // 長的在上面
                     
+                    // 邏輯 D：最後比時間
                     const timeA = new Date(a.timestamp).getTime();
                     const timeB = new Date(b.timestamp).getTime();
                     return timeA - timeB;
