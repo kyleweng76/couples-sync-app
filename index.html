@@ -653,7 +653,7 @@
             <p class="text-sm text-gray-500 mb-4">此動作無法復原，您確定要刪除這個項目嗎？</p>
             <div class="flex gap-3">
                 <button onclick="window.closeConfirmModal()" class="flex-1 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium">取消</button>
-                <button onclick="window.executeDelete()" class="flex-1 py-2 bg-red-500 text-white rounded-lg text-sm font-bold shadow-md shadow-red-200">刪除</button>
+                <button id="confirm-delete-btn" onclick="window.executeDelete()" class="flex-1 py-2 bg-red-500 text-white rounded-lg text-sm font-bold shadow-md shadow-red-200">刪除</button>            
             </div>
         </div>
     </div>
@@ -3007,13 +3007,16 @@
 
         window.confirmDeleteMsg = function(msgId) {
             deleteTarget = 'message';
-            noteToDelete = msgId; // 借用這個變數暫存 ID
+            noteToDelete = msgId; 
             
             const m = document.getElementById('confirm-modal');
             const title = m.querySelector('h3');
             const desc = m.querySelector('p');
+            const btn = document.getElementById('confirm-delete-btn'); // 抓取按鈕
+
             if(title) title.textContent = '收回訊息？';
-            if(desc) desc.textContent = '確定要刪除這則訊息嗎？';
+            if(desc) desc.textContent = '確定要收回這則訊息嗎？'; // 改成「收回」
+            if(btn) btn.textContent = '收回'; // 按鈕改成「收回」
             
             window.confirmDelete();
         };
