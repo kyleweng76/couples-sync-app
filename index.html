@@ -315,6 +315,28 @@
         nav .nav-item.active i { transform: scale(1.1); }
         nav .nav-item span { transform: none !important; }
         nav .nav-item.active::after { content: ""; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 20px; height: 3px; border-radius: 999px; background-color: var(--active-tab-color, #2cc998); }
+    
+        /* === 分類標籤樣式 === */
+        .category-chip {
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #6b7280;
+            background-color: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .category-chip.active {
+            background-color: #ecfdf5;
+            color: #2cc998;
+            border-color: #2cc998;
+            font-weight: bold;
+        }
+
     </style>
 </head>
 <body class="text-gray-700 h-screen flex flex-col overflow-hidden bg-white">
@@ -474,32 +496,15 @@
 
         <!-- Page 3: Todo -->
         <div id="page-todo" class="page-content">
-            <div class="sticky top-0 bg-white z-10 border-b border-gray-200 px-4 flex items-center h-[60px] relative">
+            <div class="sticky top-0 bg-white z-10 border-b border-gray-200 px-4 flex items-center h-[60px] relative shadow-sm">
                 <h2 class="text-xl font-bold text-gray-800">待辦清單</h2>
                  <button onclick="window.openAddTodoModal()" class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-ttgreen text-white p-2 rounded-lg shadow-sm active:scale-95 transition">
                     <i data-lucide="plus" class="w-5 h-5"></i>
                 </button>
             </div>
             
-            <div id="todo-list-container" class="p-4 space-y-6 pb-24">
-                <div>
-                     <h3 class="text-sm font-bold text-orange-400 mb-2 flex items-center gap-1">
-                        <i data-lucide="users" class="w-4 h-4"></i> 共同待辦
-                    </h3>
-                    <div id="todo-list-joint" class="space-y-2"></div>
-                </div>
-                 <div>
-                     <h3 class="text-sm font-bold text-ttgreen mb-2 flex items-center gap-1">
-                        <i data-lucide="user" class="w-4 h-4"></i> 皓皓
-                    </h3>
-                    <div id="todo-list-haohao" class="space-y-2"></div>
-                </div>
-                 <div>
-                     <h3 class="text-sm font-bold text-pink-400 mb-2 flex items-center gap-1">
-                        <i data-lucide="user" class="w-4 h-4"></i> 毛毛
-                    </h3>
-                    <div id="todo-list-maomao" class="space-y-2"></div>
-                </div>
+            <div id="todo-category-container" class="p-4 space-y-4 pb-24">
+                <div class="text-center py-10 text-gray-400 text-sm">載入中...</div>
             </div>
         </div>
     </main>
@@ -779,7 +784,21 @@
                     <label class="text-xs font-bold text-gray-400 mb-1 block">內容</label>
                     <input type="text" id="todo-input-title" placeholder="輸入待辦事項..." class="w-full text-xl font-bold text-gray-800 border-b border-gray-200 pb-2 focus:outline-none focus:border-ttgreen bg-transparent">
                 </div>
-                
+                <div class="px-2 pt-2 pb-2">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-xs font-bold text-gray-400 block">分類標籤</label>
+                        <button onclick="window.toggleCustomCategoryInput()" class="text-[10px] text-ttgreen font-bold bg-green-50 px-2 py-0.5 rounded">自訂</button>
+                    </div>
+                    
+                    <div id="todo-category-chips" class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                        </div>
+                    
+                    <div id="todo-custom-category-container" class="hidden mt-2 flex gap-2">
+                        <input type="text" id="todo-input-category-custom" placeholder="輸入新分類名稱" class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-ttgreen">
+                    </div>
+                    
+                    <input type="hidden" id="todo-input-category" value="">
+                </div>
                 <!-- Date/Time Group (Unified List Style) -->
                 <div class="bg-white border border-gray-100 rounded-xl overflow-hidden">
                     <!-- Date -->
@@ -1351,6 +1370,21 @@
             if (window.isSavingTodo) return;
             const title = document.getElementById('todo-input-title').value.trim();
             if (!title) { window.showToast('請輸入內容'); return; }
+            
+            // === 修改重點：取得分類 ===
+            let category = document.getElementById('todo-input-category').value;
+            const customCat = document.getElementById('todo-input-category-custom').value.trim();
+            
+            // 如果有輸入自訂分類，優先使用，並存入 localStorage
+            if (customCat) {
+                category = customCat;
+                if (!customCategories.includes(customCat)) {
+                    customCategories.push(customCat);
+                    localStorage.setItem('my_custom_categories', JSON.stringify(customCategories));
+                }
+            }
+            // ========================
+
             window.isSavingTodo = true;
             const btn = document.getElementById('todo-modal-btn');
             const originalText = btn ? btn.textContent : '儲存';
@@ -1365,12 +1399,15 @@
             const timeEnd = document.getElementById('input-time-todo-end').value || null;
             const addToCalendar = !!date; 
 
+            // === 修改重點：加入 category 欄位 ===
             const baseData = {
                 title, done: false, creator: currentUserRole, isJoint: isJoint, addToCalendar: addToCalendar,
+                category: category, // <--- 存入資料庫
                 dueDate: date, dueTime: (date && time) ? time : null,
                 dueDateEnd: dateEnd, dueTimeEnd: (date && timeEnd) ? timeEnd : null, 
                 timestamp: null, createdAt: new Date().toISOString() 
             };
+            
             if (date) {
                 const tStr = time || "00:00";
                 try { baseData.timestamp = new Date(`${date}T${tStr}`).toISOString(); } catch(e){}
@@ -2211,89 +2248,179 @@
             window.confirmDelete();
         };
 
+        // === 全域變數：用來記錄哪些分類是被「收起來」的 ===
+        window.collapsedCategories = JSON.parse(localStorage.getItem('collapsed_categories') || '{}');
+
         window.renderTodos = function(todos) {
-            const jointList = document.getElementById('todo-list-joint');
-            const haohaoList = document.getElementById('todo-list-haohao');
-            const maomaoList = document.getElementById('todo-list-maomao');
+            const container = document.getElementById('todo-category-container');
             const dashboardList = document.getElementById('dashboard-todo-list');
             
-            if(!jointList || !haohaoList || !maomaoList || !dashboardList) return;
+            if(!container) return;
+            container.innerHTML = '';
             
-            jointList.innerHTML = '';
-            haohaoList.innerHTML = '';
-            maomaoList.innerHTML = '';
-            dashboardList.innerHTML = '';
+            // 1. 資料分組 (Grouping)
+            const groups = {};
+            const noCategoryKey = '未分類';
+            
+            // 預設分類排序 (你可以調整順序)
+            const categoryOrder = ['重要', 'Debug', '工作', '生活', '購物', '請假', 'Party', '財務', noCategoryKey];
             
             let pendingCount = 0;
-            
+
             todos.forEach(t => {
-                let colorHex = roleColors.haohao;
-                let container = haohaoList;
+                if(!t.done) pendingCount++;
                 
-                if (t.isJoint) {
-                    colorHex = roleColors.joint;
-                    container = jointList;
-                } else if (t.creator === 'maomao') {
-                    colorHex = roleColors.maomao;
-                    container = maomaoList;
+                // 決定分類名稱
+                const cat = t.category || noCategoryKey;
+                
+                if (!groups[cat]) {
+                    groups[cat] = [];
                 }
-                
-                let checkStyle = t.done ? `background-color: #d1d5db; border-color: #d1d5db;` : `border-color: ${colorHex};`;
-                let titleClass = t.done ? "text-gray-400 line-through" : "text-gray-800";
-                
-                if (!t.done) pendingCount++;
-                
-                // Calendar Icon logic for list
-                let calInfo = '';
-                if (t.dueDate) {
-                    calInfo = `<span class="text-[10px] ${t.done?'text-gray-300':'text-gray-400'} ml-2 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${t.dueDate}</span>`;
-                }
-
-                // --- KEYWORD DETECTION FOR ICON ---
-                let displayIcon = '';
-                if (isLeaveEvent(t.title)) {
-                        displayIcon = '🏖️ ';
-                }
-
-                const html = `
-                <div class="todo-item flex items-center p-3 bg-white rounded-xl border border-gray-100 shadow-sm mb-2">
-                    <div class="flex-none p-2 cursor-pointer" onclick="window.toggleTodo('${t.id}', ${!t.done}); event.stopPropagation();">
-                        <div class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors text-white" style="${checkStyle}">
-                            ${t.done ? '<i data-lucide="check" class="w-3 h-3"></i>' : ''}
-                        </div>
-                    </div>
-                    <div class="flex-1 px-2 cursor-pointer overflow-hidden" onclick="window.openEditTodoModal('${t.id}')">
-                        <span class="${titleClass} font-medium truncate block">${displayIcon}${t.title}</span>
-                        ${calInfo}
-                    </div>
-                    <button onclick="window.deleteTodo('${t.id}'); event.stopPropagation();" class="flex-none p-2 text-gray-300 hover:text-red-400 transition">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
-                </div>`;
-                
-                container.innerHTML += html;
+                groups[cat].push(t);
             });
 
-            // Dashboard Summary
-            if (pendingCount === 0) {
-                dashboardList.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">沒有未完成的待辦事項 🎉</p>`;
+            // 2. 決定顯示順序 (已定義的排前面，自訂的排後面)
+            const sortedKeys = Object.keys(groups).sort((a, b) => {
+                const idxA = categoryOrder.indexOf(a);
+                const idxB = categoryOrder.indexOf(b);
+                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                if (idxA !== -1) return -1;
+                if (idxB !== -1) return 1;
+                return a.localeCompare(b); // 其他自訂分類照筆畫排
+            });
+
+            // 3. 渲染每個分類區塊
+            if (sortedKeys.length === 0) {
+                 container.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">目前沒有待辦事項 🎉</div>`;
             } else {
-                const pendings = todos.filter(t => !t.done).slice(0, 3);
-                pendings.forEach(t => {
-                    let dotColor = t.isJoint ? roleColors.joint : (t.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
-                    dashboardList.innerHTML += `
-                    <div class="flex items-center gap-2 text-sm bg-gray-50 p-2 rounded-lg border border-gray-100 mb-1">
-                        <div class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: ${dotColor}"></div>
-                        <span class="truncate text-gray-700 flex-1">${t.title}</span>
-                    </div>`;
+                sortedKeys.forEach(cat => {
+                    const items = groups[cat];
+                    const isCollapsed = !!window.collapsedCategories[cat];
+                    const count = items.filter(i => !i.done).length; // 只計算未完成的
+                    
+                    // 區塊 HTML
+                    const sectionId = `cat-section-${cat}`;
+                    const listId = `cat-list-${cat}`;
+                    const chevronClass = isCollapsed ? '' : 'rotate-180';
+                    const listClass = isCollapsed ? 'hidden' : 'block';
+                    
+                    // 標題列
+                    let html = `
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="flex items-center justify-between p-3 bg-gray-50/50 cursor-pointer select-none active:bg-gray-100 transition" onclick="window.toggleTodoCategory('${cat}')">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="chevron-down" id="chevron-${cat}" class="w-4 h-4 text-gray-400 transition-transform duration-300 ${chevronClass}"></i>
+                                <h3 class="font-bold text-gray-700">${cat}</h3>
+                                ${count > 0 ? `<span class="bg-ttgreen text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">${count}</span>` : ''}
+                            </div>
+                        </div>
+                        
+                        <div id="${listId}" class="${listClass} divide-y divide-gray-100 bg-white">
+                    `;
+                    
+                    // 該分類下的清單項目
+                    items.forEach(t => {
+                        // 顏色邏輯 (改為顯示在卡片左側邊條)
+                        let barColor = roleColors.haohao;
+                        if (t.isJoint) barColor = roleColors.joint;
+                        else if (t.creator === 'maomao') barColor = roleColors.maomao;
+                        
+                        const titleClass = t.done ? "text-gray-400 line-through" : "text-gray-800";
+                        const checkStyle = t.done ? `background-color: #d1d5db; border-color: #d1d5db;` : `border-color: ${barColor};`;
+                        
+                        // 時間顯示
+                        let calInfo = '';
+                        if (t.dueDate) {
+                            calInfo = `<span class="text-[10px] ${t.done?'text-gray-300':'text-gray-400'} ml-auto flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${t.dueDate}</span>`;
+                        }
+
+                        html += `
+                        <div class="flex items-center p-3 hover:bg-gray-50 transition cursor-pointer group" onclick="window.openEditTodoModal('${t.id}')">
+                            <div class="flex-none mr-3" onclick="window.toggleTodo('${t.id}', ${!t.done}); event.stopPropagation();">
+                                <div class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors text-white" style="${checkStyle}">
+                                    ${t.done ? '<i data-lucide="check" class="w-3 h-3"></i>' : ''}
+                                </div>
+                            </div>
+                            
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between">
+                                    <span class="${titleClass} font-medium truncate">${t.title}</span>
+                                    ${calInfo}
+                                </div>
+                                <div class="flex items-center mt-1">
+                                    <div class="w-1.5 h-1.5 rounded-full mr-1.5" style="background-color: ${barColor}"></div>
+                                    <span class="text-[10px] text-gray-400">
+                                        ${t.isJoint ? '共同' : (t.creator === 'haohao' ? '皓皓' : '毛毛')}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <button onclick="window.deleteTodo('${t.id}'); event.stopPropagation();" class="flex-none p-2 text-gray-200 hover:text-red-400 transition ml-1">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        </div>`;
+                    });
+                    
+                    if(items.length === 0) {
+                        html += `<div class="p-4 text-center text-xs text-gray-300">此分類無項目</div>`;
+                    }
+
+                    html += `
+                        </div>
+                    </div>`; // 關閉 container
+                    
+                    container.innerHTML += html;
                 });
-                
-                if (todos.filter(t => !t.done).length > 3) {
-                    dashboardList.innerHTML += `<div class="text-center text-xs text-gray-400 mt-1">還有 ${todos.filter(t => !t.done).length - 3} 個項目...</div>`;
+            }
+
+            // 更新 Dashboard (摘要) - 邏輯維持不變
+            if(dashboardList) {
+                if (pendingCount === 0) {
+                    dashboardList.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">沒有未完成的待辦事項 🎉</p>`;
+                } else {
+                    dashboardList.innerHTML = '';
+                    // 只抓前 3 個未完成的
+                    const pendings = todos.filter(t => !t.done).slice(0, 3);
+                    pendings.forEach(t => {
+                        let dotColor = t.isJoint ? roleColors.joint : (t.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
+                        dashboardList.innerHTML += `
+                        <div class="flex items-center gap-2 text-sm bg-gray-50 p-2 rounded-lg border border-gray-100 mb-1">
+                            <div class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: ${dotColor}"></div>
+                            <span class="truncate text-gray-700 flex-1">${t.title}</span>
+                            ${t.category ? `<span class="text-[9px] px-1 rounded bg-gray-200 text-gray-500">${t.category}</span>` : ''}
+                        </div>`;
+                    });
+                     if (todos.filter(t => !t.done).length > 3) {
+                        dashboardList.innerHTML += `<div class="text-center text-xs text-gray-400 mt-1">還有 ${todos.filter(t => !t.done).length - 3} 個項目...</div>`;
+                    }
                 }
             }
             
             if (typeof lucide !== 'undefined') lucide.createIcons();
+        };
+
+        // === 新增：分類收合切換功能 ===
+        window.toggleTodoCategory = function(cat) {
+            // 切換狀態
+            const isCollapsed = window.collapsedCategories[cat];
+            window.collapsedCategories[cat] = !isCollapsed;
+            
+            // 存入 localStorage 記住使用者的偏好
+            localStorage.setItem('collapsed_categories', JSON.stringify(window.collapsedCategories));
+            
+            // 直接操作 DOM 顯示/隱藏，不重新渲染整個列表 (效能較好)
+            const listEl = document.getElementById(`cat-list-${cat}`);
+            const chevronEl = document.getElementById(`chevron-${cat}`);
+            
+            if (listEl && chevronEl) {
+                if (!isCollapsed) { // 變為收合
+                    listEl.classList.add('hidden');
+                    chevronEl.classList.remove('rotate-180');
+                } else { // 變為展開
+                    listEl.classList.remove('hidden');
+                    chevronEl.classList.add('rotate-180');
+                }
+            }
         };
 
         window.confirmDelete = function() { const m = document.getElementById('confirm-modal'); m.classList.remove('hidden'); setTimeout(() => m.classList.add('visible'), 10); };
@@ -2545,6 +2672,96 @@
           window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').then(reg => console.log('SW registered', reg)).catch(err => console.error('SW failed', err)); });
         }
         document.addEventListener('visibilitychange', () => { if (!document.hidden) { safeRun(() => { if (typeof lucide !== 'undefined') lucide.createIcons(); if (currentViewMode === 'month') { window.renderBigCalendar(); } }, 'resume'); } });
+    
+        // === 待辦分類功能核心邏輯 ===
+
+        // 1. 定義預設分類
+        const defaultCategories = [
+            { name: '生活', color: '#e0f2fe', text: '#0284c7' }, // 藍
+            { name: '購物', color: '#fef3c7', text: '#d97706' }, // 黃
+            { name: '工作', color: '#f3f4f6', text: '#4b5563' }, // 灰
+            { name: '財務', color: '#dcfce7', text: '#16a34a' }, // 綠
+            { name: '重要', color: '#fee2e2', text: '#dc2626' }, // 紅
+            { name: 'Debug', color: '#f3e8ff', text: '#7e22ce' }, // 紫
+            { name: 'Party', color: '#fce7f3', text: '#be185d' }  // 粉
+        ];
+
+        // 讀取使用者的自訂分類
+        let customCategories = JSON.parse(localStorage.getItem('my_custom_categories') || '[]');
+
+        // 渲染標籤函式
+        window.renderCategoryChips = function(selectedVal = '') {
+            const container = document.getElementById('todo-category-chips');
+            if(!container) return;
+            
+            container.innerHTML = '';
+            
+            // 合併預設與自訂分類
+            const allCats = [...defaultCategories];
+            customCategories.forEach(c => {
+                // 避免重複
+                if(!allCats.find(def => def.name === c)) {
+                    allCats.push({ name: c, color: '#f3f4f6', text: '#4b5563' });
+                }
+            });
+
+            // 產生 HTML
+            allCats.forEach(cat => {
+                const isActive = cat.name === selectedVal;
+                const el = document.createElement('div');
+                el.className = `category-chip ${isActive ? 'active' : ''}`;
+                el.textContent = cat.name;
+                el.onclick = () => window.selectTodoCategory(cat.name);
+                container.appendChild(el);
+            });
+        };
+
+        // 點選標籤
+        window.selectTodoCategory = function(name) {
+            const current = document.getElementById('todo-input-category').value;
+            // 如果點選已選取的，則取消選取
+            if (current === name) {
+                document.getElementById('todo-input-category').value = '';
+            } else {
+                document.getElementById('todo-input-category').value = name;
+            }
+            window.renderCategoryChips(document.getElementById('todo-input-category').value);
+        };
+
+        // 切換自訂輸入框
+        window.toggleCustomCategoryInput = function() {
+            const el = document.getElementById('todo-custom-category-container');
+            el.classList.toggle('hidden');
+            if (!el.classList.contains('hidden')) {
+                document.getElementById('todo-input-category-custom').focus();
+            }
+        };
+
+        // 覆寫：開啟新增視窗 (初始化分類)
+        const originalOpenAddTodoModal = window.openAddTodoModal;
+        window.openAddTodoModal = function() {
+            originalOpenAddTodoModal(); // 執行原本的開啟邏輯
+            
+            // 重置分類狀態
+            document.getElementById('todo-input-category').value = '';
+            document.getElementById('todo-input-category-custom').value = '';
+            document.getElementById('todo-custom-category-container').classList.add('hidden');
+            window.renderCategoryChips();
+        };
+
+        // 覆寫：開啟編輯視窗 (載入舊分類)
+        const originalOpenEditTodoModal = window.openEditTodoModal;
+        window.openEditTodoModal = function(id) {
+            originalOpenEditTodoModal(id);
+            
+            const todo = allTodosCache.find(t => t.id === id);
+            if(todo) {
+                const cat = todo.category || '';
+                document.getElementById('todo-input-category').value = cat;
+                window.renderCategoryChips(cat);
+            }
+        };
+    
     </script>
 </body>
 </html>
