@@ -1428,6 +1428,23 @@
             window.confirmDelete();
         };
 
+        // === 補上：從列表直接刪除待辦 ===
+        window.deleteTodo = function(id) {
+            // 設定要刪除的 ID (讓 executeDelete 知道要刪誰)
+            editingTodoId = id;
+            deleteTarget = 'todo';
+
+            // 設定確認視窗的文字
+            const m = document.getElementById('confirm-modal');
+            const title = m.querySelector('h3');
+            const desc = m.querySelector('p');
+            if(title) title.textContent = '刪除待辦？';
+            if(desc) desc.textContent = '確定要刪除這個待辦事項嗎？';
+
+            // 打開確認視窗
+            window.confirmDelete();
+        };
+
         window.deleteNote = function(role) {
             if (!window.checkRoleEnforcement()) return;
             const bubbleEl = document.getElementById(`note-bubble-${role}`); if(bubbleEl) bubbleEl.classList.add('hidden');
@@ -2256,7 +2273,7 @@
                 
                 container.innerHTML += html;
             });
-            
+
             // Dashboard Summary
             if (pendingCount === 0) {
                 dashboardList.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">沒有未完成的待辦事項 🎉</p>`;
