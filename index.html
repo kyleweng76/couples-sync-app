@@ -2165,11 +2165,11 @@
     
         window.renderCalendarListView = function() { const items = window.getCalendarItems(); const listEl = document.getElementById('event-list'); if(!listEl) return; if (items.length === 0) { listEl.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">無行程</div>`; } else { window.renderEventListItems(items, listEl); } };
 
-        // === 優化版：列表渲染 (支援強制展開模式) ===
-        window.renderEventListItems = function(items, container, forceExpand = false) {
+        // === 優化版：列表渲染 (支援強制展開 + 隱藏月份標題) ===
+        window.renderEventListItems = function(items, container, forceExpand = false, hideMonthHeader = false) {
             const now = new Date(); 
             
-            // 2. 定義 HTML 生成器 (先定義好，後面會用)
+            // 2. 定義 HTML 生成器
             const generateItemHtml = (listItems) => {
                 let htmlBuffer = '';
                 let lastMonthLabel = '';
@@ -2178,7 +2178,9 @@
                     const date = new Date(e.timestamp);
                     // 月份標題
                     const currentMonthLabel = `${date.getFullYear()}年 ${date.getMonth() + 1}月`;
-                    if (currentMonthLabel !== lastMonthLabel) {
+                    
+                    // === 修改重點：只有在 hideMonthHeader 為 false 時才顯示月份標題 ===
+                    if (!hideMonthHeader && currentMonthLabel !== lastMonthLabel) {
                         htmlBuffer += `
                         <div class="sticky top-0 z-30 bg-gray-100/95 backdrop-blur-sm px-4 py-2 text-xs font-bold text-gray-500 border-b border-gray-200 shadow-sm flex items-center justify-between">
                             <span>${currentMonthLabel}</span>
@@ -2186,6 +2188,7 @@
                         </div>`;
                         lastMonthLabel = currentMonthLabel;
                     }
+                    // ==========================================================
 
                     let opacityClass = '';
                     if (e.isTodo && e.done) opacityClass = 'opacity-40 grayscale';
@@ -2290,15 +2293,13 @@
                 return htmlBuffer;
             };
 
-            // === 修改重點：如果 forceExpand 為 true，直接渲染全部，不分流 ===
             if (forceExpand) {
                 container.innerHTML = generateItemHtml(items);
                 if (typeof lucide !== 'undefined') lucide.createIcons({ root: container });
                 return;
             }
-            // =========================================================
 
-            // 1. 資料分流 (原本的邏輯)
+            // ... (後面的歷史行程分流邏輯保持不變) ...
             const pastItems = [];
             const futureItems = [];
 
@@ -2316,7 +2317,6 @@
                 if (isPast) pastItems.push(e); else futureItems.push(e);
             });
 
-            // 3. 組合 HTML
             let finalHtml = '';
             if (pastItems.length > 0) {
                 finalHtml += `
@@ -2716,7 +2716,7 @@
                 if (dayEvents.length === 0) {
                     listEl.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs">這天沒有安排行程 😴</div>`;
                 } else {
-                    window.renderEventListItems(dayEvents, listEl, true);
+                    window.renderEventListItems(dayEvents, listEl, true, true);
                 }
             }
 
