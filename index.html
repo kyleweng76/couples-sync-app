@@ -2699,10 +2699,10 @@
             
             // 篩選當日行程
             const dayEvents = items.filter(e => {
-                const t = new Date(e.startDate || e.timestamp); // 支援 event 和 todo
+                const t = new Date(e.startDate || e.timestamp);
                 const startDay = new Date(t); startDay.setHours(0,0,0,0);
                 
-                // 處理跨日行程：如果今天在這個行程的範圍內
+                // 處理跨日行程
                 if (e.endDate || e.dueDateEnd) {
                     const endT = new Date(e.endDate || e.dueDateEnd); endT.setHours(23,59,59,999);
                     return ds <= endT && de >= startDay;
@@ -2714,25 +2714,36 @@
             if (dayEvents.length === 0) {
                 listEl.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs">這天沒有安排行程 😴</div>`;
             } else {
-                // 第三個參數 true 代表「強制展開」，不摺疊歷史行程
-            window.renderEventListItems(dayEvents, listEl, true);
+                // 強制展開所有行程 (第三個參數 true)
+                window.renderEventListItems(dayEvents, listEl, true);
             }
 
-            // === 4. 新增：如果有指定目標 ID，執行捲動與高亮 ===
+            // === 4. 捲動與高亮邏輯 (加強版) ===
             if (targetId) {
+                // 延長時間至 300ms，確保 DOM 渲染完成
                 setTimeout(() => {
                     const targetEl = document.getElementById(`list-item-${targetId}`);
                     if (targetEl) {
                         // 平滑捲動到畫面中央
                         targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         
-                        // 閃爍高亮效果 (利用 Tailwind 的 ring 或 bg)
-                        targetEl.classList.add('bg-green-50', 'transition-colors', 'duration-500');
+                        // 先移除舊的 class 以防萬一
+                        targetEl.classList.remove('bg-yellow-100', 'transition-colors', 'duration-1000');
+                        
+                        // 強制重繪 (Reflow)
+                        void targetEl.offsetWidth;
+                        
+                        // 加入明顯的黃色高亮與過渡動畫
+                        targetEl.classList.add('bg-yellow-100', 'transition-colors', 'duration-1000');
+                        
+                        // 1.5秒後慢慢淡出
                         setTimeout(() => {
-                            targetEl.classList.remove('bg-green-50');
-                        }, 800);
+                            targetEl.classList.remove('bg-yellow-100');
+                        }, 1500);
+                    } else {
+                        console.warn("找不到目標元素 ID:", targetId);
                     }
-                }, 100); // 稍微延遲確保 DOM 已渲染
+                }, 300); 
             }
         };
         
