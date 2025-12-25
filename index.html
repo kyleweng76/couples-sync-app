@@ -41,14 +41,74 @@
         
         #main-container { position: relative; width: 100%; height: 100%; overflow: hidden; }
         
+        /* 1. 修正頁面頂部距離，避免被標題列擋住 (裁切問題) */
         .page-content {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
             overflow-y: auto;
-            padding-top: 70px; 
+            padding-top: 85px; /* 原本 70px -> 改為 85px */
             padding-bottom: 90px;
             background-color: #f9fafb;
             display: none; 
+        }
+
+        /* 2. 加高聊天室高度，讓對話能看更多 */
+        #chat-container {
+            scroll-behavior: smooth; 
+            background-color: #9bbbd4; 
+            height: 320px; /* 原本 220px -> 改為 320px */
+        }
+        
+        /* 3. 聊天氣泡樣式優化 (支援顯示名字) */
+        .chat-row { display: flex; width: 100%; margin-bottom: 6px; }
+        
+        /* 左側 (對方) */
+        .chat-row.left { justify-content: flex-start; align-items: flex-start; }
+        .chat-row.left .chat-bubble {
+            background-color: #ffffff;
+            color: #1f2937;
+            border-radius: 4px 16px 16px 16px; /* 圓角微調 */
+            /* 移除 margin-left，由外層容器控制間距 */
+        }
+        
+        /* 右側 (自己) */
+        .chat-row.right { justify-content: flex-end; align-items: flex-end; }
+        .chat-row.right .chat-bubble {
+            background-color: #9de69f;
+            color: #0f172a;
+            border-radius: 16px 4px 16px 16px;
+        }
+
+        .chat-bubble {
+            padding: 8px 12px;
+            font-size: 14px;
+            line-height: 1.5;
+            position: relative;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            word-wrap: break-word;
+            word-break: break-all;
+        }
+        
+        /* 頭像樣式 */
+        .chat-avatar {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; color: white; font-weight: bold;
+            flex-shrink: 0;
+            margin-top: 2px; /* 稍微對齊 */
+        }
+        
+        /* 時間標籤 */
+        .chat-time {
+            font-size: 9px;
+            color: rgba(255,255,255,0.9); /* 增強對比 */
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            margin: 0 4px;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
         .page-content.active { display: block; }
         
@@ -2858,35 +2918,45 @@
             }
 
             let html = '';
-            let lastRole = ''; // 用來判斷是否要連續顯示頭像 (可選優化，目前先簡化)
-
+            // 用來記錄上一則訊息是誰傳的，如果連續傳送就不重複顯示頭像 (這是進階優化，這裡先簡單處理)
+            
             messages.forEach(msg => {
                 const isMe = msg.creator === currentUserRole;
                 const roleColor = roleColors[msg.creator] || '#ccc';
-                const avatarName = msg.creator === 'haohao' ? '皓' : '毛';
+                const avatarChar = msg.creator === 'haohao' ? '皓' : '毛';
+                const displayName = msg.creator === 'haohao' ? '皓皓' : '毛毛';
                 
-                // 時間格式化 (只顯示 HH:mm)
+                // 時間格式化 (例如 20:30)
                 const date = new Date(msg.timestamp);
                 const timeStr = date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
 
                 if (isMe) {
-                    // 右側 (自己) - 不顯示頭像，時間在左邊
+                    // === 右側 (自己) ===
+                    // 自己不需要顯示名字，只顯示氣泡和時間
                     html += `
                     <div class="chat-row right">
-                        <span class="chat-time">${timeStr}</span>
+                        <span class="chat-time mb-1">${timeStr}</span>
                         <div class="chat-bubble" onclick="window.confirmDeleteMsg('${msg.id}')">
                             ${msg.text}
                         </div>
                     </div>`;
                 } else {
-                    // 左側 (對方) - 顯示頭像，時間在右邊
+                    // === 左側 (對方) ===
+                    // 結構：頭像 + (名字 + 氣泡 + 時間)
                     html += `
                     <div class="chat-row left">
-                        <div class="chat-avatar" style="background-color: ${roleColor}">${avatarName}</div>
-                        <div class="chat-bubble" onclick="window.confirmDeleteMsg('${msg.id}')">
-                            ${msg.text}
+                        <div class="chat-avatar self-start" style="background-color: ${roleColor}">${avatarChar}</div>
+                        
+                        <div class="flex flex-col items-start ml-2 max-w-[75%]">
+                            <span class="text-[10px] text-gray-600 mb-0.5 ml-0.5 font-medium">${displayName}</span>
+                            
+                            <div class="flex items-end">
+                                <div class="chat-bubble" onclick="window.confirmDeleteMsg('${msg.id}')">
+                                    ${msg.text}
+                                </div>
+                                <span class="chat-time ml-1 mb-0">${timeStr}</span>
+                            </div>
                         </div>
-                        <span class="chat-time">${timeStr}</span>
                     </div>`;
                 }
             });
