@@ -2714,44 +2714,43 @@
                 }
             }
 
-            // === 4. 觸發捲動 (修改重點) ===
-            // 不管點什麼，只要清單太下面，就把它捲上來
+            // === 4. 觸發捲動與高亮 (邏輯修正) ===
             setTimeout(() => {
-                let hasScrolledToItem = false;
+                const scrollArea = document.getElementById('calendar-scroll-area');
+                const listHeader = document.getElementById('selected-date-label');
+                let didScrollHeader = false;
 
-                // 嘗試 A：如果有指定行程 ID，試著聚焦它
+                // --- 動作 A：優先確保清單標題滑上來 (解決滑不下去的問題) ---
+                if (scrollArea && listHeader) {
+                    const headerRect = listHeader.getBoundingClientRect();
+                    const containerRect = scrollArea.getBoundingClientRect();
+                    
+                    // 只要標題在視窗下半部 (太低了) 或者被擋住，就捲上來
+                    // 即使有點到行程，這個動作也要執行，確保清單進入視野
+                    if (headerRect.top > containerRect.bottom - 250) { 
+                         listHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                         didScrollHeader = true; // 標記已執行捲動
+                    }
+                }
+
+                // --- 動作 B：如果有指定行程，進行高亮 (與 動作 A 不衝突) ---
                 if (targetId) {
                     const targetEl = document.getElementById(`list-item-${targetId}`);
                     if (targetEl) {
-                        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        // 如果剛剛沒有捲動標題 (代表標題已經在上面了，清單很清楚)，
+                        // 這時候我們才執行「聚焦到該行程」，避免畫面亂跳
+                        if (!didScrollHeader) {
+                             targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
                         
-                        // 高亮動畫
+                        // 不管有沒有捲動，都要執行黃色閃爍高亮
                         targetEl.classList.remove('bg-yellow-100', 'transition-colors', 'duration-1000');
-                        void targetEl.offsetWidth; // 重繪
+                        void targetEl.offsetWidth; // 強制重繪
                         targetEl.classList.add('bg-yellow-100', 'transition-colors', 'duration-1000');
                         setTimeout(() => targetEl.classList.remove('bg-yellow-100'), 1500);
-                        
-                        hasScrolledToItem = true;
                     }
                 }
-
-                // 嘗試 B：如果沒有成功聚焦到行程 (可能渲染太慢或沒 ID)，或者是點空白處
-                // 我們就執行「通用捲動」：把清單標題拉上來
-                if (!hasScrolledToItem) {
-                    const scrollArea = document.getElementById('calendar-scroll-area');
-                    const listHeader = document.getElementById('selected-date-label');
-                    
-                    if (scrollArea && listHeader) {
-                        const headerRect = listHeader.getBoundingClientRect();
-                        const containerRect = scrollArea.getBoundingClientRect();
-                        
-                        // 只要標題在視窗下半部 (太低了)，就捲上來
-                        if (headerRect.top > containerRect.bottom - 250) { 
-                             listHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }
-                    }
-                }
-            }, 150); // 稍微加長一點時間 (150ms) 確保渲染完成
+            }, 150); // 等待渲染完成
         };
         
         window.handleBigCalDbClick = function(y, m, d) {
