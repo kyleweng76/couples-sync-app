@@ -1490,6 +1490,54 @@
             db.collection('notes').doc(role).delete().then(() => { window.showToast('心情已刪除 💨'); }).catch(err => { console.error(err); window.showToast('刪除失敗'); });
         };
         
+        // === 補上：發送心情留言 ===
+        window.sendNote = function() {
+            if (!window.checkRoleEnforcement()) return;
+            
+            const input = document.getElementById('note-input');
+            const text = input.value.trim();
+            
+            if (!text) {
+                window.showToast('請輸入內容 💬');
+                return;
+            }
+
+            // 限制字數 (雖然 HTML 有 maxlength，但後端防呆一下)
+            if (text.length > 20) {
+                window.showToast('字數太多囉 (限 20 字)');
+                return;
+            }
+
+            const data = {
+                text: text,
+                timestamp: new Date().toISOString(),
+                creator: currentUserRole
+            };
+
+            // 寫入資料庫 (使用 set 覆蓋舊的，因為每個人同時只能有一個心情氣泡)
+            db.collection('notes').doc(currentUserRole).set(data)
+                .then(() => {
+                    input.value = ''; // 清空輸入框
+                    input.blur(); // 收起鍵盤
+                    window.showToast('心情已送出 ☁️');
+                })
+                .catch((error) => {
+                    console.error("Error sending note: ", error);
+                    window.showToast('送出失敗');
+                });
+        };
+
+        // === 補上：點擊頭像聚焦輸入框 ===
+        window.setNoteInputFocus = function() {
+            if (!window.checkRoleEnforcement()) return;
+            const el = document.getElementById('note-input');
+            if (el) {
+                el.focus();
+                // 稍微震動一下手機 (如果有支援)
+                if (navigator.vibrate) navigator.vibrate(5);
+            }
+        };
+
         window.syncNoteAvatarColors = function() { 
             const h = document.getElementById('avatar-note-haohao'); 
             const m = document.getElementById('avatar-note-maomao'); 
