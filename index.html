@@ -2687,7 +2687,8 @@
             }
             
             // 2. 更新標題
-            document.getElementById('selected-date-label').textContent = `${y}年${m + 1}月${d}日`;
+            const label = document.getElementById('selected-date-label');
+            if (label) label.textContent = `${y}年${m + 1}月${d}日`;
             
             // 3. 渲染下方清單
             const listEl = document.getElementById('month-event-list');
@@ -2718,33 +2719,40 @@
                 window.renderEventListItems(dayEvents, listEl, true);
             }
 
-            // === 4. 捲動與高亮邏輯 (加強版) ===
-            if (targetId) {
-                // 延長時間至 300ms，確保 DOM 渲染完成
-                setTimeout(() => {
+            // === 4. 自動捲動邏輯 (UX 大優化) ===
+            // 縮短等待時間至 100ms，讓反應更即時
+            setTimeout(() => {
+                if (targetId) {
+                    // 情境 A：使用者精準點擊了「行程條」-> 捲動到該行程並高亮
                     const targetEl = document.getElementById(`list-item-${targetId}`);
                     if (targetEl) {
-                        // 平滑捲動到畫面中央
                         targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         
-                        // 先移除舊的 class 以防萬一
+                        // 黃色高亮閃爍
                         targetEl.classList.remove('bg-yellow-100', 'transition-colors', 'duration-1000');
-                        
-                        // 強制重繪 (Reflow)
-                        void targetEl.offsetWidth;
-                        
-                        // 加入明顯的黃色高亮與過渡動畫
+                        void targetEl.offsetWidth; // 強制重繪
                         targetEl.classList.add('bg-yellow-100', 'transition-colors', 'duration-1000');
-                        
-                        // 1.5秒後慢慢淡出
-                        setTimeout(() => {
-                            targetEl.classList.remove('bg-yellow-100');
-                        }, 1500);
-                    } else {
-                        console.warn("找不到目標元素 ID:", targetId);
+                        setTimeout(() => targetEl.classList.remove('bg-yellow-100'), 1500);
                     }
-                }, 300); 
-            }
+                } else {
+                    // 情境 B：使用者點擊了「日期格子」(可能手指粗沒點到行程) -> 捲動到清單標題
+                    // 這樣使用者就會意識到「喔！下面有清單」
+                    const scrollArea = document.getElementById('calendar-scroll-area');
+                    const listHeader = document.getElementById('selected-date-label');
+                    
+                    // 只有當標題不在視野上方時才捲動 (避免一直跳動)
+                    if (scrollArea && listHeader) {
+                        // 取得標題相對於捲動視窗的位置
+                        const headerRect = listHeader.getBoundingClientRect();
+                        const containerRect = scrollArea.getBoundingClientRect();
+                        
+                        // 如果標題在太下面，就捲上來
+                        if (headerRect.top > containerRect.bottom - 200) { 
+                             listHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    }
+                }
+            }, 100); 
         };
         
         window.handleBigCalDbClick = function(y, m, d) {
