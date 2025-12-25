@@ -3162,20 +3162,50 @@
             window.confirmDelete();
         };
 
-        // 記得修改 window.executeDelete 加入 message 的判斷
+        // === 修正後的完整刪除執行函式 ===
         window.executeDelete = function() { 
-            // ... (前面的 event, todo 判斷保持不變) ...
-            
+            // 1. 刪除行程
             if (deleteTarget === 'event' && editingEventId) { 
-                // ... (略)
-            } else if (deleteTarget === 'todo' && editingTodoId) {
-                // ... (略)
-            } else if (deleteTarget === 'message' && noteToDelete) { // 新增這段
+                db.collection('events').doc(editingEventId).delete()
+                    .then(() => { 
+                        window.closeConfirmModal(); 
+                        window.closeAddModal(); 
+                        window.showToast('行程已刪除'); 
+                    })
+                    .catch(e => { 
+                        console.error(e); 
+                        window.showToast('刪除失敗'); 
+                    }); 
+            } 
+            // 2. 刪除待辦
+            else if (deleteTarget === 'todo' && editingTodoId) {
+                db.collection('todos').doc(editingTodoId).delete()
+                    .then(() => { 
+                        window.closeConfirmModal(); 
+                        window.closeAddTodoModal(); 
+                        window.showToast('待辦已刪除'); 
+                    })
+                    .catch(e => { 
+                        console.error(e); 
+                        window.showToast('刪除失敗'); 
+                    }); 
+            } 
+            // 3. 收回訊息 (聊天室)
+            else if (deleteTarget === 'message' && noteToDelete) { 
                 db.collection('messages').doc(noteToDelete).delete()
-                    .then(() => { window.showToast('訊息已收回'); window.closeConfirmModal(); })
-                    .catch(() => { window.showToast('刪除失敗'); });
+                    .then(() => { 
+                        window.showToast('訊息已收回'); 
+                        window.closeConfirmModal(); 
+                    })
+                    .catch(() => { 
+                        window.showToast('刪除失敗'); 
+                    });
             }
-            // 舊的 note 刪除邏輯可以保留或移除，不影響
+            // 4. 刪除心情 (舊版功能，保留以防萬一)
+            else if (deleteTarget === 'note' && noteToDelete) { 
+                window.deleteNote(noteToDelete); 
+                window.closeConfirmModal();
+            }
         };
 
         // === 新增：渲染設定頁面的分類開關 ===
