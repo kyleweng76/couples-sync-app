@@ -2690,69 +2690,68 @@
             const label = document.getElementById('selected-date-label');
             if (label) label.textContent = `${y}年${m + 1}月${d}日`;
             
-            // 3. 渲染下方清單
+            // 3. 渲染下方清單 (強制展開)
             const listEl = document.getElementById('month-event-list');
-            if (!listEl) return;
-            
-            const items = window.getCalendarItems();
-            const ds = new Date(y, m, d);
-            const de = new Date(y, m, d, 23, 59, 59);
-            
-            // 篩選當日行程
-            const dayEvents = items.filter(e => {
-                const t = new Date(e.startDate || e.timestamp);
-                const startDay = new Date(t); startDay.setHours(0,0,0,0);
+            if (listEl) {
+                const items = window.getCalendarItems();
+                const ds = new Date(y, m, d);
+                const de = new Date(y, m, d, 23, 59, 59);
                 
-                // 處理跨日行程
-                if (e.endDate || e.dueDateEnd) {
-                    const endT = new Date(e.endDate || e.dueDateEnd); endT.setHours(23,59,59,999);
-                    return ds <= endT && de >= startDay;
-                }
-                
-                return t >= ds && t <= de;
-            });
+                const dayEvents = items.filter(e => {
+                    const t = new Date(e.startDate || e.timestamp);
+                    const startDay = new Date(t); startDay.setHours(0,0,0,0);
+                    if (e.endDate || e.dueDateEnd) {
+                        const endT = new Date(e.endDate || e.dueDateEnd); endT.setHours(23,59,59,999);
+                        return ds <= endT && de >= startDay;
+                    }
+                    return t >= ds && t <= de;
+                });
 
-            if (dayEvents.length === 0) {
-                listEl.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs">這天沒有安排行程 😴</div>`;
-            } else {
-                // 強制展開所有行程 (第三個參數 true)
-                window.renderEventListItems(dayEvents, listEl, true);
+                if (dayEvents.length === 0) {
+                    listEl.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs">這天沒有安排行程 😴</div>`;
+                } else {
+                    window.renderEventListItems(dayEvents, listEl, true);
+                }
             }
 
-            // === 4. 自動捲動邏輯 (UX 大優化) ===
-            // 縮短等待時間至 100ms，讓反應更即時
+            // === 4. 觸發捲動 (修改重點) ===
+            // 不管點什麼，只要清單太下面，就把它捲上來
             setTimeout(() => {
+                let hasScrolledToItem = false;
+
+                // 嘗試 A：如果有指定行程 ID，試著聚焦它
                 if (targetId) {
-                    // 情境 A：使用者精準點擊了「行程條」-> 捲動到該行程並高亮
                     const targetEl = document.getElementById(`list-item-${targetId}`);
                     if (targetEl) {
                         targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         
-                        // 黃色高亮閃爍
+                        // 高亮動畫
                         targetEl.classList.remove('bg-yellow-100', 'transition-colors', 'duration-1000');
-                        void targetEl.offsetWidth; // 強制重繪
+                        void targetEl.offsetWidth; // 重繪
                         targetEl.classList.add('bg-yellow-100', 'transition-colors', 'duration-1000');
                         setTimeout(() => targetEl.classList.remove('bg-yellow-100'), 1500);
+                        
+                        hasScrolledToItem = true;
                     }
-                } else {
-                    // 情境 B：使用者點擊了「日期格子」(可能手指粗沒點到行程) -> 捲動到清單標題
-                    // 這樣使用者就會意識到「喔！下面有清單」
+                }
+
+                // 嘗試 B：如果沒有成功聚焦到行程 (可能渲染太慢或沒 ID)，或者是點空白處
+                // 我們就執行「通用捲動」：把清單標題拉上來
+                if (!hasScrolledToItem) {
                     const scrollArea = document.getElementById('calendar-scroll-area');
                     const listHeader = document.getElementById('selected-date-label');
                     
-                    // 只有當標題不在視野上方時才捲動 (避免一直跳動)
                     if (scrollArea && listHeader) {
-                        // 取得標題相對於捲動視窗的位置
                         const headerRect = listHeader.getBoundingClientRect();
                         const containerRect = scrollArea.getBoundingClientRect();
                         
-                        // 如果標題在太下面，就捲上來
-                        if (headerRect.top > containerRect.bottom - 200) { 
+                        // 只要標題在視窗下半部 (太低了)，就捲上來
+                        if (headerRect.top > containerRect.bottom - 250) { 
                              listHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
                         }
                     }
                 }
-            }, 100); 
+            }, 150); // 稍微加長一點時間 (150ms) 確保渲染完成
         };
         
         window.handleBigCalDbClick = function(y, m, d) {
