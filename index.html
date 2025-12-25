@@ -535,43 +535,6 @@
             
         </div> 
         <div id="page-calendar" class="page-content">
-            
-            <!-- Actions -->
-            <div class="px-4 flex gap-3 mb-6">
-                <button onclick="window.openAddModal()" class="flex-1 bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-gray-600 flex items-center justify-center gap-2 active:bg-gray-50 transition">
-                    <i data-lucide="calendar-plus" class="w-5 h-5 text-ttgreen"></i>
-                    <span class="text-sm font-bold">新增行程</span>
-                </button>
-                <button onclick="window.openAddTodoModal()" class="flex-1 bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-gray-600 flex items-center justify-center gap-2 active:bg-gray-50 transition">
-                    <i data-lucide="check-square" class="w-5 h-5 text-blue-400"></i>
-                    <span class="text-sm font-bold">新增待辦</span>
-                </button>
-            </div>
-
-            <!-- Next Up -->
-            <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 mx-4">
-                <div class="bg-ttgreen px-4 py-2 flex justify-between items-center">
-                    <span class="text-white text-xs font-bold tracking-wider">NEXT 7 DAYS</span>
-                    <span id="dashboard-countdown" class="text-white text-xs bg-white/20 px-2 py-0.5 rounded-full">...</span>
-                </div>
-                <div id="dashboard-next-list" class="divide-y divide-gray-100 min-h-[100px]">
-                    <div class="text-center py-8 text-gray-400 text-sm">載入中...</div>
-                </div>
-            </div>
-
-            <!-- Todo Summary -->
-            <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 p-4 mx-4 mt-4">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2">
-                        <i data-lucide="check-square" class="w-4 h-4 text-ttgreen"></i> 待辦清單
-                    </h3>
-                    <button onclick="window.switchTab('todo')" class="text-xs text-ttgreen font-medium">查看全部</button>
-                </div>
-                <div id="dashboard-todo-list" class="space-y-2">
-                    <p class="text-xs text-gray-400 text-center py-2">載入中...</p>
-                </div>
-            </div>
-        </div>
 
         <!-- Page 2: Calendar -->
         <div id="page-calendar" class="page-content">
