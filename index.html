@@ -2158,48 +2158,18 @@
         };
     
         window.renderCalendarListView = function() { const items = window.getCalendarItems(); const listEl = document.getElementById('event-list'); if(!listEl) return; if (items.length === 0) { listEl.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">無行程</div>`; } else { window.renderEventListItems(items, listEl); } };
-        // === 列表渲染邏輯 (包含歷史摺疊功能) ===
-        window.renderEventListItems = function(items, container) {
+
+        // === 優化版：列表渲染 (支援強制展開模式) ===
+        window.renderEventListItems = function(items, container, forceExpand = false) {
             const now = new Date(); 
             
-            // 1. 資料分流：分成「過去」與「未來」
-            const pastItems = [];
-            const futureItems = [];
-
-            items.forEach(e => {
-                const date = new Date(e.timestamp);
-                if (isNaN(date)) return;
-
-                // 判斷邏輯：
-                // 待辦事項：已完成 = 過去
-                // 一般行程：結束時間 < 現在 = 過去
-                // (為了保守起見，如果沒有結束時間，就用開始時間判斷)
-                let isPast = false;
-                if (e.isTodo) {
-                    isPast = e.done;
-                } else {
-                    // 取得較精確的結束時間
-                    const endDateStr = e.endDate || e.dueDateEnd || (e.startDate || e.dueDate);
-                    const endTimeStr = e.endTime || e.dueTimeEnd || "23:59";
-                    const endDateTime = new Date(`${endDateStr}T${endTimeStr}`);
-                    
-                    // 如果無法解析，退回使用 timestamp
-                    if(isNaN(endDateTime)) isPast = date < now;
-                    else isPast = endDateTime < now;
-                }
-
-                if (isPast) pastItems.push(e);
-                else futureItems.push(e);
-            });
-
-            // 2. 定義 HTML 生成器 (避免重複寫兩次 code)
+            // 2. 定義 HTML 生成器 (先定義好，後面會用)
             const generateItemHtml = (listItems) => {
                 let htmlBuffer = '';
                 let lastMonthLabel = '';
 
                 listItems.forEach(e => {
                     const date = new Date(e.timestamp);
-                    
                     // 月份標題
                     const currentMonthLabel = `${date.getFullYear()}年 ${date.getMonth() + 1}月`;
                     if (currentMonthLabel !== lastMonthLabel) {
@@ -2211,12 +2181,10 @@
                         lastMonthLabel = currentMonthLabel;
                     }
 
-                    // 樣式設定
                     let opacityClass = '';
                     if (e.isTodo && e.done) opacityClass = 'opacity-40 grayscale';
                     else if (!e.isTodo && new Date(e.timestamp) < now) opacityClass = 'opacity-50 grayscale';
 
-                    // 時間字串
                     let timeStr = "";
                     const startDateStr = e.startDate || e.dueDate;
                     const endDateStr = e.endDate || e.dueDateEnd;
@@ -2228,12 +2196,10 @@
                     let dayNum = dateObjStart.getDate();
                     let dayName = dateObjStart.toLocaleDateString('en-US', { weekday: 'short' });
 
-                    // 判斷跨日與時間顯示
                     if (startDateStr && effectiveEndDateStr && startDateStr !== effectiveEndDateStr) {
                         const dateObjEnd = new Date(effectiveEndDateStr);
                         const sDateDisplay = `${dateObjStart.getMonth()+1}/${dateObjStart.getDate()}`;
                         const eDateDisplay = `${dateObjEnd.getMonth()+1}/${dateObjEnd.getDate()}`;
-                        
                         if (e.allDay) {
                              timeStr = `${sDateDisplay} - ${eDateDisplay} (All Day)`;
                         } else {
@@ -2247,21 +2213,16 @@
                         if (endTime && !e.allDay) timeStr += ` - ${endTime}`;
                     }
 
-                    // 休假 ICON
                     let displayIcon = '';
-                    if (typeof window.isLeaveEvent === 'function' && window.isLeaveEvent(e.title)) {
-                        displayIcon = '🏖️ ';
-                    }
+                    if (typeof window.isLeaveEvent === 'function' && window.isLeaveEvent(e.title)) displayIcon = '🏖️ ';
 
                     let displayColor;
                     if (e.isJoint) displayColor = roleColors.joint; 
                     else displayColor = (e.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
 
-                    // 渲染項目
                     if (e.isTodo) {
                         const statusClass = e.done ? "line-through text-gray-400" : "text-gray-800";
                         const checkIcon = e.done ? '<i data-lucide="check-square" class="w-5 h-5 text-green-500"></i>' : '<i data-lucide="square" class="w-5 h-5 text-gray-400"></i>';
-                        
                         htmlBuffer += `
                         <div id="list-item-${e.id}" class="flex p-4 items-center gap-4 hover:bg-gray-50 transition cursor-pointer border-b border-gray-50 last:border-0 ${opacityClass}">
                             <div class="flex flex-col items-center w-10">
@@ -2295,14 +2256,14 @@
                         let av = `<div class="avatar-sm z-20" style="background-color:${roleColors[e.creator]||'#2cc998'}">${e.creator==='haohao'?'皓':'毛'}</div>`;
                         if (e.isJoint) {
                             const partner = e.creator === 'haohao' ? 'maomao' : 'haohao';
-                            const partnerName = partner === 'haohao' ? '皓' : '毛';
-                            av += `<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[partner]}">${partnerName}</div>`;
+                            av += `<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[partner]}">${partner==='haohao'?'皓':'毛'}</div>`;
                         }
                         let noteDisplay = '';
                         if (e.note && e.note.trim()) noteDisplay = `<div class="text-xs text-gray-400 mt-1 flex items-start gap-1"><i data-lucide="sticky-note" class="w-3 h-3 mt-0.5 flex-shrink-0"></i><span class="truncate">${e.note}</span></div>`;
 
                         htmlBuffer += `
-                        <div id="list-item-${e.id}" class="flex p-4 items-start gap-4 hover:bg-gray-50 transition cursor-pointer card-press border-b border-gray-50 last:border-0 ${opacityClass}" onclick="window.openEditModal('${e.id}')">                            <div class="flex flex-col items-center w-10 pt-1">
+                        <div id="list-item-${e.id}" class="flex p-4 items-start gap-4 hover:bg-gray-50 transition cursor-pointer card-press border-b border-gray-50 last:border-0 ${opacityClass}" onclick="window.openEditModal('${e.id}')">
+                            <div class="flex flex-col items-center w-10 pt-1">
                                 <span class="text-xs text-gray-400 font-medium uppercase">${dayName}</span>
                                 <span class="text-xl font-bold leading-none" style="color:${displayColor}">${dayNum}</span>
                             </div>
@@ -2323,26 +2284,45 @@
                 return htmlBuffer;
             };
 
+            // === 修改重點：如果 forceExpand 為 true，直接渲染全部，不分流 ===
+            if (forceExpand) {
+                container.innerHTML = generateItemHtml(items);
+                if (typeof lucide !== 'undefined') lucide.createIcons({ root: container });
+                return;
+            }
+            // =========================================================
+
+            // 1. 資料分流 (原本的邏輯)
+            const pastItems = [];
+            const futureItems = [];
+
+            items.forEach(e => {
+                const date = new Date(e.timestamp);
+                if (isNaN(date)) return;
+                let isPast = false;
+                if (e.isTodo) { isPast = e.done; } 
+                else {
+                    const endDateStr = e.endDate || e.dueDateEnd || (e.startDate || e.dueDate);
+                    const endTimeStr = e.endTime || e.dueTimeEnd || "23:59";
+                    const endDateTime = new Date(`${endDateStr}T${endTimeStr}`);
+                    if(isNaN(endDateTime)) isPast = date < now; else isPast = endDateTime < now;
+                }
+                if (isPast) pastItems.push(e); else futureItems.push(e);
+            });
+
             // 3. 組合 HTML
             let finalHtml = '';
-
-            // A. 歷史行程區塊 (如果有的話)
             if (pastItems.length > 0) {
-                // 摺疊按鈕
                 finalHtml += `
                 <div onclick="window.toggleHistory()" class="cursor-pointer bg-gray-50 border-b border-gray-200 py-3 flex items-center justify-center text-xs text-gray-500 hover:bg-gray-100 transition">
                     <i data-lucide="clock" class="w-3.5 h-3.5 mr-1.5"></i>
                     <span id="history-btn-text">查看之前的 ${pastItems.length} 筆行程</span>
                     <i id="history-chevron" data-lucide="chevron-down" class="w-3.5 h-3.5 ml-1 transition-transform duration-300"></i>
                 </div>
-                `;
-                // 歷史清單容器 (預設隱藏)
-                finalHtml += `<div id="history-list-container" class="hidden bg-gray-50/50 border-b border-gray-200 shadow-inner">`;
+                <div id="history-list-container" class="hidden bg-gray-50/50 border-b border-gray-200 shadow-inner">`;
                 finalHtml += generateItemHtml(pastItems);
                 finalHtml += `</div>`;
             }
-
-            // B. 未來行程區塊
             if (futureItems.length > 0) {
                 finalHtml += generateItemHtml(futureItems);
             } else {
@@ -2734,7 +2714,8 @@
             if (dayEvents.length === 0) {
                 listEl.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs">這天沒有安排行程 😴</div>`;
             } else {
-                window.renderEventListItems(dayEvents, listEl);
+                // 第三個參數 true 代表「強制展開」，不摺疊歷史行程
+            window.renderEventListItems(dayEvents, listEl, true);
             }
 
             // === 4. 新增：如果有指定目標 ID，執行捲動與高亮 ===
