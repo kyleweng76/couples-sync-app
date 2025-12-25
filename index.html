@@ -2075,15 +2075,39 @@
 
         window.toggleTodo = function(id,s) { db.collection('todos').doc(id).update({done:s}); };
 
-        window.deleteTodo = function(id) {
-            editingTodoId = id;
+        // === 補上缺失的刪除觸發函式 ===
+
+        window.deleteCurrentEvent = function() {
+            // 確保有正在編輯的 ID
+            if (!editingEventId) return;
+            
+            deleteTarget = 'event';
+            
+            // 設定確認視窗的文字
+            const m = document.getElementById('confirm-modal');
+            const title = m.querySelector('h3');
+            const desc = m.querySelector('p');
+            if(title) title.textContent = '刪除行程？';
+            if(desc) desc.textContent = '確定要刪除這個行程嗎？無法復原喔！';
+            
+            // 打開確認視窗
+            window.confirmDelete();
+        };
+
+        window.deleteCurrentTodo = function() {
+            // 確保有正在編輯的 ID
+            if (!editingTodoId) return;
+            
             deleteTarget = 'todo';
+            
+            // 設定確認視窗的文字
             const m = document.getElementById('confirm-modal');
             const title = m.querySelector('h3');
             const desc = m.querySelector('p');
             if(title) title.textContent = '刪除待辦？';
             if(desc) desc.textContent = '確定要刪除這個待辦事項嗎？';
             
+            // 打開確認視窗
             window.confirmDelete();
         };
 
