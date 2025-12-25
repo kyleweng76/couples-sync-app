@@ -33,7 +33,14 @@
     </script>
 
     <style>
-        body { font-family: 'Noto Sans TC', sans-serif; background-color: #ffffff; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5; /* 建議改成這個更淺的灰色，原本的 #e5e5e5 有點太深 */
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            /* ... */
+        }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .card-press:active { transform: scale(0.98); transition: transform 0.1s; }
@@ -1015,13 +1022,36 @@
     </div>
 
     <!-- Bottom Nav (3 Items only) -->
-        <nav class="bg-white border-t border-gray-100 fixed bottom-0 w-full px-6 pt-3 pb-6 pb-safe z-20 shadow-[0_-5px_15px_rgba(0,0,0,0.02)]">
-        <div class="flex justify-between items-center max-w-md mx-auto">
-            <button class="nav-item active flex flex-col items-center gap-1 text-gray-400 transition py-1" onclick="window.switchTab('dashboard')"><i data-lucide="layout-grid" class="w-6 h-6"></i><span class="text-[10px] font-medium">摘要</span></button>
-            <button class="nav-item flex flex-col items-center gap-1 text-gray-400 transition py-1" onclick="window.switchTab('calendar')"><i data-lucide="calendar" class="w-6 h-6"></i><span class="text-[10px] font-medium">行事曆</span></button>
-            <button class="nav-item flex flex-col items-center gap-1 text-gray-400 transition py-1" onclick="window.switchTab('todo')"><i data-lucide="list-checks" class="w-6 h-6"></i><span class="text-[10px] font-medium">清單</span></button>
-        </div>
-    </nav>
+            <nav class="fixed bottom-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-200 px-4 py-2 flex justify-around items-center z-50 pb-safe transition-all duration-300">
+            
+            <button onclick="window.switchTab('dashboard')" class="nav-btn active group flex flex-col items-center justify-center w-16 h-full transition-all" data-tab="dashboard">
+                <div class="nav-icon-pill p-1.5 rounded-full transition-all duration-300 group-[.active]:bg-ttgreen group-[.active]:text-white text-gray-400">
+                    <i data-lucide="layout-dashboard" class="w-6 h-6 transition-transform duration-300 group-active:scale-95"></i>
+                </div>
+                <span class="text-[10px] font-medium mt-1 transition-all duration-300 group-[.active]:text-ttgreen group-[.active]:font-bold text-gray-400">摘要</span>
+            </button>
+
+            <button onclick="window.switchTab('calendar')" class="nav-btn group flex flex-col items-center justify-center w-16 h-full transition-all" data-tab="calendar">
+                <div class="nav-icon-pill p-1.5 rounded-full transition-all duration-300 group-[.active]:bg-ttgreen group-[.active]:text-white text-gray-400">
+                    <i data-lucide="calendar" class="w-6 h-6 transition-transform duration-300 group-active:scale-95"></i>
+                </div>
+                <span class="text-[10px] font-medium mt-1 transition-all duration-300 group-[.active]:text-ttgreen group-[.active]:font-bold text-gray-400">行事曆</span>
+            </button>
+
+            <button onclick="window.switchTab('todo')" class="nav-btn group flex flex-col items-center justify-center w-16 h-full transition-all" data-tab="todo">
+                 <div class="nav-icon-pill p-1.5 rounded-full transition-all duration-300 group-[.active]:bg-ttgreen group-[.active]:text-white text-gray-400">
+                    <i data-lucide="check-square" class="w-6 h-6 transition-transform duration-300 group-active:scale-95"></i>
+                </div>
+                <span class="text-[10px] font-medium mt-1 transition-all duration-300 group-[.active]:text-ttgreen group-[.active]:font-bold text-gray-400">待辦</span>
+            </button>
+
+            <button onclick="window.switchTab('settings')" class="nav-btn group flex flex-col items-center justify-center w-16 h-full transition-all" data-tab="settings">
+                 <div class="nav-icon-pill p-1.5 rounded-full transition-all duration-300 group-[.active]:bg-ttgreen group-[.active]:text-white text-gray-400">
+                    <i data-lucide="settings" class="w-6 h-6 transition-transform duration-300 group-active:scale-95"></i>
+                </div>
+                <span class="text-[10px] font-medium mt-1 transition-all duration-300 group-[.active]:text-ttgreen group-[.active]:font-bold text-gray-400">設定</span>
+            </button>
+        </nav>
 
     <script>
        /* ===== STABLE PATCH: SafeRun Helper ===== */
@@ -2556,16 +2586,38 @@
             window.closeCalendar();
         };
 
+        // === 修改後的 switchTab：簡化邏輯，只切換 .active 類別 ===
         window.switchTab = function(tabId) {
-            document.querySelectorAll('.page-content').forEach(el => el.classList.remove('active'));
-            const target = document.getElementById('page-' + tabId);
-            if(target) target.classList.add('active');
-            const tabs = ['dashboard', 'calendar', 'todo', 'settings'];
-            document.querySelectorAll('.nav-item').forEach((el, idx) => {
-                if(tabs[idx] === tabId) el.classList.add('active');
-                else el.classList.remove('active');
+            // 1. 隱藏所有頁面
+            document.querySelectorAll('.page-content').forEach(page => {
+                page.classList.remove('active');
+                // 確保切換時捲動到頂部 (UX 優化)
+                page.scrollTop = 0;
             });
-            if(tabId === 'calendar' && currentViewMode === 'month') { window.renderBigCalendar(); }
+            
+            // 2. 顯示目標頁面
+            const targetPage = document.getElementById(`page-${tabId}`);
+            if(targetPage) {
+                targetPage.classList.add('active');
+                // 如果是行事曆，嘗試渲染大月曆
+                if(tabId === 'calendar' && typeof window.renderBigCalendar === 'function') {
+                    window.renderBigCalendar();
+                }
+            }
+            
+            // 3. 更新底部導航按鈕狀態 (關鍵修改)
+            const buttons = document.querySelectorAll('.nav-btn');
+            buttons.forEach(btn => {
+                // 只需切換 'active' 類別，樣式由 Tailwind 的 group-[.active] 控制
+                if(btn.dataset.tab === tabId) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            // (可選) 在切換時產生一點點觸覺回饋
+            if (navigator.vibrate) navigator.vibrate(5);
         };
 
         window.switchCalendarView = function(mode) {
