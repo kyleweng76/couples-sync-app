@@ -2263,7 +2263,7 @@
                         const checkIcon = e.done ? '<i data-lucide="check-square" class="w-5 h-5 text-green-500"></i>' : '<i data-lucide="square" class="w-5 h-5 text-gray-400"></i>';
                         
                         htmlBuffer += `
-                        <div class="flex p-4 items-center gap-4 hover:bg-gray-50 transition cursor-pointer border-b border-gray-50 last:border-0 ${opacityClass}">
+                        <div id="list-item-${e.id}" class="flex p-4 items-center gap-4 hover:bg-gray-50 transition cursor-pointer border-b border-gray-50 last:border-0 ${opacityClass}">
                             <div class="flex flex-col items-center w-10">
                                 <span class="text-xs text-gray-400 font-medium uppercase">${dayName}</span>
                                 <span class="text-xl font-bold text-gray-800 leading-none">${dayNum}</span>
@@ -2302,8 +2302,7 @@
                         if (e.note && e.note.trim()) noteDisplay = `<div class="text-xs text-gray-400 mt-1 flex items-start gap-1"><i data-lucide="sticky-note" class="w-3 h-3 mt-0.5 flex-shrink-0"></i><span class="truncate">${e.note}</span></div>`;
 
                         htmlBuffer += `
-                        <div class="flex p-4 items-start gap-4 hover:bg-gray-50 transition cursor-pointer card-press border-b border-gray-50 last:border-0 ${opacityClass}" onclick="window.openEditModal('${e.id}')">
-                            <div class="flex flex-col items-center w-10 pt-1">
+                        <div id="list-item-${e.id}" class="flex p-4 items-start gap-4 hover:bg-gray-50 transition cursor-pointer card-press border-b border-gray-50 last:border-0 ${opacityClass}" onclick="window.openEditModal('${e.id}')">                            <div class="flex flex-col items-center w-10 pt-1">
                                 <span class="text-xs text-gray-400 font-medium uppercase">${dayName}</span>
                                 <span class="text-xl font-bold leading-none" style="color:${displayColor}">${dayNum}</span>
                             </div>
@@ -2699,7 +2698,62 @@
             window.renderBigCalendar();
         };
         
-        window.selectBigCalendarDate = function(y,m,d) { document.querySelectorAll('.big-cal-cell.selected').forEach(e=>e.classList.remove('selected')); if(m===bigCalDate.getMonth()) { const el=document.getElementById(`big-cal-day-${d}`); if(el) el.classList.add('selected'); } document.getElementById('selected-date-label').textContent = `${y}年${m+1}月${d}日`; const listEl = document.getElementById('month-event-list'); if(!listEl) return; const items = window.getCalendarItems(); const ds=new Date(y, m, d), de=new Date(y, m, d, 23,59,59); const dayEvents = items.filter(e => { const t = new Date(e.timestamp); return t>=ds && t<=de; }); if(dayEvents.length===0) listEl.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs">這天沒有安排行程 😴</div>`; else window.renderEventListItems(dayEvents, listEl); };
+        window.selectBigCalendarDate = function(y, m, d, targetId = null) {
+            // 1. 視覺選取樣式
+            document.querySelectorAll('.big-cal-cell.selected').forEach(e => e.classList.remove('selected'));
+            if (m === bigCalDate.getMonth()) {
+                const el = document.getElementById(`big-cal-day-${d}`);
+                if (el) el.classList.add('selected');
+            }
+            
+            // 2. 更新標題
+            document.getElementById('selected-date-label').textContent = `${y}年${m + 1}月${d}日`;
+            
+            // 3. 渲染下方清單
+            const listEl = document.getElementById('month-event-list');
+            if (!listEl) return;
+            
+            const items = window.getCalendarItems();
+            const ds = new Date(y, m, d);
+            const de = new Date(y, m, d, 23, 59, 59);
+            
+            // 篩選當日行程
+            const dayEvents = items.filter(e => {
+                const t = new Date(e.startDate || e.timestamp); // 支援 event 和 todo
+                const startDay = new Date(t); startDay.setHours(0,0,0,0);
+                
+                // 處理跨日行程：如果今天在這個行程的範圍內
+                if (e.endDate || e.dueDateEnd) {
+                    const endT = new Date(e.endDate || e.dueDateEnd); endT.setHours(23,59,59,999);
+                    return ds <= endT && de >= startDay;
+                }
+                
+                return t >= ds && t <= de;
+            });
+
+            if (dayEvents.length === 0) {
+                listEl.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs">這天沒有安排行程 😴</div>`;
+            } else {
+                window.renderEventListItems(dayEvents, listEl);
+            }
+
+            // === 4. 新增：如果有指定目標 ID，執行捲動與高亮 ===
+            if (targetId) {
+                setTimeout(() => {
+                    const targetEl = document.getElementById(`list-item-${targetId}`);
+                    if (targetEl) {
+                        // 平滑捲動到畫面中央
+                        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        
+                        // 閃爍高亮效果 (利用 Tailwind 的 ring 或 bg)
+                        targetEl.classList.add('bg-green-50', 'transition-colors', 'duration-500');
+                        setTimeout(() => {
+                            targetEl.classList.remove('bg-green-50');
+                        }, 800);
+                    }
+                }, 100); // 稍微延遲確保 DOM 已渲染
+            }
+        };
         
         window.handleBigCalDbClick = function(y, m, d) {
             const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
@@ -2912,7 +2966,8 @@
                             content = (isStart || isSingle) ? `🏖 ${evt.title}` : (isEnd ? '' : '&nbsp;');
                         }
 
-                        bars += `<div class="event-bar ${evt.isTodo&&evt.done?'done':''} ${shapeClass}" style="${styleAttr}">${content}</div>`;
+                        // 加上 onclick，傳入 evt.id，並使用 event.stopPropagation() 防止冒泡觸發格子的點擊事件
+                    bars += `<div class="event-bar ${evt.isTodo&&evt.done?'done':''} ${shapeClass}" style="${styleAttr}" onclick="event.stopPropagation(); window.selectBigCalendarDate(${y},${m},${d}, '${evt.id}')">${content}</div>`;
                     } else {
                         // === 關鍵：如果這一軌沒行程，但下面有行程，要渲染隱形支架 ===
                         // 這裡使用 invisible 讓它佔位但不顯示
