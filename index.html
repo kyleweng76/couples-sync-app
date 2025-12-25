@@ -2920,10 +2920,11 @@
                 
                 for (let t = 0; t <= renderLimit; t++) {
                     // 找找看當天、這一軌有沒有行程
+                    // ... (前段的 eventTrack 查找邏輯保持不變) ...
                     const evt = dayEvents.find(e => eventTrack[e.id] === t);
 
                     if (evt) {
-                        // === 渲染行程條 (與之前邏輯相同，處理樣式) ===
+                        // === 渲染行程條 ===
                         let bg;
                         if (evt.isJoint) bg = roleColors.joint;
                         else bg = (evt.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
@@ -2937,6 +2938,10 @@
                         const isSingle = isStart && isEnd;
                         const isVac = window.isLeaveEvent(evt.title);
 
+                        // === 修改重點：決定是否顯示文字 ===
+                        // 規則：只有在「開始日」、「單日行程」或「每月1號(d===1)」才顯示標題
+                        const showLabel = isStart || isSingle || (d === 1);
+
                         let styleAttr = `background-color:${bg};`;
                         let content = evt.title;
                         let shapeClass = 'rounded-[3px] mx-[2px] relative z-0'; 
@@ -2944,12 +2949,13 @@
                         if (!isSingle) {
                             if (isStart) {
                                 shapeClass = 'rounded-l-[3px] rounded-r-none mr-[-3px] pr-2 relative z-10 ml-[2px]'; 
-                                content = `${evt.title}`;
+                                // content 預設就是 title，不用動
                             } else if (isEnd) {
                                 shapeClass = 'rounded-l-none rounded-r-[3px] ml-[-3px] pl-2 relative z-10 mr-[2px]';
+                                if (!showLabel) content = '&nbsp;'; // 結尾不顯示字 (除非剛好是1號)
                             } else {
                                 shapeClass = 'rounded-none mx-[-3px] relative z-10';
-                                content = '&nbsp;'; 
+                                if (!showLabel) content = '&nbsp;'; // 中間不顯示字 (除非剛好是1號)
                             }
                         }
 
@@ -2958,14 +2964,14 @@
                             if (!isSingle && !isStart && !isEnd) styleAttr += ' border-left: none; border-right: none;';
                             if (!isSingle && isStart) styleAttr += ' border-right: none;';
                             if (!isSingle && isEnd) styleAttr += ' border-left: none;';
-                            content = (isStart || isSingle) ? `🏖 ${evt.title}` : (isEnd ? '' : '&nbsp;');
+                            
+                            // 休假也套用同樣邏輯：跨月或開始時才顯示文字
+                            content = showLabel ? `🏖 ${evt.title}` : '&nbsp;';
                         }
 
-                        // 加上 onclick，傳入 evt.id，並使用 event.stopPropagation() 防止冒泡觸發格子的點擊事件
-                    bars += `<div class="event-bar ${evt.isTodo&&evt.done?'done':''} ${shapeClass}" style="${styleAttr}" onclick="event.stopPropagation(); window.selectBigCalendarDate(${y},${m},${d}, '${evt.id}')">${content}</div>`;
+                        bars += `<div class="event-bar ${evt.isTodo&&evt.done?'done':''} ${shapeClass}" style="${styleAttr}" onclick="event.stopPropagation(); window.selectBigCalendarDate(${y},${m},${d}, '${evt.id}')">${content}</div>`;
                     } else {
-                        // === 關鍵：如果這一軌沒行程，但下面有行程，要渲染隱形支架 ===
-                        // 這裡使用 invisible 讓它佔位但不顯示
+                        // ... (隱形支架邏輯保持不變) ...
                         bars += `<div class="event-bar invisible"></div>`;
                     }
                 }
