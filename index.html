@@ -2038,13 +2038,15 @@
 
         window.renderDashboardNextUp = function(items) {
             const now = new Date();
+            now.setHours(0, 0, 0, 0); // <--- 關鍵修改：將比較基準設為今天的起始點
+            
             const nextLimit = new Date();
-            nextLimit.setDate(now.getDate() + 3); // 修改：只抓未來 3 天
+            nextLimit.setDate(now.getDate() + 3); 
             
             const upcoming = items.filter(item => {
                 const t = new Date(item.timestamp);
                 if (item.isTodo && item.done) return false;
-                // 邏輯：時間 >= 現在 且 <= 未來3天
+                // 邏輯：時間 >= 今天凌晨 且 <= 未來3天
                 return !isNaN(t) && t >= now && t <= nextLimit;
             });
 
