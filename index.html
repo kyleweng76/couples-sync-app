@@ -403,18 +403,17 @@
                 </div>
 
                 <!-- Input -->
-                <div class="relative z-20 h-9 w-[270px]">
+                <div class="relative z-30 h-9 w-[270px]">
                     <div class="flex flex-nowrap items-center bg-white rounded-full px-1 py-0.5 shadow-sm border border-gray-200 focus-within:ring-2 focus-within:ring-opacity-50 transition-all h-full overflow-hidden">
                         <div class="w-8 h-8 flex items-center justify-center text-gray-300 flex-shrink-0">
                             <i data-lucide="message-circle" class="w-4 h-4"></i>
                         </div>
-                        <input type="text" id="note-input" maxlength="14" placeholder="說點什麼吧..." class="flex-1 min-w-0 bg-transparent border-none text-xs text-gray-600 placeholder-gray-300 focus:ring-0 px-1 outline-none text-left h-full tracking-wide">
+                        <input type="text" id="note-input" maxlength="20" placeholder="說點什麼吧..." class="flex-1 min-w-0 bg-transparent border-none text-xs text-gray-600 placeholder-gray-300 focus:ring-0 px-1 outline-none text-left h-full tracking-wide">
                         <button id="note-send-btn" onclick="window.sendNote()" class="w-7 h-7 flex items-center justify-center rounded-full text-white shadow-sm active:scale-90 transition ml-0.5 flex-shrink-0" style="background-color: #d1d5db;">
                             <i data-lucide="send" class="w-3.5 h-3.5 ml-0.5"></i>
                         </button>
                     </div>
                 </div>
-            </div>
 
             <!-- Actions -->
             <div class="px-4 flex gap-3 mb-6">
@@ -1490,23 +1489,24 @@
             db.collection('notes').doc(role).delete().then(() => { window.showToast('心情已刪除 💨'); }).catch(err => { console.error(err); window.showToast('刪除失敗'); });
         };
         
-        // === 補上：發送心情留言 ===
+        // === 優化版：發送心情留言 ===
         window.sendNote = function() {
             if (!window.checkRoleEnforcement()) return;
             
             const input = document.getElementById('note-input');
+            const btn = document.getElementById('note-send-btn');
             const text = input.value.trim();
             
             if (!text) {
                 window.showToast('請輸入內容 💬');
+                input.focus(); // 聚焦提醒
                 return;
             }
 
-            // 限制字數 (雖然 HTML 有 maxlength，但後端防呆一下)
-            if (text.length > 20) {
-                window.showToast('字數太多囉 (限 20 字)');
-                return;
-            }
+            // 1. 鎖定介面 (避免重複發送)
+            input.disabled = true;
+            btn.disabled = true;
+            btn.classList.add('opacity-50'); // 讓按鈕變淡表示處理中
 
             const data = {
                 text: text,
@@ -1514,16 +1514,23 @@
                 creator: currentUserRole
             };
 
-            // 寫入資料庫 (使用 set 覆蓋舊的，因為每個人同時只能有一個心情氣泡)
+            // 2. 寫入資料庫
             db.collection('notes').doc(currentUserRole).set(data)
                 .then(() => {
                     input.value = ''; // 清空輸入框
-                    input.blur(); // 收起鍵盤
+                    // 注意：這裡移除了 input.blur()，讓鍵盤保持開啟，方便連續輸入
                     window.showToast('心情已送出 ☁️');
                 })
                 .catch((error) => {
                     console.error("Error sending note: ", error);
                     window.showToast('送出失敗');
+                })
+                .finally(() => {
+                    // 3. 無論成功失敗，強制解鎖介面
+                    input.disabled = false;
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50');
+                    input.focus(); // 確保焦點還在輸入框
                 });
         };
 
@@ -2478,8 +2485,8 @@
                 db.collection('events').doc(editingEventId).delete().then(() => { window.closeConfirmModal(); window.closeAddModal(); window.showToast('行程已刪除'); }).catch(e => { console.error(e); window.showToast('刪除失敗'); }); 
             } else if (deleteTarget === 'todo' && editingTodoId) {
                 db.collection('todos').doc(editingTodoId).delete().then(() => { window.closeConfirmModal(); window.closeAddTodoModal(); window.showToast('待辦已刪除'); }).catch(e => { console.error(e); window.showToast('刪除失敗'); });
-            } else if (deleteTarget === 'note' && noteToDelete) {
-                window.deleteNote(noteToDelete);
+            } else if (deleteTarget === 'note' && noteToDelete) { // <--- 確認這裡是 noteToDelete
+                window.deleteNote(noteToDelete); // 呼叫刪除函式
                 window.closeConfirmModal();
             }
         };
