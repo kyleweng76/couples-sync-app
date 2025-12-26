@@ -3059,18 +3059,20 @@
                 // === 新增：取得農曆與假日資訊 ===
                 const { lunar, holiday } = window.getLunarAndHoliday(current);
                 
-                // 優先顯示假日，沒有假日才顯示農曆，避免太擠
-                // 或者你可以兩個都顯示，這邊範例是：有假日顯示紅字假日，沒假日顯示灰字農曆
                 let extraInfoHtml = '';
+                let dayNumStyle = ''; // 新增：用來控制日期數字顏色的變數
+
                 if (holiday) {
                     extraInfoHtml = `<span class="big-cal-holiday">${holiday}</span>`;
+                    // 如果是假日，強制將日期數字設為紅色 (對齊假日的紅色 #ef4444)
+                    dayNumStyle = 'style="color: #ef4444;"';
                 } else {
                     extraInfoHtml = `<span class="big-cal-lunar">${lunar}</span>`;
                 }
 
                 html += `<div class="big-cal-cell ${isToday?'today':''}" id="big-cal-day-${d}" onclick="window.selectBigCalendarDate(${y},${m},${d})" ondblclick="window.handleBigCalDbClick(${y},${m},${d})">
                     <div class="big-cal-day-header">
-                        <span class="big-cal-day-num">${d}</span>
+                        <span class="big-cal-day-num" ${dayNumStyle}>${d}</span>
                         ${extraInfoHtml}
                     </div>
                     
