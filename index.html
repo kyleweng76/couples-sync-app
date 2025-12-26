@@ -2125,9 +2125,9 @@
             }, 50);
         };
 
-// 2. 更新選擇 (修正版：解決手機畫面亂跳問題)
+        // 2. 更新選擇 (防衝突修正版：暫時關閉吸附，避免亂飛)
         window.updateTimePickerSelection = function(colType, val) {
-            // 更新變數
+            // 更新全域變數
             if(colType === 'hour') window._tempHour = val;
             if(colType === 'minute') window._tempMinute = val;
 
@@ -2144,26 +2144,31 @@
             if(target) {
                 target.classList.add('selected');
                 
-                // === 關鍵修正 Start ===
-                // 不使用 scrollIntoView，改用計算 scrollTop
-                // 這樣只會捲動列表內部，絕對不會影響到整頁
-                
-                // 列表容器的高度
-                const containerHeight = col.clientHeight;
-                // 目標選項的高度
-                const targetHeight = target.offsetHeight;
-                // 目標選項距離列表頂部的位置
-                const targetOffset = target.offsetTop;
+                // === 關鍵修正：解決手機版亂跳 ===
+                // 1. 點擊瞬間，先把 CSS 吸附關掉！避免瀏覽器干擾 JS 捲動
+                col.style.scrollSnapType = 'none';
 
-                // 計算置中位置：(目標位置) - (容器一半) + (目標一半)
+                // 2. 計算置中位置
+                const containerHeight = col.clientHeight;
+                const targetHeight = target.offsetHeight;
+                const targetOffset = target.offsetTop;
                 const scrollPos = targetOffset - (containerHeight / 2) + (targetHeight / 2);
 
-                // 執行平滑捲動
+                // 3. 執行平滑捲動 (這時候沒有 CSS 干擾，會很乖)
                 col.scrollTo({
                     top: scrollPos,
                     behavior: 'smooth'
                 });
-                // === 關鍵修正 End ===
+
+                // 4. 等動畫跑完 (約 300~400ms)，再把吸附開回來
+                // 這樣之後手指去滑動時，還是會有「喀、喀」的吸附手感
+                
+                // 清除舊的計時器，防止快速點擊時閃爍
+                if (col.snapTimeout) clearTimeout(col.snapTimeout);
+                
+                col.snapTimeout = setTimeout(() => {
+                    col.style.scrollSnapType = 'y mandatory';
+                }, 400); 
             }
         };
 
