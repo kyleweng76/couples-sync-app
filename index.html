@@ -76,12 +76,42 @@
             display: none; 
         }
 
-        /* 2. 聊天室容器樣式 */
+        /* 2. 聊天室容器樣式 (背景圖版) */
         #chat-container {
             scroll-behavior: smooth; 
-            background-color: #9bbbd4; 
-            /* height: 320px; <--- 刪除或註解掉這一行，讓 Flex 排版自動控制高度 */
+            /* background-color: #9bbbd4; <--- 原本的藍底註解掉，或是刪除 */
             height: auto; 
+            
+            /* 關鍵設定：為了讓背景圖定位 */
+            position: relative; 
+            z-index: 0;
+            overflow: hidden; /* 防止背景圖溢出 */
+        }
+
+        /* 新增：在內容「背後」建立一個半透明圖層 */
+        #chat-container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* 放在最底層，才不會蓋住文字 */
+            
+            /* 設定你的圖片 */
+            background-image: url('haomaobg.jpeg'); 
+            
+            /* 圖片顯示設定 */
+            background-size: cover;      /* 讓圖片填滿整個區域 */
+            background-position: center; /* 圖片居中對齊 */
+            background-repeat: no-repeat;
+            
+            /* 關鍵：調整這裡的數字來控制深淺 (0.0 ~ 1.0) */
+            /* 建議 0.1 到 0.2 之間最舒服，不會搶走對話框的視線 */
+            opacity: 0.15; 
+            
+            /* (選用) 如果覺得顏色太花，可以把下面這行打開變黑白，會更像浮水印 */
+            /* filter: grayscale(100%); */
         }
 
         /* 確保有這段：讓聊天分頁在 active 時才變成 Flex 垂直排版 */
