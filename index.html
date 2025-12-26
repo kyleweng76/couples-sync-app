@@ -3229,9 +3229,14 @@
             if(grid) grid.innerHTML = html;
         };
 
-        function initApp(db) {
+function initApp(db) {
             if (!db) { console.error("Firebase not initialized"); return; }
-            const conn = document.getElementById('connection-status'); if (conn) { conn.className = "w-2 h-2 rounded-full bg-ttgreen shadow-[0_0_8px_#2cc998]"; }
+            
+            // 連線狀態燈號
+            const conn = document.getElementById('connection-status'); 
+            if (conn) { conn.className = "w-2 h-2 rounded-full bg-ttgreen shadow-[0_0_8px_#2cc998]"; }
+            
+            // 1. 行程 (Events) 監聽
             bindSnapshot(db.collection('events').orderBy('timestamp', 'asc'), (snapshot) => {
               const events = []; snapshot.forEach(doc => events.push({ id: doc.id, ...doc.data() }));
               allEventsCache = events;
@@ -3240,12 +3245,13 @@
               
               if (currentViewMode === 'month') { 
                   safeRun(() => window.renderBigCalendar(), 'big-calendar');
-                  // === 新增：如果目前有選中某天，立即刷新下方的清單 ===
                   if (currentSelectedDate && currentSelectedDate.y === bigCalDate.getFullYear() && currentSelectedDate.m === bigCalDate.getMonth()) {
-                      window.selectBigCalendarDate(currentSelectedDate.y, currentSelectedDate.m, currentSelectedDate.d, null, true); // true = 不捲動
+                      window.selectBigCalendarDate(currentSelectedDate.y, currentSelectedDate.m, currentSelectedDate.d, null, true);
                   }
               }
             }, 'events');
+
+            // 2. 待辦 (Todos) 監聽
             bindSnapshot(db.collection('todos').orderBy('createdAt', 'desc'), (snapshot) => {
               const todos = []; snapshot.forEach(doc => todos.push({ id: doc.id, ...doc.data() }));
               allTodosCache = todos;
@@ -3255,16 +3261,13 @@
               
               if (currentViewMode === 'month') { 
                   safeRun(() => window.renderBigCalendar(), 'big-calendar-from-todos');
-                  // === 新增：待辦更新時，也刷新當日清單 ===
                   if (currentSelectedDate && currentSelectedDate.y === bigCalDate.getFullYear() && currentSelectedDate.m === bigCalDate.getMonth()) {
                       window.selectBigCalendarDate(currentSelectedDate.y, currentSelectedDate.m, currentSelectedDate.d, null, true);
                   }
               }
             }, 'todos');
             
-            // ... 在 initApp 函式內 ...
-
-            // === 修改：聊天室監聽 (包含自動刪除過期訊息 + 自動標記已讀) ===
+            // 3. 聊天室 (Chat) 監聽 (包含自動刪除過期 + 標記已讀)
             bindSnapshot(db.collection('messages').orderBy('timestamp', 'desc').limit(50), (snapshot) => {
                 const msgs = [];
                 const now = new Date();
@@ -3274,38 +3277,29 @@
                     const data = doc.data();
                     const msgTime = new Date(data.timestamp);
                     
-                    // 1. 檢查過期
+                    // A. 檢查過期：超過24小時自動刪除
                     if ((now - msgTime) > expirationMs) {
                         db.collection('messages').doc(doc.id).delete().catch(e => {});
                     } else {
                         msgs.push({ id: doc.id, ...data });
 
-                        // === 2. 關鍵邏輯：標記已讀 ===
+                        // B. 關鍵邏輯：標記已讀
                         // 如果這則訊息「不是我傳的」(是對方傳的) 且「還沒已讀」
-                        if (data.creator && data.creator !== currentUserRole && !data.read) {
-                            // 標記為已讀 (這會觸發資料庫更新，進而讓對方看到已讀)
+                        if (data.creator && currentUserRole && data.creator !== currentUserRole && !data.read) {
+                            // 標記為已讀 (這會觸發資料庫更新，讓對方看到已讀)
                             db.collection('messages').doc(doc.id).update({ read: true });
                         }
                     }
                 });
 
+                // 顯示時反轉 (舊 -> 新)
                 window.renderChat(msgs.reverse());
             }, 'chat');
 
-            // ... (其他部分保持不變) ...
-
-            bindSnapshot(db.collection('status').doc('current'), (doc) => { if (doc.exists) safeRun(() => window.renderStatus?.(doc.data()), 'status'); }, 'status');
-            // ... (在 initApp 函式內) ...
-            
-            // 改為監聽 'messages' 集合，依照時間排序，只抓最近 30 筆
-            bindSnapshot(db.collection('messages').orderBy('timestamp', 'desc').limit(30), (snapshot) => {
-                const msgs = [];
-                snapshot.forEach(doc => msgs.push({ id: doc.id, ...doc.data() }));
-                // 因為是 desc 抓最新的，顯示時要反轉變成「舊 -> 新」由上往下排
-                window.renderChat(msgs.reverse());
-            }, 'chat');
-            
-            // ... (其他監聽保持不變) ...
+            // 4. 狀態 (Status) 監聽
+            bindSnapshot(db.collection('status').doc('current'), (doc) => { 
+                if (doc.exists) safeRun(() => window.renderStatus?.(doc.data()), 'status'); 
+            }, 'status');
         }
 
         document.addEventListener('DOMContentLoaded', () => {
