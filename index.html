@@ -661,6 +661,20 @@
             background-color: var(--app-color) !important;
         }
 
+        /* === 新增：分類排序按鈕樣式 === */
+        .sort-btn {
+            padding: 4px;
+            border-radius: 6px;
+            color: #9ca3af;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sort-btn:hover { background-color: #f3f4f6; color: #4b5563; }
+        .sort-btn:active { transform: scale(0.9); background-color: #e5e7eb; }
+        .sort-btn.disabled { opacity: 0.3; cursor: default; pointer-events: none; }
+
     </style>
 </head>
 <body class="text-gray-700 h-screen flex flex-col overflow-hidden bg-white">
@@ -2922,33 +2936,35 @@
             const groups = {};
             const noCategoryKey = '未分類';
             
-            // 預設分類排序 (你可以調整順序)
-            const categoryOrder = ['重要', 'Debug', '工作', '生活', '購物', '請假', 'Party', '財務', noCategoryKey];
-            
+            // === 修改：取得使用者自訂的順序 ===
+            const categoryOrder = window.getCategoryOrder(); 
+            // ==============================
+
             let pendingCount = 0;
 
             todos.forEach(t => {
                 if(!t.done) pendingCount++;
-                
-                // 決定分類名稱
                 const cat = t.category || noCategoryKey;
-                
-                if (!groups[cat]) {
-                    groups[cat] = [];
-                }
+                if (!groups[cat]) { groups[cat] = []; }
                 groups[cat].push(t);
             });
 
-            // 2. 決定顯示順序 (已定義的排前面，自訂的排後面)
+            // 2. 決定顯示順序
             const sortedKeys = Object.keys(groups).sort((a, b) => {
                 const idxA = categoryOrder.indexOf(a);
                 const idxB = categoryOrder.indexOf(b);
+                // 如果都有在清單裡，照清單排
                 if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                // 如果只有 A 有，A 排前面
                 if (idxA !== -1) return -1;
+                // 如果只有 B 有，B 排前面
                 if (idxB !== -1) return 1;
-                return a.localeCompare(b); // 其他自訂分類照筆畫排
+                // 都沒有，照筆畫排
+                return a.localeCompare(b);
             });
 
+            // ... (後面的程式碼保持不變，直接複製原本的即可) ...
+            
             // 3. 渲染每個分類區塊
             if (sortedKeys.length === 0) {
                  container.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">目前沒有待辦事項 🎉</div>`;
@@ -2956,18 +2972,15 @@
                 sortedKeys.forEach(cat => {
                     const items = groups[cat];
                     const isCollapsed = !!window.collapsedCategories[cat];
-                    const count = items.filter(i => !i.done).length; // 只計算未完成的
+                    const count = items.filter(i => !i.done).length; 
                     
-                    // 區塊 HTML
                     const sectionId = `cat-section-${cat}`;
                     const listId = `cat-list-${cat}`;
                     const chevronClass = isCollapsed ? '' : 'rotate-180';
                     const listClass = isCollapsed ? 'hidden' : 'block';
                     
-                    // 標題列
                     let html = `
-                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                        <div class="flex items-center justify-between p-3 bg-gray-50/50 cursor-pointer select-none active:bg-gray-100 transition" onclick="window.toggleTodoCategory('${cat}')">
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-3"> <div class="flex items-center justify-between p-3 bg-gray-50/50 cursor-pointer select-none active:bg-gray-100 transition" onclick="window.toggleTodoCategory('${cat}')">
                             <div class="flex items-center gap-2">
                                 <i data-lucide="chevron-down" id="chevron-${cat}" class="w-4 h-4 text-gray-400 transition-transform duration-300 ${chevronClass}"></i>
                                 <h3 class="font-bold text-gray-700">${cat}</h3>
@@ -2978,9 +2991,7 @@
                         <div id="${listId}" class="${listClass} divide-y divide-gray-100 bg-white">
                     `;
                     
-                    // 該分類下的清單項目
                     items.forEach(t => {
-                        // 顏色邏輯 (改為顯示在卡片左側邊條)
                         let barColor = roleColors.haohao;
                         if (t.isJoint) barColor = roleColors.joint;
                         else if (t.creator === 'maomao') barColor = roleColors.maomao;
@@ -2988,7 +2999,6 @@
                         const titleClass = t.done ? "text-gray-400 line-through" : "text-gray-800";
                         const checkStyle = t.done ? `background-color: #d1d5db; border-color: #d1d5db;` : `border-color: ${barColor};`;
                         
-                        // 時間顯示
                         let calInfo = '';
                         if (t.dueDate) {
                             calInfo = `<span class="text-[10px] ${t.done?'text-gray-300':'text-gray-400'} ml-auto flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${t.dueDate}</span>`;
@@ -3001,7 +3011,6 @@
                                     ${t.done ? '<i data-lucide="check" class="w-3 h-3"></i>' : ''}
                                 </div>
                             </div>
-                            
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center justify-between">
                                     <span class="${titleClass} font-medium truncate">${t.title}</span>
@@ -3014,51 +3023,32 @@
                                     </span>
                                 </div>
                             </div>
-
                             <button onclick="window.deleteTodo('${t.id}'); event.stopPropagation();" class="flex-none p-2 text-gray-200 hover:text-red-400 transition ml-1">
                                 <i data-lucide="x" class="w-4 h-4"></i>
                             </button>
                         </div>`;
                     });
                     
-                    if(items.length === 0) {
-                        html += `<div class="p-4 text-center text-xs text-gray-300">此分類無項目</div>`;
-                    }
-
-                    html += `
-                        </div>
-                    </div>`; // 關閉 container
-                    
+                    if(items.length === 0) { html += `<div class="p-4 text-center text-xs text-gray-300">此分類無項目</div>`; }
+                    html += `</div></div>`;
                     container.innerHTML += html;
                 });
             }
 
-            // 更新 Dashboard (摘要) - 修改過濾邏輯
+            // 更新 Dashboard 摘要 (這部分保持不變)
             if(dashboardList) {
                 if (pendingCount === 0) {
                     dashboardList.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">沒有未完成的待辦事項 🎉</p>`;
                 } else {
                     dashboardList.innerHTML = '';
-                    
-                    // === 修改重點：加入分類過濾 ===
                     const pendings = todos.filter(t => {
-                        // 1. 必須是未完成
                         if (t.done) return false;
-                        
-                        // 2. 檢查該分類是否被隱藏
-                        // 如果沒有分類，視為 "未分類"，預設顯示
-                        // 如果有分類，檢查 visibility 設定 (預設 true)
                         const cat = t.category; 
-                        if (cat && window.todoCategoryVisibility[cat] === false) {
-                            return false; // 如果設定為 false，則隱藏
-                        }
-                        
+                        if (cat && window.todoCategoryVisibility[cat] === false) return false;
                         return true;
-                    }).slice(0, 3); // 取過濾後的前 3 筆
-                    // ==========================
+                    }).slice(0, 3);
 
                     if (pendings.length === 0 && pendingCount > 0) {
-                        // 如果有未完成項目，但全部都被隱藏了
                         dashboardList.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">待辦事項已隱藏 (請至清單查看)</p>`;
                     } else {
                         pendings.forEach(t => {
@@ -3070,9 +3060,6 @@
                                 ${t.category ? `<span class="text-[9px] px-1 rounded bg-gray-200 text-gray-500">${t.category}</span>` : ''}
                             </div>`;
                         });
-                        
-                        // 計算還有多少個 (這裡顯示的是 "總未完成數" 扣掉 "摘要顯示數")
-                        // 或者你可以改成 "還有 X 個被隱藏"
                         const remaining = todos.filter(t => !t.done).length - pendings.length;
                         if (remaining > 0) {
                             dashboardList.innerHTML += `<div class="text-center text-xs text-gray-400 mt-1">還有 ${remaining} 個項目...</div>`;
@@ -3080,7 +3067,6 @@
                     }
                 }
             }
-            
             if (typeof lucide !== 'undefined') lucide.createIcons();
         };
 
@@ -3861,44 +3847,123 @@ function initApp(db) {
             }
         };
 
-        // === 新增：渲染設定頁面的分類開關 ===
+        // === 修改：取得分類順序 (優先讀取使用者設定) ===
+        window.getCategoryOrder = function() {
+            // 1. 預設順序
+            const defaultOrder = ['重要', 'Debug', '工作', '生活', '購物', '請假', 'Party', '財務', '未分類'];
+            
+            // 2. 讀取儲存的順序
+            let savedOrder = JSON.parse(localStorage.getItem('todo_category_order') || '[]');
+            
+            // 3. 收集目前系統中所有已知的分類 (預設 + 自訂 + 現有待辦中出現的)
+            const allCats = new Set(defaultCategories.map(c => c.name));
+            if(window.customCategories) window.customCategories.forEach(c => allCats.add(c));
+            if(window.allTodosCache) window.allTodosCache.forEach(t => { if(t.category) allCats.add(t.category); });
+            allCats.add('未分類'); // 確保有未分類
+
+            // 4. 合併邏輯：
+            //    a. 先放 savedOrder 裡有的
+            //    b. 再放 savedOrder 裡沒有，但在 defaultOrder 裡有的 (插在後面)
+            //    c. 最後放全新的 (自訂的)
+            
+            const finalOrder = [];
+            
+            // a. 既有設定
+            savedOrder.forEach(cat => {
+                if (allCats.has(cat)) {
+                    finalOrder.push(cat);
+                    allCats.delete(cat);
+                }
+            });
+            
+            // b. 補上預設 (如果還沒被加進去)
+            defaultOrder.forEach(cat => {
+                if (allCats.has(cat)) {
+                    finalOrder.push(cat);
+                    allCats.delete(cat);
+                }
+            });
+            
+            // c. 補上剩下的 (新自訂的)
+            allCats.forEach(cat => finalOrder.push(cat));
+            
+            return finalOrder;
+        };
+
+        // === 修改：渲染設定頁面的分類 (加入排序按鈕) ===
         window.renderCategorySettings = function() {
             const container = document.getElementById('settings-category-list');
             if (!container) return;
             
             container.innerHTML = '';
             
-            // 1. 收集所有出現過的分類 (預設 + 自訂 + 現有待辦中用到的)
-            const allCats = new Set(defaultCategories.map(c => c.name));
-            if(window.customCategories) window.customCategories.forEach(c => allCats.add(c));
-            // 也要包含目前待辦事項中已經存在的分類 (避免漏網之魚)
-            if(allTodosCache) allTodosCache.forEach(t => { if(t.category) allCats.add(t.category); });
-            
-            const sortedCats = Array.from(allCats).sort();
+            // 1. 取得排序後的列表
+            const sortedCats = window.getCategoryOrder();
 
-            // 2. 產生開關 UI
-            sortedCats.forEach(cat => {
-                // 預設為 true (顯示)，除非明確被設為 false
+            // 2. 產生 UI
+            sortedCats.forEach((cat, index) => {
                 const isVisible = window.todoCategoryVisibility[cat] !== false;
-                
-                // 顏色裝飾
                 const defCat = defaultCategories.find(c => c.name === cat);
-                const color = defCat ? defCat.color : '#f3f4f6'; // 預設灰
+                const color = defCat ? defCat.color : '#f3f4f6'; 
                 
+                // 判斷是否為第一項或最後一項 (用來禁用按鈕)
+                const isFirst = index === 0;
+                const isLast = index === sortedCats.length - 1;
+
                 const html = `
-                <div class="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                    <div class="flex items-center gap-2">
-                        <div class="w-3 h-3 rounded-full" style="background-color: ${color}"></div>
-                        <span class="text-sm text-gray-700">${cat}</span>
+                <div class="flex items-center justify-between py-2 border-b border-gray-50 last:border-0 group">
+                    <div class="flex items-center gap-3 flex-1">
+                        <div class="flex flex-col gap-0.5">
+                            <button onclick="window.moveCategory('${cat}', -1)" class="sort-btn ${isFirst ? 'disabled' : ''}">
+                                <i data-lucide="chevron-up" class="w-3 h-3"></i>
+                            </button>
+                            <button onclick="window.moveCategory('${cat}', 1)" class="sort-btn ${isLast ? 'disabled' : ''}">
+                                <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${color}"></div>
+                        <span class="text-sm text-gray-700 font-medium">${cat}</span>
                     </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
+
+                    <label class="relative inline-flex items-center cursor-pointer ml-4">
                         <input type="checkbox" class="sr-only toggle-checkbox" onchange="window.toggleCategoryVisibility('${cat}')" ${isVisible ? 'checked' : ''}>
                         <div class="w-9 h-5 bg-gray-200 rounded-full toggle-bg transition-colors duration-200 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all input:checked:after:translate-x-full peer-checked:after:translate-x-full"></div>
-                        <style> .toggle-checkbox:checked + .toggle-bg:after { transform: translateX(100%); border-color: white; } </style>
                     </label>
                 </div>`;
                 container.innerHTML += html;
             });
+            
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        };
+
+        // === 新增：移動分類順序 ===
+        window.moveCategory = function(cat, direction) {
+            const currentOrder = window.getCategoryOrder();
+            const index = currentOrder.indexOf(cat);
+            
+            if (index === -1) return;
+            
+            const newIndex = index + direction;
+            
+            // 邊界檢查
+            if (newIndex < 0 || newIndex >= currentOrder.length) return;
+            
+            // 交換位置
+            const temp = currentOrder[newIndex];
+            currentOrder[newIndex] = currentOrder[index];
+            currentOrder[index] = temp;
+            
+            // 存檔
+            localStorage.setItem('todo_category_order', JSON.stringify(currentOrder));
+            
+            // 重新渲染設定頁面 (讓按鈕狀態更新)
+            window.renderCategorySettings();
+            
+            // 重新渲染外部待辦清單 (即時生效)
+            if (typeof window.renderTodos === 'function' && window.allTodosCache) {
+                window.renderTodos(window.allTodosCache);
+            }
         };
 
         // === 新增：切換分類顯示狀態 ===
