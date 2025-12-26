@@ -1551,10 +1551,27 @@
             let endDate = document.getElementById('input-date-end').value;
             if (!endDate) endDate = startDate;
 
-            const time = document.getElementById('input-time-start').value || '00:00'; 
-            const timestamp = new Date(`${startDate}T${time}:00`).toISOString();
-            const isAllDay = !document.getElementById('input-time-start').value;
-            const endTime = document.getElementById('input-time-end').value || '';
+            // === 新增驗證邏輯 ===
+            // 1. 檢查日期：結束日期不能早於開始日期
+            if (endDate < startDate) {
+                window.showToast('結束日期不能早於開始日期 🙅‍♂️');
+                throw new Error('Invalid date range');
+            }
+
+            const time = document.getElementById('input-time-start').value; 
+            const endTime = document.getElementById('input-time-end').value;
+
+            // 2. 檢查時間：如果是同一天，且都有填寫時間，結束時間不能早於開始時間
+            if (startDate === endDate && time && endTime) {
+                if (endTime < time) {
+                    window.showToast('結束時間不能早於開始時間 🙅‍♂️');
+                    throw new Error('Invalid time range');
+                }
+            }
+            // ===================
+
+            const timestamp = new Date(`${startDate}T${time || '00:00'}:00`).toISOString();
+            const isAllDay = !time; // 如果沒有開始時間，視為全天
 
             const baseData = {
               title, allDay: isAllDay, isJoint: document.getElementById('check-partner').checked || false,
@@ -1562,7 +1579,7 @@
               note: document.getElementById('input-note').value || '',
               creator: currentUserRole, color: currentSelectedColor,
               location: document.getElementById('input-location').value || '',
-              endDate: endDate, endTime: endTime, createdAt: new Date().toISOString()
+              endDate: endDate, endTime: endTime || '', createdAt: new Date().toISOString()
             };
 
             const isRecur = document.getElementById('check-recur-event').checked;
@@ -1589,7 +1606,7 @@
 
                     batchEvents = dateList.map(d => {
                         const dStr = d.toISOString().split('T')[0];
-                        const ts = new Date(`${dStr}T${time}:00`).toISOString();
+                        const ts = new Date(`${dStr}T${time || '00:00'}:00`).toISOString();
                         const newEndObj = new Date(d);
                         newEndObj.setDate(newEndObj.getDate() + durationDays);
                         const newEndDateStr = newEndObj.toISOString().split('T')[0];
