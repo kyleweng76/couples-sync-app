@@ -673,6 +673,28 @@
             padding-bottom: 20px; /* 微調對齊 */
         }
 
+        /* === 修正：自訂待辦分類輸入框 (聚焦時變主題色) === */
+        .focus-border-theme:focus {
+            border-color: var(--app-color) !important;
+            --tw-ring-color: var(--app-color) !important; /* ✅ 改成這樣才對 */
+            outline: none; /* 確保移除預設黑框 */
+        }
+
+        /* === 修正：分類標籤選取狀態 (改用變數) === */
+        .category-chip.active {
+            background-color: var(--app-color-light) !important; /* 淺色底 */
+            color: var(--app-color) !important;      /* 主色字 */
+            border-color: var(--app-color) !important; /* 主色框 */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            font-weight: bold;
+        }
+
+        /* === 修正：設定頁面的 Toggle 開關 (選取時變主題色) === */
+        /* 當 input 被 checked 時，後面的 div 變色 */
+        .toggle-checkbox:checked + .toggle-bg {
+            background-color: var(--app-color) !important;
+        }
+
     </style>
 </head>
 <body class="text-gray-700 h-screen flex flex-col overflow-hidden bg-white">
@@ -1157,15 +1179,15 @@
                 </div>
                 <div class="px-2 pt-2 pb-2">
                     <div class="flex justify-between items-center mb-2">
-                        <label class="text-xs font-bold text-gray-400 block">分類標籤</label>
-                        <button onclick="window.toggleCustomCategoryInput()" class="text-[10px] text-theme font-bold bg-green-50 px-2 py-0.5 rounded">自訂</button>
+                    <label class="text-xs font-bold text-gray-400 block">分類標籤</label>
+                    <button onclick="window.toggleCustomCategoryInput()" class="text-[10px] text-theme font-bold bg-theme-light px-2 py-0.5 rounded">自訂</button>
                     </div>
                     
                     <div id="todo-category-chips" class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                         </div>
                     
                     <div id="todo-custom-category-container" class="hidden mt-2 flex gap-2">
-                        <input type="text" id="todo-input-category-custom" placeholder="輸入新分類名稱" class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-ttgreen">
+                    <input type="text" id="todo-input-category-custom" placeholder="輸入新分類名稱" class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus-border-theme">
                     </div>
                     
                     <input type="hidden" id="todo-input-category" value="">
@@ -2333,11 +2355,34 @@
             const btnHaohao = document.getElementById('role-haohao');
             const btnMaomao = document.getElementById('role-maomao');
             if (btnHaohao) {
-                const activeClass = "flex-1 py-3 rounded-xl text-sm font-bold border-2 border-ttgreen bg-green-50 text-theme transition shadow-sm";
-                const inactiveClass = "flex-1 py-3 rounded-xl text-sm font-medium border border-gray-200 text-gray-400 bg-white transition";
-                if (currentUserRole === 'haohao') { btnHaohao.className = activeClass; btnMaomao.className = inactiveClass; } 
-                else if (currentUserRole === 'maomao') { btnHaohao.className = inactiveClass; btnMaomao.className = activeClass; } 
-                else { btnHaohao.className = inactiveClass; btnMaomao.className = inactiveClass; }
+                const activeClass = "flex-1 py-3 rounded-xl text-sm font-bold border-2 border-transparent bg-theme text-white shadow-md transition transform scale-105";
+                
+                const inactiveClass = "flex-1 py-3 rounded-xl text-sm font-medium border border-gray-200 text-gray-400 bg-white transition hover:bg-gray-50";
+
+                if (currentUserRole === 'haohao') { 
+                    btnHaohao.className = activeClass; 
+                    // 強制覆寫背景色，確保皓皓按鈕一定是皓皓綠 (即使還沒切換完成)
+                    btnHaohao.style.backgroundColor = roleColors.haohao;
+                    btnHaohao.style.borderColor = roleColors.haohao;
+                    
+                    btnMaomao.className = inactiveClass; 
+                    btnMaomao.style.backgroundColor = '';
+                    btnMaomao.style.borderColor = '';
+                } 
+                else if (currentUserRole === 'maomao') { 
+                    btnHaohao.className = inactiveClass;
+                    btnHaohao.style.backgroundColor = '';
+                    btnHaohao.style.borderColor = '';
+
+                    btnMaomao.className = activeClass; 
+                    // 強制覆寫背景色，確保毛毛按鈕一定是毛毛粉
+                    btnMaomao.style.backgroundColor = roleColors.maomao;
+                    btnMaomao.style.borderColor = roleColors.maomao;
+                } 
+                else { 
+                    btnHaohao.className = inactiveClass; 
+                    btnMaomao.className = inactiveClass; 
+                }
             }
             const badge = document.getElementById('header-role-badge');
             const badgeName = document.getElementById('header-role-name');
@@ -3885,8 +3930,9 @@ function initApp(db) {
                         <span class="text-sm text-gray-700">${cat}</span>
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" class="sr-only peer" onchange="window.toggleCategoryVisibility('${cat}')" ${isVisible ? 'checked' : ''}>
-                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-ttgreen"></div>
+                        <input type="checkbox" class="sr-only toggle-checkbox" onchange="window.toggleCategoryVisibility('${cat}')" ${isVisible ? 'checked' : ''}>
+                        <div class="w-9 h-5 bg-gray-200 rounded-full toggle-bg transition-colors duration-200 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all input:checked:after:translate-x-full peer-checked:after:translate-x-full"></div>
+                        <style> .toggle-checkbox:checked + .toggle-bg:after { transform: translateX(100%); border-color: white; } </style>
                     </label>
                 </div>`;
                 container.innerHTML += html;
