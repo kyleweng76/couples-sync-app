@@ -38,7 +38,6 @@
             --app-color: #2cc998; /* 預設為皓皓綠 */
         }
         
-        /* 通用主題色類別 (取代原本的 bg-ttgreen / text-ttgreen) */
         .bg-theme { background-color: var(--app-color) !important; }
         .text-theme { color: var(--app-color) !important; }
         .border-theme { border-color: var(--app-color) !important; }
@@ -732,7 +731,7 @@
 
             <div class="px-4 flex gap-3 mb-6">
                 <button onclick="window.openAddModal()" class="flex-1 bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-gray-600 flex items-center justify-center gap-2 active:bg-gray-50 transition">
-                    <i data-lucide="calendar-plus" class="w-5 h-5 text-ttgreen"></i>
+                    <i data-lucide="calendar-plus" class="w-5 h-5 text-theme"></i>
                     <span class="text-sm font-bold">新增行程</span>
                 </button>
                 <button onclick="window.openAddTodoModal()" class="flex-1 bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-gray-600 flex items-center justify-center gap-2 active:bg-gray-50 transition">
@@ -754,9 +753,9 @@
             <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 p-4 mx-4 mt-4">
                 <div class="flex justify-between items-center mb-3">
                     <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2">
-                        <i data-lucide="check-square" class="w-4 h-4 text-ttgreen"></i> 待辦清單
+                        <i data-lucide="check-square" class="w-4 h-4 text-theme"></i> 待辦清單
                     </h3>
-                    <button onclick="window.switchTab('todo')" class="text-xs text-ttgreen font-medium">查看全部</button>
+                    <button onclick="window.switchTab('todo')" class="text-xs text-theme font-medium">查看全部</button>
                 </div>
                 <div id="dashboard-todo-list" class="space-y-2">
                     <p class="text-xs text-gray-400 text-center py-2">載入中...</p>
@@ -769,7 +768,7 @@
         <div id="page-calendar" class="page-content">
             <div class="flex-none bg-white z-10 border-b border-gray-200 px-4 flex items-center justify-center h-[60px] relative">
                  <div class="flex bg-gray-100 p-1 rounded-lg">
-                    <button onclick="window.switchCalendarView('list')" id="btn-view-list" class="w-16 py-1.5 text-xs font-bold rounded-md bg-white shadow-sm text-ttgreen transition-all">列表</button>
+                    <button onclick="window.switchCalendarView('list')" id="btn-view-list" class="w-16 py-1.5 text-xs font-bold rounded-md bg-white shadow-sm text-theme transition-all">列表</button>
                     <button onclick="window.switchCalendarView('month')" id="btn-view-month" class="w-16 py-1.5 text-xs font-medium rounded-md text-gray-500 transition-all">月曆</button>
                 </div>
                 
@@ -1159,7 +1158,7 @@
                 <div class="px-2 pt-2 pb-2">
                     <div class="flex justify-between items-center mb-2">
                         <label class="text-xs font-bold text-gray-400 block">分類標籤</label>
-                        <button onclick="window.toggleCustomCategoryInput()" class="text-[10px] text-ttgreen font-bold bg-green-50 px-2 py-0.5 rounded">自訂</button>
+                        <button onclick="window.toggleCustomCategoryInput()" class="text-[10px] text-theme font-bold bg-green-50 px-2 py-0.5 rounded">自訂</button>
                     </div>
                     
                     <div id="todo-category-chips" class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
@@ -1295,7 +1294,7 @@
 
             <div id="calendar-days" class="calendar-grid"></div>
             <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center text-sm font-medium">
-                <button onclick="window.selectToday()" class="text-ttgreen hover:bg-green-50 px-3 py-1.5 rounded-lg transition">今天</button>
+                <button onclick="window.selectToday()" class="text-theme hover:bg-green-50 px-3 py-1.5 rounded-lg transition">今天</button>
                 <div class="flex gap-2">
                     <button onclick="window.clearDate()" class="text-red-400 hover:bg-red-50 px-3 py-1.5 rounded-lg transition">清除</button>
                     <button onclick="window.closeCalendar()" class="text-gray-400 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition">取消</button>
@@ -2334,7 +2333,7 @@
             const btnHaohao = document.getElementById('role-haohao');
             const btnMaomao = document.getElementById('role-maomao');
             if (btnHaohao) {
-                const activeClass = "flex-1 py-3 rounded-xl text-sm font-bold border-2 border-ttgreen bg-green-50 text-ttgreen transition shadow-sm";
+                const activeClass = "flex-1 py-3 rounded-xl text-sm font-bold border-2 border-ttgreen bg-green-50 text-theme transition shadow-sm";
                 const inactiveClass = "flex-1 py-3 rounded-xl text-sm font-medium border border-gray-200 text-gray-400 bg-white transition";
                 if (currentUserRole === 'haohao') { btnHaohao.className = activeClass; btnMaomao.className = inactiveClass; } 
                 else if (currentUserRole === 'maomao') { btnHaohao.className = inactiveClass; btnMaomao.className = activeClass; } 
