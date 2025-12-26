@@ -703,14 +703,14 @@
                     
             <div class="flex-none bg-white z-20 shadow-sm relative">
                         <div class="flex justify-between items-center p-3 border-b border-gray-100">
-                            <div class="flex items-center gap-3">
-                                <h2 id="big-cal-title" class="text-lg font-bold text-gray-800 pl-2">...</h2>
-                                <button onclick="window.jumpToToday()" class="text-xs font-bold text-ttgreen bg-green-50 px-3 py-1 rounded-full hover:bg-green-100 transition active:scale-95">
+                            <h2 id="big-cal-title" class="text-lg font-bold text-gray-800 pl-2">...</h2>
+                            
+                            <div class="flex items-center gap-2">
+                                <button onclick="window.jumpToToday()" class="text-xs font-bold text-ttgreen bg-green-50 px-3 py-1.5 rounded-full hover:bg-green-100 transition active:scale-95 mr-1">
                                     今天
                                 </button>
-                            </div>
-                            <div class="flex gap-2">
-                                <button onclick="window.changeBigCalMonth(-1)" class="p-1.5 rounded-full hover:bg-gray-100 active:bg-gray-200 transition">                                    <i data-lucide="chevron-left" class="w-5 h-5 text-gray-600"></i>
+                                <button onclick="window.changeBigCalMonth(-1)" class="p-1.5 rounded-full hover:bg-gray-100 active:bg-gray-200 transition">
+                                    <i data-lucide="chevron-left" class="w-5 h-5 text-gray-600"></i>
                                 </button>
                                 <button onclick="window.changeBigCalMonth(1)" class="p-1.5 rounded-full hover:bg-gray-100 active:bg-gray-200 transition">
                                     <i data-lucide="chevron-right" class="w-5 h-5 text-gray-600"></i>
