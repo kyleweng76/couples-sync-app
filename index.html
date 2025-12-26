@@ -1233,6 +1233,7 @@
         let currentViewMode = 'list';
         let timePickerTarget = ''; // FIX: variable for time picker
         let deleteTarget = 'event'; // 'event' or 'todo'
+        let currentSelectedDate = null; // 用來記住目前月曆選中的日期
         let noteToDelete = null;
         
         // Recurrence Variables
@@ -2838,12 +2839,15 @@
             }
         };
 
-        window.changeBigCalMonth = function(delta) {
+            window.changeBigCalMonth = function(delta) {
             bigCalDate.setMonth(bigCalDate.getMonth() + delta);
             window.renderBigCalendar();
         };
         
-        window.selectBigCalendarDate = function(y, m, d, targetId = null) {
+            window.selectBigCalendarDate = function(y, m, d, targetId = null, preventScroll = false) {
+            // 0. 記住當前選擇，方便資料更新時刷新
+            currentSelectedDate = { y, m, d };
+
             // 1. 視覺選取樣式
             document.querySelectorAll('.big-cal-cell.selected').forEach(e => e.classList.remove('selected'));
             if (m === bigCalDate.getMonth()) {
@@ -2875,47 +2879,45 @@
                 if (dayEvents.length === 0) {
                     listEl.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs">這天沒有安排行程 😴</div>`;
                 } else {
+                    // 第四個參數 true = 隱藏月份標題
                     window.renderEventListItems(dayEvents, listEl, true, true);
                 }
             }
 
-            // === 4. 觸發捲動與高亮 (邏輯修正) ===
-            setTimeout(() => {
-                const scrollArea = document.getElementById('calendar-scroll-area');
-                const listHeader = document.getElementById('selected-date-label');
-                let didScrollHeader = false;
+            // === 4. 觸發捲動與高亮 ===
+            // 只有在 preventScroll 為 false 時才執行捲動 (避免刪除更新時畫面亂跳)
+            if (!preventScroll) {
+                setTimeout(() => {
+                    const scrollArea = document.getElementById('calendar-scroll-area');
+                    const listHeader = document.getElementById('selected-date-label');
+                    let didScrollHeader = false;
 
-                // --- 動作 A：優先確保清單標題滑上來 (解決滑不下去的問題) ---
-                if (scrollArea && listHeader) {
-                    const headerRect = listHeader.getBoundingClientRect();
-                    const containerRect = scrollArea.getBoundingClientRect();
-                    
-                    // 只要標題在視窗下半部 (太低了) 或者被擋住，就捲上來
-                    // 即使有點到行程，這個動作也要執行，確保清單進入視野
-                    if (headerRect.top > containerRect.bottom - 250) { 
-                         listHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                         didScrollHeader = true; // 標記已執行捲動
-                    }
-                }
-
-                // --- 動作 B：如果有指定行程，進行高亮 (與 動作 A 不衝突) ---
-                if (targetId) {
-                    const targetEl = document.getElementById(`list-item-${targetId}`);
-                    if (targetEl) {
-                        // 如果剛剛沒有捲動標題 (代表標題已經在上面了，清單很清楚)，
-                        // 這時候我們才執行「聚焦到該行程」，避免畫面亂跳
-                        if (!didScrollHeader) {
-                             targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
+                    // --- 動作 A：優先確保清單標題滑上來 ---
+                    if (scrollArea && listHeader) {
+                        const headerRect = listHeader.getBoundingClientRect();
+                        const containerRect = scrollArea.getBoundingClientRect();
                         
-                        // 不管有沒有捲動，都要執行黃色閃爍高亮
-                        targetEl.classList.remove('bg-yellow-100', 'transition-colors', 'duration-1000');
-                        void targetEl.offsetWidth; // 強制重繪
-                        targetEl.classList.add('bg-yellow-100', 'transition-colors', 'duration-1000');
-                        setTimeout(() => targetEl.classList.remove('bg-yellow-100'), 1500);
+                        if (headerRect.top > containerRect.bottom - 250) { 
+                             listHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                             didScrollHeader = true; 
+                        }
                     }
-                }
-            }, 150); // 等待渲染完成
+
+                    // --- 動作 B：如果有指定行程，進行高亮 ---
+                    if (targetId) {
+                        const targetEl = document.getElementById(`list-item-${targetId}`);
+                        if (targetEl) {
+                            if (!didScrollHeader) {
+                                 targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                            targetEl.classList.remove('bg-yellow-100', 'transition-colors', 'duration-1000');
+                            void targetEl.offsetWidth; 
+                            targetEl.classList.add('bg-yellow-100', 'transition-colors', 'duration-1000');
+                            setTimeout(() => targetEl.classList.remove('bg-yellow-100'), 1500);
+                        }
+                    }
+                }, 150); 
+            }
         };
         
         window.handleBigCalDbClick = function(y, m, d) {
@@ -3179,7 +3181,14 @@
               allEventsCache = events;
               safeRun(() => window.renderDashboardNextUp(window.getCalendarItems()), 'dashboard-events');
               safeRun(() => window.renderCalendarListView(), 'calendar-list');
-              if (currentViewMode === 'month') safeRun(() => window.renderBigCalendar(), 'big-calendar');
+              
+              if (currentViewMode === 'month') { 
+                  safeRun(() => window.renderBigCalendar(), 'big-calendar');
+                  // === 新增：如果目前有選中某天，立即刷新下方的清單 ===
+                  if (currentSelectedDate && currentSelectedDate.y === bigCalDate.getFullYear() && currentSelectedDate.m === bigCalDate.getMonth()) {
+                      window.selectBigCalendarDate(currentSelectedDate.y, currentSelectedDate.m, currentSelectedDate.d, null, true); // true = 不捲動
+                  }
+              }
             }, 'events');
             bindSnapshot(db.collection('todos').orderBy('createdAt', 'desc'), (snapshot) => {
               const todos = []; snapshot.forEach(doc => todos.push({ id: doc.id, ...doc.data() }));
@@ -3187,7 +3196,14 @@
               safeRun(() => window.renderTodos(todos), 'todos');
               safeRun(() => window.renderDashboardNextUp(window.getCalendarItems()), 'dashboard-todos');
               safeRun(() => window.renderCalendarListView(), 'calendar-list-from-todos');
-              if (currentViewMode === 'month') safeRun(() => window.renderBigCalendar(), 'big-calendar-from-todos');
+              
+              if (currentViewMode === 'month') { 
+                  safeRun(() => window.renderBigCalendar(), 'big-calendar-from-todos');
+                  // === 新增：待辦更新時，也刷新當日清單 ===
+                  if (currentSelectedDate && currentSelectedDate.y === bigCalDate.getFullYear() && currentSelectedDate.m === bigCalDate.getMonth()) {
+                      window.selectBigCalendarDate(currentSelectedDate.y, currentSelectedDate.m, currentSelectedDate.d, null, true);
+                  }
+              }
             }, 'todos');
             
             // ... 在 initApp 函式內 ...
