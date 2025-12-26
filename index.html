@@ -701,12 +701,16 @@
                 </div>
                 <div id="calendar-view-month-container" class="absolute inset-0 flex flex-col bg-gray-50 hidden">
                     
-                    <div class="flex-none bg-white z-20 shadow-sm relative">
+            <div class="flex-none bg-white z-20 shadow-sm relative">
                         <div class="flex justify-between items-center p-3 border-b border-gray-100">
-                            <h2 id="big-cal-title" class="text-lg font-bold text-gray-800 pl-2">...</h2>
+                            <div class="flex items-center gap-3">
+                                <h2 id="big-cal-title" class="text-lg font-bold text-gray-800 pl-2">...</h2>
+                                <button onclick="window.jumpToToday()" class="text-xs font-bold text-ttgreen bg-green-50 px-3 py-1 rounded-full hover:bg-green-100 transition active:scale-95">
+                                    今天
+                                </button>
+                            </div>
                             <div class="flex gap-2">
-                                <button onclick="window.changeBigCalMonth(-1)" class="p-1.5 rounded-full hover:bg-gray-100 active:bg-gray-200 transition">
-                                    <i data-lucide="chevron-left" class="w-5 h-5 text-gray-600"></i>
+                                <button onclick="window.changeBigCalMonth(-1)" class="p-1.5 rounded-full hover:bg-gray-100 active:bg-gray-200 transition">                                    <i data-lucide="chevron-left" class="w-5 h-5 text-gray-600"></i>
                                 </button>
                                 <button onclick="window.changeBigCalMonth(1)" class="p-1.5 rounded-full hover:bg-gray-100 active:bg-gray-200 transition">
                                     <i data-lucide="chevron-right" class="w-5 h-5 text-gray-600"></i>
@@ -3012,6 +3016,27 @@
                     else window.changeBigCalMonth(-1);         // 右滑 -> 上個月
                 }
             }, {passive: true});
+        };
+
+            // === 新增：一鍵回到今天 ===
+        window.jumpToToday = function() {
+            const now = new Date();
+            
+            // 1. 更新全域變數 bigCalDate 為今天
+            bigCalDate = new Date(now);
+            
+            // 2. 重畫月曆格子 (會自動切換到本月)
+            window.renderBigCalendar();
+            
+            // 3. 選取今天的日期 (這會觸發下方清單更新 + 自動捲動)
+            window.selectBigCalendarDate(
+                now.getFullYear(), 
+                now.getMonth(), 
+                now.getDate()
+            );
+            
+            // 4. 給一點震動回饋 (如果裝置支援)
+            if (navigator.vibrate) navigator.vibrate(5);
         };
 
             window.renderBigCalendar = function() {
