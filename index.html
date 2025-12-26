@@ -3760,7 +3760,7 @@ function initApp(db) {
                             ${readHtml}
                             <span class="chat-time">${timeStr}</span>
                         </div>
-                        <div class="chat-bubble shadow-md" style="${bubbleStyle}" onclick="window.confirmDeleteMsg('${msg.id}')">
+                        <div class="chat-bubble shadow-md" style="${bubbleStyle}">
                             ${msg.text}
                         </div>
                     </div>`;
@@ -3774,7 +3774,7 @@ function initApp(db) {
                             <span class="text-[10px] text-gray-400 mb-0.5 ml-0.5 font-medium">${displayName}</span>
                             
                             <div class="flex items-end">
-                                <div class="chat-bubble shadow-md" style="${bubbleStyle}" onclick="window.confirmDeleteMsg('${msg.id}')">
+                                <div class="chat-bubble shadow-md" style="${bubbleStyle}">
                                     ${msg.text}
                                 </div>
                                 <div class="chat-info-col">
