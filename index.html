@@ -2221,14 +2221,21 @@
 
                     let displayIcon = '';
                     let isVac = false;
+                    
+                    // 1. 如果是休假，直接在標題前加上 Emoji
                     if (typeof window.isLeaveEvent === 'function' && window.isLeaveEvent(item.title)) {
                         isVac = true;
-                        displayIcon = ''; 
+                        displayIcon = '🏖 '; 
                     }
 
                     let tagHtml = '';
-                    if (item.isTodo) tagHtml = `<span class="ml-2 text-[10px] border border-gray-200 text-gray-400 px-1 rounded flex-shrink-0">待辦</span>`;
-                    else if (isVac) tagHtml = `<span class="ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-500 border border-blue-100 flex-shrink-0">🏖 休假</span>`;
+                    if (item.isTodo) {
+                        tagHtml = `<span class="ml-2 text-[10px] border border-gray-200 text-gray-400 px-1 rounded flex-shrink-0">待辦</span>`;
+                    } 
+                    // 2. 如果是休假，tagHtml 留空 (因為已經加在標題了)
+                    else if (isVac) {
+                        tagHtml = ''; 
+                    }
                     else if (item.status === 'tbc') tagHtml = `<span class="ml-2 status-tag tbc">TBC</span>`;
                     else if (item.status === 'tbd') tagHtml = `<span class="ml-2 status-tag tbd">TBD</span>`;
 
