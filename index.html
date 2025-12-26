@@ -302,16 +302,16 @@
             border-right: none;
         }
 
-        /* 修改：日期頭部容器 (加大間距版) */
+        /* 修改：日期頭部容器 (還原 margin) */
         .big-cal-day-header {
             display: flex;
             align-items: baseline;
             justify-content: center;
             gap: 3px;
             padding-top: 2px;
-            padding-bottom: 2px; /* 增加一點內部留白 */
-            margin-bottom: 12px; /* <--- 改成 12px，強制拉開與下方行程的距離 */
-            height: 24px;        /* 稍微加高容器，避免圓圈被切到 */
+            padding-bottom: 2px;
+            margin-bottom: 0px; /* <--- 改回 0，我們改用下方的 padding 來推 */
+            height: 24px;
             line-height: 24px;
             position: relative;
         }
@@ -356,13 +356,14 @@
         }
         .big-cal-cell.today .big-cal-day-num { color: white !important; } /* 今天強制白字 */
         
-        /* 讓內容區塊變成絕對佈局的容器 */
+        /* 修改：內容區塊容器 (加入 padding-top) */
         .big-cal-content-wrapper {
             flex: 1;
             width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 1px; /* 行程之間的微小間距 */
+            gap: 1px;
+            padding-top: 14px; /* <--- 關鍵！強制在頂部留出 14px 的空白空間 */
         }
 
         /* 行程條樣式：更扁、文字更小 */
