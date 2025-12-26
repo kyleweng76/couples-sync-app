@@ -1245,7 +1245,12 @@
 
         function isLeaveEvent(title) {
             if (!title) return false;
-            return title.includes('休假') || title.includes('請假');
+            // 只要標題包含這些關鍵字，都會被視為休假類型的行程
+            return title.includes('休假') || 
+                   title.includes('請假') || 
+                   title.includes('關線') || 
+                   title.includes('公休') || 
+                   title.includes('病假');
         }
         
         function hideBubble(bubbleEl, dotEl, timeEl, role) {
