@@ -135,10 +135,12 @@
             margin-right: 2px;
         }
 
+        /* 修改：氣泡寬度 (放寬限制，解決太快換行的問題) */
         .chat-bubble {
             padding: 8px 12px;
-            font-size: 14px;
+            font-size: 15px; /* 字體微調大一點，閱讀更舒服 */
             line-height: 1.5;
+            max-width: 88%; /* <--- 關鍵！原本是 75%，改大到 88% */
             position: relative;
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
             word-wrap: break-word;
@@ -157,15 +159,16 @@
             margin-top: 2px; /* 稍微對齊 */
         }
         
-        /* 修改：時間文字顏色 (改成灰色，取消陰影) */
+        /* 修改：時間文字顏色 (加深灰色，取消陰影，確保清楚) */
         .chat-time {
-            font-size: 9px;
-            color: #9ca3af; /* <--- 改成灰色，原本是 white */
-            text-shadow: none; /* <--- 移除陰影，因為背景是淺色 */
+            font-size: 10px; /* 稍微加大一點點，原本 9px */
+            color: #6b7280 !important; /* <--- 關鍵！改成深灰色 */
+            text-shadow: none !important; /* 移除陰影 */
             margin: 0 4px;
             align-self: flex-end;
             margin-bottom: 2px;
             min-width: 25px;
+            line-height: 1;
         }
         .page-content.active { display: block; }
         
@@ -574,14 +577,14 @@
             margin-left: 6px;
         }
 
-        /* 修改：已讀標籤樣式 (改成灰色) */
+        /* 修改：已讀標籤 (統一深灰色) */
         .chat-read {
             font-size: 10px;
-            color: #9ca3af;  /* <--- 改成灰色，原本是 white */
+            color: #6b7280 !important; /* <--- 關鍵！改成深灰色 */
             font-weight: normal; 
             line-height: 1;
             margin-bottom: 3px;
-            text-shadow: none; /* <--- 移除陰影 */
+            text-shadow: none;
         }
         
         /* 強制覆寫時間樣式，確保對齊 */
