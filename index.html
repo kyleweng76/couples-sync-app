@@ -499,19 +499,39 @@
         }
         .chat-row.right .chat-time { text-align: right; }
 
-        /* 休假小標籤 (Badge) */
-        .leave-badge {
-            font-size: 9px;
-            height: 15px;
-            line-height: 15px;
-            padding: 0 4px;
-            border-radius: 4px;
+        /* === 休假專用樣式 (新版) === */
+        .leave-row {
+            display: flex;
+            gap: 2px;
+            margin-bottom: 2px; /* 與下方行程保持一點距離 */
+            min-height: 0;      /* 沒休假時不佔高度 */
+        }
+
+        .leave-chip {
+            font-size: 10px;
             color: white;
             font-weight: bold;
-            margin-left: 2px;
+            padding: 0 4px; /* 稍微寬一點，讓字舒服 */
+            border-radius: 4px;
+            height: 16px;   /* 固定高度，跟一般的行程條差不多或略小 */
+            line-height: 16px;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+        }
+
+        /* 日期 Header 微調 (改回靠左或置中，這裡維持置中比較好看) */
+        .big-cal-day-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 3px;
+            padding-top: 2px;
+            margin-bottom: 2px;
+            height: 20px;
+            line-height: 20px;
+            position: relative;
         }
 
     </style>
@@ -2877,7 +2897,7 @@
             }, {passive: true});
         };
 
-window.renderBigCalendar = function() {
+            window.renderBigCalendar = function() {
             const y = bigCalDate.getFullYear();
             const m = bigCalDate.getMonth();
             const title = document.getElementById('big-cal-title');
@@ -2891,7 +2911,7 @@ window.renderBigCalendar = function() {
             const monthStart = new Date(y, m, 1);
             const monthEnd = new Date(y, m, daysInMonth, 23, 59, 59);
 
-            // 1. 篩選出本月相關行程 (包含跨月)
+            // 1. 篩選出本月相關行程
             const allVisibleEvents = items.filter(e => {
                 const s = new Date(e.startDate || e.timestamp);
                 const endStr = e.endDate || e.dueDateEnd || (e.startDate || e.dueDate);
@@ -2899,15 +2919,14 @@ window.renderBigCalendar = function() {
                 return end >= monthStart && s <= monthEnd;
             });
 
-            // === 修改重點 A：將資料拆分為「顯示條」與「休假標籤」 ===
-            // 1. 一般行程 (要畫成條狀的)
-            const barEvents = allVisibleEvents.filter(e => !window.isLeaveEvent(e.title));
-            // 2. 休假行程 (要變成標籤的)
+            // === 重點：將行程拆分 ===
+            // 休假行程 (另外處理，不參與一般排版)
             const leaveEvents = allVisibleEvents.filter(e => window.isLeaveEvent(e.title));
+            // 一般行程 (要畫成條狀的)
+            const barEvents = allVisibleEvents.filter(e => !window.isLeaveEvent(e.title));
 
-            // 2. 預先排序 (只針對 barEvents 做排序與軌道分配)
+            // 2. 對一般行程進行排序與軌道分配 (Tetris 演算法)
             barEvents.sort((a, b) => {
-                // 計算持續天數
                 const getDuration = (evt) => {
                     const s = new Date(evt.startDate || evt.timestamp);
                     const eStr = evt.endDate || evt.dueDateEnd || (evt.startDate || evt.dueDate);
@@ -2916,11 +2935,10 @@ window.renderBigCalendar = function() {
                 };
                 const durA = getDuration(a);
                 const durB = getDuration(b);
-                if (Math.abs(durA - durB) > 86400000) return durB - durA; // 長行程優先
-                return new Date(a.timestamp) - new Date(b.timestamp); // 最後比時間
+                if (Math.abs(durA - durB) > 86400000) return durB - durA; 
+                return new Date(a.timestamp) - new Date(b.timestamp);
             });
 
-            // 3. 軌道分配演算法 (只針對 barEvents)
             const slots = {}; 
             const eventTrack = {}; 
 
@@ -2937,7 +2955,6 @@ window.renderBigCalendar = function() {
                     }
                     loopDate.setDate(loopDate.getDate() + 1);
                 }
-
                 if (coveredKeys.length === 0) return;
 
                 let track = 0;
@@ -2961,7 +2978,7 @@ window.renderBigCalendar = function() {
                 }
             });
 
-            // 4. 開始渲染 HTML
+            // 3. 開始渲染格子
             let html = '';
             for(let i=0; i<firstDay; i++) {
                 html += `<div class="big-cal-cell bg-gray-50/30"></div>`;
@@ -2971,10 +2988,8 @@ window.renderBigCalendar = function() {
                 const current = new Date(y, m, d);
                 const nowStr = new Date().toDateString();
                 const isToday = current.toDateString() === nowStr;
-                const dayKey = `${d}`;
-
-                // === 修改重點 B：渲染休假標籤 (Badge) ===
-                // 找出這一天有哪些休假
+                
+                // --- A. 處理休假標籤 (放在最上面) ---
                 const todaysLeaves = leaveEvents.filter(e => {
                     const s = new Date(e.startDate || e.timestamp); s.setHours(0,0,0,0);
                     const endStr = e.endDate || e.dueDateEnd || (e.startDate || e.dueDate);
@@ -2982,17 +2997,31 @@ window.renderBigCalendar = function() {
                     return current >= s && current <= end;
                 });
 
-                let badgesHtml = '';
-                // 檢查是否有皓皓的假
-                if (todaysLeaves.some(e => e.creator === 'haohao' || e.isJoint)) {
-                    badgesHtml += `<span class="leave-badge" style="background-color:${roleColors.haohao}">皓休</span>`;
-                }
-                // 檢查是否有毛毛的假
-                if (todaysLeaves.some(e => e.creator === 'maomao' || e.isJoint)) {
-                    badgesHtml += `<span class="leave-badge" style="background-color:${roleColors.maomao}">毛休</span>`;
+                // 檢查當天有誰休假
+                let hasHaohaoLeave = false;
+                let hasMaomaoLeave = false;
+                // 為了綁定點擊事件，我們需要紀錄 ID
+                let haohaoLeaveId = '';
+                let maomaoLeaveId = '';
+
+                todaysLeaves.forEach(e => {
+                    if (e.creator === 'haohao' || e.isJoint) { hasHaohaoLeave = true; haohaoLeaveId = e.id; }
+                    if (e.creator === 'maomao' || e.isJoint) { hasMaomaoLeave = true; maomaoLeaveId = e.id; }
+                });
+
+                let leaveHtml = '';
+                if (hasHaohaoLeave || hasMaomaoLeave) {
+                    leaveHtml += `<div class="leave-row">`;
+                    if (hasHaohaoLeave) {
+                        leaveHtml += `<span class="leave-chip" style="background-color:${roleColors.haohao}" onclick="event.stopPropagation(); window.selectBigCalendarDate(${y},${m},${d}, '${haohaoLeaveId}')">休</span>`;
+                    }
+                    if (hasMaomaoLeave) {
+                        leaveHtml += `<span class="leave-chip" style="background-color:${roleColors.maomao}" onclick="event.stopPropagation(); window.selectBigCalendarDate(${y},${m},${d}, '${maomaoLeaveId}')">休</span>`;
+                    }
+                    leaveHtml += `</div>`;
                 }
 
-                // 找出當天所有的一般行程 (Bars)
+                // --- B. 處理一般行程條 ---
                 const dayBarEvents = barEvents.filter(e => {
                     const s = new Date(e.startDate || e.timestamp); s.setHours(0,0,0,0);
                     const endStr = e.endDate || e.dueDateEnd || (e.startDate || e.dueDate);
@@ -3000,19 +3029,16 @@ window.renderBigCalendar = function() {
                     return current >= s && current <= end;
                 });
 
-                // 渲染行程條 (邏輯不變，只是來源變成了 dayBarEvents)
-                const MAX_VISIBLE_TRACKS = 4;
+                const MAX_VISIBLE_TRACKS = 4; // 最多顯示幾行一般行程
                 let bars = '';
                 let maxTrackUsed = -1;
-                dayBarEvents.forEach(e => {
-                    if (eventTrack[e.id] > maxTrackUsed) maxTrackUsed = eventTrack[e.id];
-                });
-
+                dayBarEvents.forEach(e => { if (eventTrack[e.id] > maxTrackUsed) maxTrackUsed = eventTrack[e.id]; });
+                
+                // 如果有休假，顯示空間會被壓縮一點，但我們讓它自然往下擠
                 const renderLimit = Math.min(maxTrackUsed, MAX_VISIBLE_TRACKS - 1);
                 
                 for (let t = 0; t <= renderLimit; t++) {
                     const evt = dayBarEvents.find(e => eventTrack[e.id] === t);
-
                     if (evt) {
                         let bg;
                         if (evt.isJoint) bg = roleColors.joint;
@@ -3025,8 +3051,6 @@ window.renderBigCalendar = function() {
                         const isStart = current.getTime() === s.getTime();
                         const isEnd = current.getTime() === end.getTime();
                         const isSingle = isStart && isEnd;
-                        
-                        // 休假已經變 Badge 了，這裡只剩一般行程，所以不用判斷 isVacation
                         const showLabel = isStart || isSingle || (d === 1);
 
                         let styleAttr = `background-color:${bg};`;
@@ -3044,7 +3068,6 @@ window.renderBigCalendar = function() {
                                 if (!showLabel) content = '&nbsp;'; 
                             }
                         }
-
                         bars += `<div class="event-bar ${evt.isTodo&&evt.done?'done':''} ${shapeClass}" style="${styleAttr}" onclick="event.stopPropagation(); window.selectBigCalendarDate(${y},${m},${d}, '${evt.id}')">${content}</div>`;
                     } else {
                         bars += `<div class="event-bar invisible"></div>`;
@@ -3061,7 +3084,6 @@ window.renderBigCalendar = function() {
                 const { lunar, holiday } = window.getLunarAndHoliday(current);
                 let extraInfoHtml = '';
                 let dayNumStyle = '';
-
                 if (holiday) {
                     extraInfoHtml = `<span class="big-cal-holiday">${holiday}</span>`;
                     dayNumStyle = 'style="color: #ef4444;"';
@@ -3069,13 +3091,16 @@ window.renderBigCalendar = function() {
                     extraInfoHtml = `<span class="big-cal-lunar">${lunar}</span>`;
                 }
 
+                // 組合 HTML
                 html += `<div class="big-cal-cell ${isToday?'today':''}" id="big-cal-day-${d}" onclick="window.selectBigCalendarDate(${y},${m},${d})" ondblclick="window.handleBigCalDbClick(${y},${m},${d})">
                     <div class="big-cal-day-header">
                         <span class="big-cal-day-num" ${dayNumStyle}>${d}</span>
-                        ${badgesHtml} <div style="flex:1"></div> ${extraInfoHtml}
+                        ${extraInfoHtml}
                     </div>
                     
                     <div class="big-cal-content-wrapper">
+                        ${leaveHtml}
+                        
                         ${bars}
                         ${moreHtml}
                     </div>
