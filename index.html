@@ -499,12 +499,12 @@
         }
         .chat-row.right .chat-time { text-align: right; }
 
-        /* === 休假專用樣式 (新版) === */
         .leave-row {
             display: flex;
+            justify-content: center; /* <--- 加入這行，讓標籤水平置中 */
             gap: 2px;
-            margin-bottom: 2px; /* 與下方行程保持一點距離 */
-            min-height: 0;      /* 沒休假時不佔高度 */
+            margin-bottom: 2px;
+            min-height: 0;
         }
 
         .leave-chip {
