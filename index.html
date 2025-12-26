@@ -67,14 +67,14 @@
             height: auto; 
         }
 
-        /* 新增：讓聊天分頁也支援 Flex 垂直排版 */
+        /* 確保有這段：讓聊天分頁在 active 時才變成 Flex 垂直排版 */
         #page-chat.active {
             display: flex;
             flex-direction: column;
             padding: 0;
             overflow: hidden;
-            padding-top: 70px; /* 避開頂部 App Header */
-            padding-bottom: 90px; /* 避開底部導航列 */
+            padding-top: 70px;
+            padding-bottom: 90px;
         }
         
         /* 3. 聊天氣泡樣式優化 (支援顯示名字) */
@@ -756,7 +756,7 @@
 
         </div>
 
-        <div id="page-chat" class="page-content flex flex-col h-full">
+        <div id="page-chat" class="page-content h-full">
             
             <div class="flex-none bg-white z-20 border-b border-gray-200 px-4 flex items-center justify-between h-[60px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
                 <h2 class="text-xl font-bold text-gray-800">聊天室</h2>
