@@ -3801,22 +3801,13 @@ function initApp(db) {
             
             messages.forEach(msg => {
                 const isMe = msg.creator === currentUserRole;
-                
-                // === 關鍵修改：取得發話者的代表色 ===
-                // 如果是皓皓發的，就用 haohao 的顏色；如果是毛毛發的，就用 maomao 的顏色
-                // (如果找不到人，預設為灰色)
                 const bubbleColor = roleColors[msg.creator] || '#9ca3af';
-                
-                // 設定氣泡樣式：背景色為代表色，文字統一為白色
                 const bubbleStyle = `background-color: ${bubbleColor}; color: white;`;
-
                 const avatarChar = msg.creator === 'haohao' ? '皓' : '毛';
                 const displayName = msg.creator === 'haohao' ? '皓皓' : '毛毛';
                 
                 const date = new Date(msg.timestamp);
                 const timeStr = date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
-
-                // 已讀顯示邏輯 (只有自己傳的且對方已讀才顯示)
                 const readHtml = (isMe && msg.read) ? `<span class="chat-read">已讀</span>` : '';
 
                 if (isMe) {
@@ -3837,7 +3828,7 @@ function initApp(db) {
                     <div class="chat-row left">
                         <div class="chat-avatar self-start" style="background-color: ${bubbleColor}">${avatarChar}</div>
                         
-                        <div class="flex flex-col items-start ml-2 max-w-[75%]">
+                        <div class="flex flex-col items-start ml-2 max-w-[88%]">
                             <span class="text-[10px] text-gray-400 mb-0.5 ml-0.5 font-medium">${displayName}</span>
                             
                             <div class="flex items-end">
