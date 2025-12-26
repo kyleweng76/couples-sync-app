@@ -620,11 +620,11 @@
         .time-cell:hover { background-color: #f9fafb; }
         
         .time-cell.selected {
-            background-color: #2cc998;
-            color: white;
-            font-weight: bold;
-            font-size: 20px;
-            box-shadow: 0 2px 4px rgba(44, 201, 152, 0.2);
+            background-color: transparent; /* 改成透明背景 */
+            color: #2cc998;                /* 改成綠色文字 (ttgreen) */
+            font-weight: 800;              /* 字體加粗 */
+            font-size: 24px;               /* 字體放大，強調選中 */
+            transform: scale(1.1);         /* 稍微放大一點點的效果 */
         }
         
         .time-divider {
@@ -2097,8 +2097,7 @@
 
             // 加上選取框 (選用：視覺輔助)
             const selectionBar = document.createElement('div');
-            selectionBar.className = "absolute top-1/2 left-0 w-full h-[40px] -mt-[20px] bg-gray-50 -z-0 pointer-events-none border-t border-b border-gray-100";
-            body.appendChild(selectionBar);
+            selectionBar.className = "absolute top-1/2 left-0 w-full h-[40px] -mt-[20px] bg-transparent -z-0 pointer-events-none border-t border-b border-ttgreen/30";            body.appendChild(selectionBar);
 
             body.appendChild(hourCol);
             body.appendChild(divider);
