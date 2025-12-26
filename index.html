@@ -499,6 +499,21 @@
         }
         .chat-row.right .chat-time { text-align: right; }
 
+        /* 休假小標籤 (Badge) */
+        .leave-badge {
+            font-size: 9px;
+            height: 15px;
+            line-height: 15px;
+            padding: 0 4px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            margin-left: 2px;
+            display: inline-flex;
+            align-items: center;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+        }
+
     </style>
 </head>
 <body class="text-gray-700 h-screen flex flex-col overflow-hidden bg-white">
@@ -2862,7 +2877,7 @@
             }, {passive: true});
         };
 
-        window.renderBigCalendar = function() {
+window.renderBigCalendar = function() {
             const y = bigCalDate.getFullYear();
             const m = bigCalDate.getMonth();
             const title = document.getElementById('big-cal-title');
@@ -2877,20 +2892,21 @@
             const monthEnd = new Date(y, m, daysInMonth, 23, 59, 59);
 
             // 1. 篩選出本月相關行程 (包含跨月)
-            const visibleEvents = items.filter(e => {
+            const allVisibleEvents = items.filter(e => {
                 const s = new Date(e.startDate || e.timestamp);
                 const endStr = e.endDate || e.dueDateEnd || (e.startDate || e.dueDate);
                 const end = new Date(endStr); end.setHours(23,59,59);
                 return end >= monthStart && s <= monthEnd;
             });
 
-            // 2. 預先排序 (這是關鍵：決定誰有資格先搶「第1排」)
-            // 優先順序：休假 > 跨越天數長 > 開始時間早
-            visibleEvents.sort((a, b) => {
-                const aIsLeave = window.isLeaveEvent(a.title);
-                const bIsLeave = window.isLeaveEvent(b.title);
-                if (aIsLeave !== bIsLeave) return aIsLeave ? -1 : 1; // 休假優先
-                
+            // === 修改重點 A：將資料拆分為「顯示條」與「休假標籤」 ===
+            // 1. 一般行程 (要畫成條狀的)
+            const barEvents = allVisibleEvents.filter(e => !window.isLeaveEvent(e.title));
+            // 2. 休假行程 (要變成標籤的)
+            const leaveEvents = allVisibleEvents.filter(e => window.isLeaveEvent(e.title));
+
+            // 2. 預先排序 (只針對 barEvents 做排序與軌道分配)
+            barEvents.sort((a, b) => {
                 // 計算持續天數
                 const getDuration = (evt) => {
                     const s = new Date(evt.startDate || evt.timestamp);
@@ -2901,26 +2917,22 @@
                 const durA = getDuration(a);
                 const durB = getDuration(b);
                 if (Math.abs(durA - durB) > 86400000) return durB - durA; // 長行程優先
-                
                 return new Date(a.timestamp) - new Date(b.timestamp); // 最後比時間
             });
 
-            // 3. 軌道分配演算法 (Tetris Algorithm)
-            // 用來記錄每一天、每一軌是否被佔用: slots[dayKey][trackIndex] = true/false
+            // 3. 軌道分配演算法 (只針對 barEvents)
             const slots = {}; 
-            // 用來記錄每個活動被分配到第幾軌: eventTrack[eventId] = trackIndex
             const eventTrack = {}; 
 
-            visibleEvents.forEach(e => {
+            barEvents.forEach(e => {
                 const s = new Date(e.startDate || e.timestamp); s.setHours(0,0,0,0);
                 const endStr = e.endDate || e.dueDateEnd || (e.startDate || e.dueDate);
                 const end = new Date(endStr); end.setHours(0,0,0,0);
 
-                // 找出這個行程涵蓋的所有日期字串 (key)
                 const coveredKeys = [];
                 let loopDate = new Date(s);
                 while(loopDate <= end) {
-                    if (loopDate.getMonth() === m) { // 只處理本月的格子
+                    if (loopDate.getMonth() === m) {
                         coveredKeys.push(`${loopDate.getDate()}`);
                     }
                     loopDate.setDate(loopDate.getDate() + 1);
@@ -2928,11 +2940,9 @@
 
                 if (coveredKeys.length === 0) return;
 
-                // 尋找可用的最小軌道 (Track)
                 let track = 0;
                 while (true) {
                     let isTrackFree = true;
-                    // 檢查這個行程涵蓋的每一天，在這個軌道是否都是空的
                     for (const key of coveredKeys) {
                         if (!slots[key]) slots[key] = [];
                         if (slots[key][track]) {
@@ -2941,20 +2951,18 @@
                         }
                     }
                     if (isTrackFree) {
-                        // 找到空位了！佔用它
                         for (const key of coveredKeys) {
                             slots[key][track] = true;
                         }
                         eventTrack[e.id] = track;
                         break;
                     }
-                    track++; // 這一軌有人了，試下一軌
+                    track++;
                 }
             });
 
             // 4. 開始渲染 HTML
             let html = '';
-            // 填補前面的空白
             for(let i=0; i<firstDay; i++) {
                 html += `<div class="big-cal-cell bg-gray-50/30"></div>`;
             }
@@ -2965,39 +2973,47 @@
                 const isToday = current.toDateString() === nowStr;
                 const dayKey = `${d}`;
 
-                // 找出當天所有的行程
-                const dayEvents = visibleEvents.filter(e => {
+                // === 修改重點 B：渲染休假標籤 (Badge) ===
+                // 找出這一天有哪些休假
+                const todaysLeaves = leaveEvents.filter(e => {
                     const s = new Date(e.startDate || e.timestamp); s.setHours(0,0,0,0);
                     const endStr = e.endDate || e.dueDateEnd || (e.startDate || e.dueDate);
                     const end = new Date(endStr); end.setHours(0,0,0,0);
                     return current >= s && current <= end;
                 });
 
-                // 找出當天用到的最大軌道數 (為了決定是否顯示 +N)
-                // 這裡我們只顯示前 4 軌 (0, 1, 2, 3)
+                let badgesHtml = '';
+                // 檢查是否有皓皓的假
+                if (todaysLeaves.some(e => e.creator === 'haohao' || e.isJoint)) {
+                    badgesHtml += `<span class="leave-badge" style="background-color:${roleColors.haohao}">皓休</span>`;
+                }
+                // 檢查是否有毛毛的假
+                if (todaysLeaves.some(e => e.creator === 'maomao' || e.isJoint)) {
+                    badgesHtml += `<span class="leave-badge" style="background-color:${roleColors.maomao}">毛休</span>`;
+                }
+
+                // 找出當天所有的一般行程 (Bars)
+                const dayBarEvents = barEvents.filter(e => {
+                    const s = new Date(e.startDate || e.timestamp); s.setHours(0,0,0,0);
+                    const endStr = e.endDate || e.dueDateEnd || (e.startDate || e.dueDate);
+                    const end = new Date(endStr); end.setHours(0,0,0,0);
+                    return current >= s && current <= end;
+                });
+
+                // 渲染行程條 (邏輯不變，只是來源變成了 dayBarEvents)
                 const MAX_VISIBLE_TRACKS = 4;
                 let bars = '';
-                
-                // 依軌道順序渲染 (0 -> MAX)
-                // 這裡很關鍵：即使某些軌道是空的，也要渲染「透明佔位符」
-                // 這樣才能把位於 第2軌 的行程「撐」上去
-                
-                // 計算當天實際顯示到第幾軌
                 let maxTrackUsed = -1;
-                dayEvents.forEach(e => {
+                dayBarEvents.forEach(e => {
                     if (eventTrack[e.id] > maxTrackUsed) maxTrackUsed = eventTrack[e.id];
                 });
 
-                // 限制渲染迴圈
                 const renderLimit = Math.min(maxTrackUsed, MAX_VISIBLE_TRACKS - 1);
                 
                 for (let t = 0; t <= renderLimit; t++) {
-                    // 找找看當天、這一軌有沒有行程
-                    // ... (前段的 eventTrack 查找邏輯保持不變) ...
-                    const evt = dayEvents.find(e => eventTrack[e.id] === t);
+                    const evt = dayBarEvents.find(e => eventTrack[e.id] === t);
 
                     if (evt) {
-                        // === 渲染行程條 ===
                         let bg;
                         if (evt.isJoint) bg = roleColors.joint;
                         else bg = (evt.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
@@ -3009,10 +3025,8 @@
                         const isStart = current.getTime() === s.getTime();
                         const isEnd = current.getTime() === end.getTime();
                         const isSingle = isStart && isEnd;
-                        const isVac = window.isLeaveEvent(evt.title);
-
-                        // === 修改重點：決定是否顯示文字 ===
-                        // 規則：只有在「開始日」、「單日行程」或「每月1號(d===1)」才顯示標題
+                        
+                        // 休假已經變 Badge 了，這裡只剩一般行程，所以不用判斷 isVacation
                         const showLabel = isStart || isSingle || (d === 1);
 
                         let styleAttr = `background-color:${bg};`;
@@ -3022,49 +3036,34 @@
                         if (!isSingle) {
                             if (isStart) {
                                 shapeClass = 'rounded-l-[3px] rounded-r-none mr-[-3px] pr-2 relative z-10 ml-[2px]'; 
-                                // content 預設就是 title，不用動
                             } else if (isEnd) {
                                 shapeClass = 'rounded-l-none rounded-r-[3px] ml-[-3px] pl-2 relative z-10 mr-[2px]';
-                                if (!showLabel) content = '&nbsp;'; // 結尾不顯示字 (除非剛好是1號)
+                                if (!showLabel) content = '&nbsp;'; 
                             } else {
                                 shapeClass = 'rounded-none mx-[-3px] relative z-10';
-                                if (!showLabel) content = '&nbsp;'; // 中間不顯示字 (除非剛好是1號)
+                                if (!showLabel) content = '&nbsp;'; 
                             }
-                        }
-
-                        if (isVac) {
-                            styleAttr = `color:${bg}; border: 1px solid ${bg}; background-color: white;`; 
-                            if (!isSingle && !isStart && !isEnd) styleAttr += ' border-left: none; border-right: none;';
-                            if (!isSingle && isStart) styleAttr += ' border-right: none;';
-                            if (!isSingle && isEnd) styleAttr += ' border-left: none;';
-                            
-                            // 休假也套用同樣邏輯：跨月或開始時才顯示文字
-                            content = showLabel ? `🏖 ${evt.title}` : '&nbsp;';
                         }
 
                         bars += `<div class="event-bar ${evt.isTodo&&evt.done?'done':''} ${shapeClass}" style="${styleAttr}" onclick="event.stopPropagation(); window.selectBigCalendarDate(${y},${m},${d}, '${evt.id}')">${content}</div>`;
                     } else {
-                        // ... (隱形支架邏輯保持不變) ...
                         bars += `<div class="event-bar invisible"></div>`;
                     }
                 }
 
-                // 處理 +N
                 let moreHtml = '';
-                const hiddenEvents = dayEvents.filter(e => eventTrack[e.id] >= MAX_VISIBLE_TRACKS);
+                const hiddenEvents = dayBarEvents.filter(e => eventTrack[e.id] >= MAX_VISIBLE_TRACKS);
                 if(hiddenEvents.length > 0) {
                     moreHtml = `<div class="more-events">${hiddenEvents.length} more</div>`;
                 }
 
-                // === 新增：取得農曆與假日資訊 ===
+                // 農曆與假日
                 const { lunar, holiday } = window.getLunarAndHoliday(current);
-                
                 let extraInfoHtml = '';
-                let dayNumStyle = ''; // 新增：用來控制日期數字顏色的變數
+                let dayNumStyle = '';
 
                 if (holiday) {
                     extraInfoHtml = `<span class="big-cal-holiday">${holiday}</span>`;
-                    // 如果是假日，強制將日期數字設為紅色 (對齊假日的紅色 #ef4444)
                     dayNumStyle = 'style="color: #ef4444;"';
                 } else {
                     extraInfoHtml = `<span class="big-cal-lunar">${lunar}</span>`;
@@ -3073,7 +3072,7 @@
                 html += `<div class="big-cal-cell ${isToday?'today':''}" id="big-cal-day-${d}" onclick="window.selectBigCalendarDate(${y},${m},${d})" ondblclick="window.handleBigCalDbClick(${y},${m},${d})">
                     <div class="big-cal-day-header">
                         <span class="big-cal-day-num" ${dayNumStyle}>${d}</span>
-                        ${extraInfoHtml}
+                        ${badgesHtml} <div style="flex:1"></div> ${extraInfoHtml}
                     </div>
                     
                     <div class="big-cal-content-wrapper">
