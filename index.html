@@ -600,7 +600,9 @@
             overflow-y: auto;
             padding: 10px 0;
             text-align: center;
-            scroll-behavior: smooth; /* 讓捲動滑順 */
+            /* scroll-behavior: smooth; <--- 刪除這行 */
+            scroll-snap-type: y mandatory; /* 加入：強制垂直吸附 */
+            position: relative;            /* 加入：確保定位計算準確 */
         }
         
         /* 隱藏捲軸但保留捲動功能 */
@@ -615,6 +617,7 @@
             transition: all 0.2s;
             border-radius: 8px;
             margin: 0 8px;
+            scroll-snap-align: center; /* 加入：讓它滑動時自動停在中間 */
         }
         
         .time-cell:hover { background-color: #f9fafb; }
@@ -2122,15 +2125,16 @@
             }, 50);
         };
 
-        // 2. 更新選擇 (包含視覺更新)
+// 2. 更新選擇 (修正版：解決手機畫面亂跳問題)
         window.updateTimePickerSelection = function(colType, val) {
+            // 更新變數
             if(colType === 'hour') window._tempHour = val;
             if(colType === 'minute') window._tempMinute = val;
 
             const colId = colType === 'hour' ? 'time-col-hour' : 'time-col-minute';
             const cellPrefix = colType === 'hour' ? 'hour-cell-' : 'min-cell-';
             const col = document.getElementById(colId);
-
+            
             // 移除舊的 selected
             const old = col.querySelector('.selected');
             if(old) old.classList.remove('selected');
@@ -2139,17 +2143,48 @@
             const target = document.getElementById(cellPrefix + val);
             if(target) {
                 target.classList.add('selected');
-                // 滑動置中
-                target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                
+                // === 關鍵修正 Start ===
+                // 不使用 scrollIntoView，改用計算 scrollTop
+                // 這樣只會捲動列表內部，絕對不會影響到整頁
+                
+                // 列表容器的高度
+                const containerHeight = col.clientHeight;
+                // 目標選項的高度
+                const targetHeight = target.offsetHeight;
+                // 目標選項距離列表頂部的位置
+                const targetOffset = target.offsetTop;
+
+                // 計算置中位置：(目標位置) - (容器一半) + (目標一半)
+                const scrollPos = targetOffset - (containerHeight / 2) + (targetHeight / 2);
+
+                // 執行平滑捲動
+                col.scrollTo({
+                    top: scrollPos,
+                    behavior: 'smooth'
+                });
+                // === 關鍵修正 End ===
             }
         };
 
-        // 輔助：初始開啟時的捲動 (無動畫，直接定位)
+        // 同步修改：初始定位函式 (scrollToSelectedTime)
+        // 也要改用 scrollTo，避免打開瞬間畫面跳動
         window.scrollToSelectedTime = function(colType, val) {
+            const colId = colType === 'hour' ? 'time-col-hour' : 'time-col-minute';
             const cellPrefix = colType === 'hour' ? 'hour-cell-' : 'min-cell-';
+            const col = document.getElementById(colId);
             const target = document.getElementById(cellPrefix + val);
-            if(target) {
-                target.scrollIntoView({ block: 'center', behavior: 'auto' });
+            
+            if(col && target) {
+                const containerHeight = col.clientHeight;
+                const targetHeight = target.offsetHeight;
+                const targetOffset = target.offsetTop;
+                const scrollPos = targetOffset - (containerHeight / 2) + (targetHeight / 2);
+
+                col.scrollTo({
+                    top: scrollPos,
+                    behavior: 'auto' // 初始開啟時直接跳轉，不要動畫
+                });
             }
         };
 
