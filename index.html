@@ -2125,7 +2125,7 @@
             }, 50);
         };
 
-        // 2. 更新選擇 (防衝突修正版：暫時關閉吸附，避免亂飛)
+        // 2. 更新選擇 (最終穩定版：點擊瞬間定位，手滑保留吸附)
         window.updateTimePickerSelection = function(colType, val) {
             // 更新全域變數
             if(colType === 'hour') window._tempHour = val;
@@ -2145,7 +2145,7 @@
                 target.classList.add('selected');
                 
                 // === 關鍵修正：解決手機版亂跳 ===
-                // 1. 點擊瞬間，先把 CSS 吸附關掉！避免瀏覽器干擾 JS 捲動
+                // 1. 點擊瞬間，先把 CSS 吸附關掉！
                 col.style.scrollSnapType = 'none';
 
                 // 2. 計算置中位置
@@ -2154,21 +2154,20 @@
                 const targetOffset = target.offsetTop;
                 const scrollPos = targetOffset - (containerHeight / 2) + (targetHeight / 2);
 
-                // 3. 執行平滑捲動 (這時候沒有 CSS 干擾，會很乖)
+                // 3. 改用 'auto' (瞬間定位)
+                // 雖然少了滑動動畫，但這是手機網頁上唯一能保證 "絕對不亂飛" 的方法
+                // 且點擊反應會變得非常靈敏，體驗更像原生 App
                 col.scrollTo({
                     top: scrollPos,
-                    behavior: 'smooth'
+                    behavior: 'auto' 
                 });
 
-                // 4. 等動畫跑完 (約 300~400ms)，再把吸附開回來
-                // 這樣之後手指去滑動時，還是會有「喀、喀」的吸附手感
-                
-                // 清除舊的計時器，防止快速點擊時閃爍
+                // 4. 稍微延遲後把吸附開回來 (讓手指去滑動時還有吸附效果)
                 if (col.snapTimeout) clearTimeout(col.snapTimeout);
                 
                 col.snapTimeout = setTimeout(() => {
                     col.style.scrollSnapType = 'y mandatory';
-                }, 400); 
+                }, 50); // 因為是瞬間定位，這裡只要很短的延遲即可
             }
         };
 
