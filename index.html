@@ -2009,29 +2009,30 @@
         let tempHour = 0;
         let tempMinute = 0;
 
-        // 改良版：開啟時間選擇器 (小時/分鐘 分開選)
+    // === 時間選擇器核心邏輯 (修正版：變數全域化，解決無法選擇的問題) ===
+        
+        // 1. 開啟時間選擇器
         window.openTimePicker = function(type) {
-            timePickerTarget = type;
+            window._timePickerTarget = type; // 改用 window._ 變數，確保全域存取
             const container = document.getElementById('time-list-container');
             container.innerHTML = '';
             
-            // 1. 取得目前數值 (或預設為現在時間)
+            // 取得目前設定的時間 (或預設為現在)
             const currentVal = document.getElementById(`input-time-${type}`).value;
             const now = new Date();
             
             if (currentVal) {
                 const [h, m] = currentVal.split(':').map(Number);
-                tempHour = h;
-                tempMinute = m;
+                window._tempHour = h;
+                window._tempMinute = m;
             } else {
-                tempHour = now.getHours();
-                // 預設分鐘設為最接近的 5 分鐘倍數，或直接用現在分鐘
-                tempMinute = now.getMinutes(); 
+                window._tempHour = now.getHours();
+                window._tempMinute = now.getMinutes(); 
             }
 
-            // 2. 渲染標題列 (取消 / 標題 / 確定)
+            // A. 渲染標題列
             const header = document.createElement('div');
-            header.className = "sticky top-0 bg-white border-b border-gray-100 flex justify-between items-center px-4 py-3 z-10 flex-none";
+            header.className = "sticky top-0 bg-white border-b border-gray-100 flex justify-between items-center px-4 py-3 z-20 flex-none"; // z-20 確保在最上層
             header.innerHTML = `
                 <button onclick="window.closeTimePicker()" class="text-sm text-gray-500 min-w-[40px]">取消</button>
                 <span class="text-sm font-bold text-gray-800">選擇時間</span>
@@ -2039,7 +2040,7 @@
             `;
             container.appendChild(header);
 
-            // 3. 渲染分欄容器
+            // B. 渲染分欄容器
             const body = document.createElement('div');
             body.className = "time-picker-body";
             
@@ -2047,19 +2048,18 @@
             const hourCol = document.createElement('div');
             hourCol.className = "time-column";
             hourCol.id = "time-col-hour";
-            
-            // 前面加一點留白讓第一個選項好按
-            hourCol.innerHTML += '<div style="height: 80px;"></div>';
+            hourCol.innerHTML += '<div style="height: 90px;"></div>'; // 增加留白
             
             for(let h=0; h<24; h++) {
                 const cell = document.createElement('div');
-                cell.className = `time-cell ${h === tempHour ? 'selected' : ''}`;
+                cell.className = `time-cell ${h === window._tempHour ? 'selected' : ''}`;
                 cell.textContent = String(h).padStart(2, '0');
                 cell.dataset.val = h;
-                cell.onclick = () => window.updateTimePickerSelection('hour', h);
+                // 使用 addEventListener 確保點擊事件正確綁定
+                cell.addEventListener('click', function() { window.updateTimePickerSelection('hour', h); });
                 hourCol.appendChild(cell);
             }
-            hourCol.innerHTML += '<div style="height: 80px;"></div>';
+            hourCol.innerHTML += '<div style="height: 90px;"></div>';
 
             // --- 分隔線 (:) ---
             const divider = document.createElement('div');
@@ -2070,36 +2070,36 @@
             const minCol = document.createElement('div');
             minCol.className = "time-column";
             minCol.id = "time-col-minute";
-            
-            minCol.innerHTML += '<div style="height: 80px;"></div>';
+            minCol.innerHTML += '<div style="height: 90px;"></div>'; // 增加留白
             
             for(let m=0; m<60; m++) {
                 const cell = document.createElement('div');
-                cell.className = `time-cell ${m === tempMinute ? 'selected' : ''}`;
+                cell.className = `time-cell ${m === window._tempMinute ? 'selected' : ''}`;
                 cell.textContent = String(m).padStart(2, '0');
                 cell.dataset.val = m;
-                cell.onclick = () => window.updateTimePickerSelection('minute', m);
+                // 使用 addEventListener
+                cell.addEventListener('click', function() { window.updateTimePickerSelection('minute', m); });
                 minCol.appendChild(cell);
             }
-            minCol.innerHTML += '<div style="height: 80px;"></div>';
+            minCol.innerHTML += '<div style="height: 90px;"></div>';
 
             body.appendChild(hourCol);
             body.appendChild(divider);
             body.appendChild(minCol);
             container.appendChild(body);
 
-            // 4. 底部清除按鈕
+            // C. 底部清除按鈕
             const footer = document.createElement('div');
             footer.className = "p-3 border-t border-gray-100 flex justify-center bg-gray-50";
             footer.innerHTML = '<button onclick="window.clearTime()" class="text-xs text-red-400 font-medium px-4 py-1.5 rounded-lg hover:bg-red-50 transition border border-transparent hover:border-red-100">清除時間</button>';
             container.appendChild(footer);
 
-            // 5. 顯示 Modal
+            // D. 顯示 Modal
             const m = document.getElementById('time-picker-modal');
             m.classList.remove('hidden');
             setTimeout(() => m.classList.add('visible'), 10);
 
-            // 6. 自動捲動到選取項目 (置中)
+            // E. 自動捲動到選取項目 (延遲執行確保 DOM 已渲染)
             setTimeout(() => {
                 const hEl = hourCol.querySelector('.selected');
                 const mEl = minCol.querySelector('.selected');
@@ -2108,51 +2108,63 @@
             }, 50);
         };
 
-        // 輔助：點擊選項時更新樣式與暫存值
+        // 2. 點擊選項時更新 (修正版)
         window.updateTimePickerSelection = function(colType, val) {
-            if(colType === 'hour') tempHour = val;
-            if(colType === 'minute') tempMinute = val;
+            // 更新全域變數
+            if(colType === 'hour') window._tempHour = val;
+            if(colType === 'minute') window._tempMinute = val;
             
             const colId = colType === 'hour' ? 'time-col-hour' : 'time-col-minute';
             const col = document.getElementById(colId);
             
-            // 更新視覺樣式
-            col.querySelectorAll('.time-cell').forEach(cell => {
-                if(parseInt(cell.dataset.val) === val) {
-                    cell.classList.add('selected');
-                    // 點擊後稍微滑動讓它置中 (優化體驗)
-                    cell.scrollIntoView({ block: 'center', behavior: 'smooth' });
-                } else {
-                    cell.classList.remove('selected');
-                }
-            });
-        };
-
-        // 輔助：按下「確定」
-        window.confirmTimeSelection = function() {
-            const timeStr = `${String(tempHour).padStart(2, '0')}:${String(tempMinute).padStart(2, '0')}`;
-            document.getElementById(`input-time-${timePickerTarget}`).value = timeStr;
-            window.updateTimeDisplay(timePickerTarget, timeStr);
-            window.closeTimePicker();
-            
-            // 自動更新結束時間邏輯 (如果有的話)
-            if (timePickerTarget === 'start' || timePickerTarget === 'todo') { 
-                if (window.autoUpdateEnd) window.autoUpdateEnd(); 
+            if(col) {
+                col.querySelectorAll('.time-cell').forEach(cell => {
+                    // 確保型別轉換正確
+                    if(parseInt(cell.dataset.val, 10) === val) {
+                        cell.classList.add('selected');
+                        cell.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                    } else {
+                        cell.classList.remove('selected');
+                    }
+                });
             }
         };
-        
-        // 輔助：關閉 Picker (不變)
+
+        // 3. 按下「確定」時儲存 (修正版)
+        window.confirmTimeSelection = function() {
+            const h = String(window._tempHour || 0).padStart(2, '0');
+            const m = String(window._tempMinute || 0).padStart(2, '0');
+            const timeStr = `${h}:${m}`;
+            
+            const targetType = window._timePickerTarget;
+            const inputEl = document.getElementById(`input-time-${targetType}`);
+            
+            if (inputEl) {
+                inputEl.value = timeStr;
+                window.updateTimeDisplay(targetType, timeStr);
+                
+                // 自動更新結束時間邏輯
+                if (targetType === 'start' || targetType === 'todo') { 
+                    if (window.autoUpdateEnd) window.autoUpdateEnd(); 
+                }
+            }
+            window.closeTimePicker();
+        };
+
+        // 4. 清除時間 (修正版)
+        window.clearTime = function() {
+            const targetType = window._timePickerTarget;
+            const inputEl = document.getElementById(`input-time-${targetType}`);
+            if(inputEl) inputEl.value = '';
+            window.updateTimeDisplay(targetType, ''); 
+            window.closeTimePicker();
+        };
+
+        // 5. 關閉 Picker (不變)
         window.closeTimePicker = function() {
             const m = document.getElementById('time-picker-modal');
             m.classList.remove('visible');
             setTimeout(() => m.classList.add('hidden'), 200);
-        };
-
-        // 輔助：清除時間 (修正版，配合新介面)
-        window.clearTime = function() {
-            document.getElementById(`input-time-${timePickerTarget}`).value = '';
-            window.updateTimeDisplay(timePickerTarget, ''); 
-            window.closeTimePicker();
         };
 
         window.checkRoleEnforcement = function() {
