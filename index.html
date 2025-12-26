@@ -305,13 +305,14 @@
         /* 修改：日期頭部容器 */
         .big-cal-day-header {
             display: flex;
-            align-items: baseline; /* 對齊文字底部 */
+            align-items: baseline;
             justify-content: center;
-            gap: 2px;
+            gap: 3px;
             padding-top: 2px;
-            margin-bottom: 2px;
+            margin-bottom: 6px; /* <--- 改成 6px，拉開與下方行程的距離 */
             height: 20px;
             line-height: 20px;
+            position: relative;
         }
 
         .big-cal-day-num {
