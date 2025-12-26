@@ -3529,10 +3529,12 @@
                 });
         };
 
-// === 農曆與假日輔助函式 (改良版：強制轉國字) ===
+        // === 農曆與假日輔助函式 (修正時區偏移版) ===
         window.getLunarAndHoliday = function(date) {
-            // 1. 國定假日對照表 (2025-2026 重點假日)
-            const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+            // 1. 產生本地日期字串 YYYY-MM-DD (修正時區問題)
+            const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+            // 國定假日對照表 (2025-2026 重點假日)
             const holidays = {
                 // 固定假日
                 [`${date.getFullYear()}-01-01`]: '元旦',
@@ -3568,8 +3570,7 @@
                 const lunarMonth = parts.find(p => p.type === 'month')?.value; // ex: 正月, 二月
                 let lunarDay = parts.find(p => p.type === 'day')?.value;       // ex: 1, 15, 初一
 
-                // === 關鍵修正：如果是數字，強制轉成中文 ===
-                // 定義對照表
+                // 強制轉國字對照表
                 const dayMap = {
                     '1': '初一', '2': '初二', '3': '初三', '4': '初四', '5': '初五',
                     '6': '初六', '7': '初七', '8': '初八', '9': '初九', '10': '初十',
@@ -3582,13 +3583,11 @@
                 // 嘗試將 lunarDay 轉為純數字 (去除 '日' 等字元)
                 const dayNum = parseInt(lunarDay.replace(/[^\d]/g, ''));
                 
-                // 如果是數字 (代表瀏覽器回傳了 1, 26 等)，就查表轉換
+                // 如果是數字，就查表轉換
                 if (!isNaN(dayNum) && dayMap[dayNum]) {
                     lunarDay = dayMap[dayNum];
                 }
-                // ==========================================
 
-                // 顯示邏輯：如果是初一，顯示月份(ex: 正月)；否則顯示日期(ex: 初二)
                 if (lunarDay === '初一') {
                     lunar = lunarMonth;
                 } else {
