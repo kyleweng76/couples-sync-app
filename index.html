@@ -2876,7 +2876,7 @@
             window.closeCalendar();
         };
 
-        // === 修改後的 switchTab：簡化邏輯，只切換 .active 類別 ===
+        // === 修改後的 switchTab：加入聊天室自動捲動修正 ===
         window.switchTab = function(tabId) {
             // 1. 隱藏所有頁面
             document.querySelectorAll('.page-content').forEach(page => {
@@ -2889,16 +2889,24 @@
             const targetPage = document.getElementById(`page-${tabId}`);
             if(targetPage) {
                 targetPage.classList.add('active');
+                
                 // 如果是行事曆，嘗試渲染大月曆
                 if(tabId === 'calendar' && typeof window.renderBigCalendar === 'function') {
                     window.renderBigCalendar();
                 }
+
+                // === 新增：如果是切換到聊天室，強制捲到底部 ===
+                if (tabId === 'chat') {
+                    // 直接呼叫捲動函式 (函式內已有 setTimeout 確保渲染後執行)
+                    if (typeof window.scrollToBottom === 'function') {
+                        window.scrollToBottom();
+                    }
+                }
             }
             
-            // 3. 更新底部導航按鈕狀態 (關鍵修改)
+            // 3. 更新底部導航按鈕狀態
             const buttons = document.querySelectorAll('.nav-btn');
             buttons.forEach(btn => {
-                // 只需切換 'active' 類別，樣式由 Tailwind 的 group-[.active] 控制
                 if(btn.dataset.tab === tabId) {
                     btn.classList.add('active');
                 } else {
