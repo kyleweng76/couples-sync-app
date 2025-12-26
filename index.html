@@ -3443,7 +3443,7 @@
             }
         };
 
-        // === 每日資訊卡片功能 ===
+// === 每日資訊卡片功能 (修正農曆格式版) ===
         window.renderDailyBrief = function() {
             const now = new Date();
             const weekDays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
@@ -3453,22 +3453,42 @@
             document.getElementById('brief-day-word').textContent = weekDays[now.getDay()];
             document.getElementById('brief-month-year').textContent = `${now.getMonth() + 1}月 / ${now.getFullYear()}`;
 
-            // 2. 更新農曆 (使用 Intl API)
+            // 2. 更新農曆 (使用 Intl API + 強制轉國字)
             try {
-                // 某些舊瀏覽器可能不支援，做個防呆
-                const lunarDate = new Intl.DateTimeFormat('zh-TW-u-ca-chinese', { 
-                    day: 'numeric', 
-                    month: 'long' 
-                }).format(now);
-                // 格式通常是 "腊月廿六"，我們只取最後幾個字
-                document.getElementById('brief-lunar').textContent = `農曆 ${lunarDate.replace(/[0-9]+年/, '')}`;
+                const parts = new Intl.DateTimeFormat('zh-TW-u-ca-chinese', { 
+                    day: 'numeric', month: 'long' 
+                }).formatToParts(now);
+                
+                const lunarMonth = parts.find(p => p.type === 'month')?.value; // ex: 十一月, 正月
+                let lunarDay = parts.find(p => p.type === 'day')?.value;       // ex: 7, 15, 初一
+
+                // 強制轉國字對照表
+                const dayMap = {
+                    '1': '初一', '2': '初二', '3': '初三', '4': '初四', '5': '初五',
+                    '6': '初六', '7': '初七', '8': '初八', '9': '初九', '10': '初十',
+                    '11': '十一', '12': '十二', '13': '十三', '14': '十四', '15': '十五',
+                    '16': '十六', '17': '十七', '18': '十八', '19': '十九', '20': '二十',
+                    '21': '廿一', '22': '廿二', '23': '廿三', '24': '廿四', '25': '廿五',
+                    '26': '廿六', '27': '廿七', '28': '廿八', '29': '廿九', '30': '三十'
+                };
+
+                // 嘗試將 lunarDay 轉為純數字 (去除 '日' 等字元)
+                const dayNum = parseInt(lunarDay.replace(/[^\d]/g, ''));
+                
+                // 如果是數字，就查表轉換
+                if (!isNaN(dayNum) && dayMap[dayNum]) {
+                    lunarDay = dayMap[dayNum];
+                }
+
+                // 組合顯示：例如 "農曆 十一月初七"
+                document.getElementById('brief-lunar').textContent = `農曆 ${lunarMonth}${lunarDay}`;
             } catch (e) {
+                console.error(e);
                 document.getElementById('brief-lunar').textContent = '';
             }
 
             // 3. 更新天氣 (使用 Open-Meteo 免費 API)
-            // 預設座標：新北市中和 (25.00, 121.48) 或是你可以改為台南 (22.99, 120.21)
-            // 這裡我先設定為中和/台北一帶
+            // 預設座標：新北市中和 (25.00, 121.48)
             const lat = 25.00;
             const lon = 121.48;
             
@@ -3484,14 +3504,13 @@
                     document.getElementById('brief-temp-current').textContent = `${Math.round(current.temperature_2m)}°`;
                     document.getElementById('brief-temp-range').textContent = `H:${Math.round(daily.temperature_2m_max[0])}° L:${Math.round(daily.temperature_2m_min[0])}°`;
                     
-                    // 天氣代碼轉換 (WMO Code)
+                    // 天氣代碼轉換
                     const code = current.weather_code;
                     const isDay = current.is_day;
                     let iconName = 'cloud';
                     let desc = '多雲';
                     let iconColor = 'text-gray-400';
 
-                    // 簡單的天氣對照表
                     if (code === 0) { 
                         iconName = isDay ? 'sun' : 'moon'; 
                         desc = '晴朗'; 
@@ -3516,13 +3535,11 @@
                         desc = '下雪';
                     }
 
-                    // 更新 Icon 與描述
                     const iconEl = document.getElementById('brief-weather-icon');
                     iconEl.setAttribute('data-lucide', iconName);
-                    iconEl.className = `w-6 h-6 ${iconColor}`; // 更新顏色
+                    iconEl.className = `w-6 h-6 ${iconColor}`; 
                     document.getElementById('brief-weather-desc').textContent = desc;
 
-                    // 重新渲染 Icon
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                 })
                 .catch(err => {
