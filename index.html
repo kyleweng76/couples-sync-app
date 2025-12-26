@@ -499,6 +499,45 @@
         }
         .chat-row.right .chat-time { text-align: right; }
 
+        /* === 修改：聊天訊息資訊欄 (用來包住 時間 與 已讀) === */
+        .chat-info-col {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; /* 靠底部對齊 */
+            margin-bottom: 2px;
+            min-width: 25px;
+        }
+        
+        /* 右側訊息的資訊欄靠右 (靠左邊的氣泡) */
+        .chat-row.right .chat-info-col { 
+            align-items: flex-end; 
+            margin-right: 4px;
+        }
+        
+        /* 左側訊息的資訊欄靠左 (靠右邊的氣泡) */
+        .chat-row.left .chat-info-col { 
+            align-items: flex-start; 
+            margin-left: 4px;
+        }
+
+        /* 已讀標籤樣式 */
+        .chat-read {
+            font-size: 8px; /* 字要很小 */
+            color: #ffe066; /* 淡黃色，在藍底上比較顯眼，或者你可以用白色 */
+            font-weight: bold;
+            line-height: 1.2;
+            margin-bottom: 1px;
+            text-shadow: 0 1px 1px rgba(0,0,0,0.1);
+        }
+        
+        /* 調整原本的時間樣式，移除原本的 margin，由容器控制 */
+        .chat-time {
+            font-size: 9px;
+            color: #fff; 
+            text-shadow: 0 1px 1px rgba(0,0,0,0.1);
+            white-space: nowrap;
+        }
+
         .leave-row {
             display: flex;
             justify-content: center; /* <--- 加入這行，讓標籤水平置中 */
@@ -3225,29 +3264,31 @@
             
             // ... 在 initApp 函式內 ...
 
-            // === 修改：聊天室監聽 (包含自動刪除過期訊息) ===
+            // === 修改：聊天室監聽 (包含自動刪除過期訊息 + 自動標記已讀) ===
             bindSnapshot(db.collection('messages').orderBy('timestamp', 'desc').limit(50), (snapshot) => {
                 const msgs = [];
                 const now = new Date();
-                const expirationMs = 24 * 60 * 60 * 1000; // 設定過期時間：24 小時 (毫秒)
-                // 如果想要保留 3 天，改成： 3 * 24 * 60 * 60 * 1000
+                const expirationMs = 24 * 60 * 60 * 1000; // 24小時過期
 
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     const msgTime = new Date(data.timestamp);
                     
-                    // 檢查：如果訊息時間距離現在超過設定的時間
+                    // 1. 檢查過期
                     if ((now - msgTime) > expirationMs) {
-                        // 過期了 -> 默默在背景刪除它
-                        db.collection('messages').doc(doc.id).delete()
-                            .catch(err => console.warn("清除舊訊息失敗", err));
+                        db.collection('messages').doc(doc.id).delete().catch(e => {});
                     } else {
-                        // 沒過期 -> 加入顯示列表
                         msgs.push({ id: doc.id, ...data });
+
+                        // === 2. 關鍵邏輯：標記已讀 ===
+                        // 如果這則訊息「不是我傳的」(是對方傳的) 且「還沒已讀」
+                        if (data.creator && data.creator !== currentUserRole && !data.read) {
+                            // 標記為已讀 (這會觸發資料庫更新，進而讓對方看到已讀)
+                            db.collection('messages').doc(doc.id).update({ read: true });
+                        }
                     }
                 });
 
-                // 顯示時反轉 (舊 -> 新)
                 window.renderChat(msgs.reverse());
             }, 'chat');
 
@@ -3389,7 +3430,6 @@
             }
 
             let html = '';
-            // 用來記錄上一則訊息是誰傳的，如果連續傳送就不重複顯示頭像 (這是進階優化，這裡先簡單處理)
             
             messages.forEach(msg => {
                 const isMe = msg.creator === currentUserRole;
@@ -3397,23 +3437,29 @@
                 const avatarChar = msg.creator === 'haohao' ? '皓' : '毛';
                 const displayName = msg.creator === 'haohao' ? '皓皓' : '毛毛';
                 
-                // 時間格式化 (例如 20:30)
                 const date = new Date(msg.timestamp);
                 const timeStr = date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
 
+                // === 已讀顯示邏輯 ===
+                // 只有「自己傳的訊息」且「對方已經讀了 (msg.read === true)」才顯示
+                const readHtml = (isMe && msg.read) ? `<span class="chat-read">已讀</span>` : '';
+
                 if (isMe) {
                     // === 右側 (自己) ===
-                    // 自己不需要顯示名字，只顯示氣泡和時間
+                    // 結構：[資訊欄(已讀+時間)] [氣泡]
                     html += `
                     <div class="chat-row right">
-                        <span class="chat-time mb-1">${timeStr}</span>
+                        <div class="chat-info-col">
+                            ${readHtml}
+                            <span class="chat-time">${timeStr}</span>
+                        </div>
                         <div class="chat-bubble" onclick="window.confirmDeleteMsg('${msg.id}')">
                             ${msg.text}
                         </div>
                     </div>`;
                 } else {
                     // === 左側 (對方) ===
-                    // 結構：頭像 + (名字 + 氣泡 + 時間)
+                    // 結構：[頭像] [名字區塊] -> [氣泡] [資訊欄(時間)]
                     html += `
                     <div class="chat-row left">
                         <div class="chat-avatar self-start" style="background-color: ${roleColor}">${avatarChar}</div>
@@ -3425,7 +3471,9 @@
                                 <div class="chat-bubble" onclick="window.confirmDeleteMsg('${msg.id}')">
                                     ${msg.text}
                                 </div>
-                                <span class="chat-time ml-1 mb-0">${timeStr}</span>
+                                <div class="chat-info-col">
+                                    <span class="chat-time">${timeStr}</span>
+                                </div>
                             </div>
                         </div>
                     </div>`;
