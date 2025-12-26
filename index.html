@@ -3529,7 +3529,7 @@
                 });
         };
 
-        // === 農曆與假日輔助函式 ===
+// === 農曆與假日輔助函式 (改良版：強制轉國字) ===
         window.getLunarAndHoliday = function(date) {
             // 1. 國定假日對照表 (2025-2026 重點假日)
             const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
@@ -3560,13 +3560,33 @@
             // 2. 農曆轉換 (使用 Intl API)
             let lunar = '';
             try {
-                // 格式化為 "2025年正月初一"
+                // 格式化取得農曆資訊
                 const parts = new Intl.DateTimeFormat('zh-TW-u-ca-chinese', { 
                     day: 'numeric', month: 'long' 
                 }).formatToParts(date);
                 
                 const lunarMonth = parts.find(p => p.type === 'month')?.value; // ex: 正月, 二月
-                const lunarDay = parts.find(p => p.type === 'day')?.value;     // ex: 初一, 十五
+                let lunarDay = parts.find(p => p.type === 'day')?.value;       // ex: 1, 15, 初一
+
+                // === 關鍵修正：如果是數字，強制轉成中文 ===
+                // 定義對照表
+                const dayMap = {
+                    '1': '初一', '2': '初二', '3': '初三', '4': '初四', '5': '初五',
+                    '6': '初六', '7': '初七', '8': '初八', '9': '初九', '10': '初十',
+                    '11': '十一', '12': '十二', '13': '十三', '14': '十四', '15': '十五',
+                    '16': '十六', '17': '十七', '18': '十八', '19': '十九', '20': '二十',
+                    '21': '廿一', '22': '廿二', '23': '廿三', '24': '廿四', '25': '廿五',
+                    '26': '廿六', '27': '廿七', '28': '廿八', '29': '廿九', '30': '三十'
+                };
+
+                // 嘗試將 lunarDay 轉為純數字 (去除 '日' 等字元)
+                const dayNum = parseInt(lunarDay.replace(/[^\d]/g, ''));
+                
+                // 如果是數字 (代表瀏覽器回傳了 1, 26 等)，就查表轉換
+                if (!isNaN(dayNum) && dayMap[dayNum]) {
+                    lunarDay = dayMap[dayNum];
+                }
+                // ==========================================
 
                 // 顯示邏輯：如果是初一，顯示月份(ex: 正月)；否則顯示日期(ex: 初二)
                 if (lunarDay === '初一') {
