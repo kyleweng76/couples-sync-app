@@ -527,6 +527,15 @@
             line-height: 1;
         }
 
+        /* === 修正：恢復訊息資訊欄的垂直排版 === */
+        .chat-info-col {
+            display: flex;
+            flex-direction: column; /* 關鍵！讓它們垂直排列 (已讀在上，時間在下) */
+            justify-content: flex-end; /* 靠下對齊，對齊氣泡底部 */
+            margin-bottom: 0px; /* 微調底部距離 */
+            min-width: 30px; /* 確保有足夠寬度 */
+        }
+
         .leave-row {
             display: flex;
             justify-content: center; /* <--- 加入這行，讓標籤水平置中 */
