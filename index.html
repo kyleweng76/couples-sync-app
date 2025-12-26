@@ -2276,7 +2276,7 @@
     
         window.renderCalendarListView = function() { const items = window.getCalendarItems(); const listEl = document.getElementById('event-list'); if(!listEl) return; if (items.length === 0) { listEl.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">無行程</div>`; } else { window.renderEventListItems(items, listEl); } };
 
-        // === 優化版：列表渲染 (支援強制展開 + 隱藏月份標題) ===
+// === 優化版：列表渲染 (修正反灰邏輯) ===
         window.renderEventListItems = function(items, container, forceExpand = false, hideMonthHeader = false) {
             const now = new Date(); 
             
@@ -2290,7 +2290,6 @@
                     // 月份標題
                     const currentMonthLabel = `${date.getFullYear()}年 ${date.getMonth() + 1}月`;
                     
-                    // === 修改重點：只有在 hideMonthHeader 為 false 時才顯示月份標題 ===
                     if (!hideMonthHeader && currentMonthLabel !== lastMonthLabel) {
                         htmlBuffer += `
                         <div class="sticky top-0 z-30 bg-gray-100/95 backdrop-blur-sm px-4 py-2 text-xs font-bold text-gray-500 border-b border-gray-200 shadow-sm flex items-center justify-between">
@@ -2299,11 +2298,45 @@
                         </div>`;
                         lastMonthLabel = currentMonthLabel;
                     }
-                    // ==========================================================
 
+                    // === 修改重點：判斷是否反灰 (過期變灰) ===
                     let opacityClass = '';
-                    if (e.isTodo && e.done) opacityClass = 'opacity-40 grayscale';
-                    else if (!e.isTodo && new Date(e.timestamp) < now) opacityClass = 'opacity-50 grayscale';
+                    
+                    if (e.isTodo) {
+                        // 待辦：維持原本邏輯 (完成才灰)
+                        if (e.done) opacityClass = 'opacity-40 grayscale';
+                    } else {
+                        // 行程：精確判斷時間
+                        let cutoffDate;
+                        // 取得這筆行程的「有效結束日期」 (優先取 endDate, 沒有則取 startDate)
+                        const sDateStr = e.endDate || e.dueDateEnd || e.startDate || e.dueDate;
+                        
+                        if (sDateStr) {
+                            if (e.allDay) {
+                                // 規則 1：全天行程 -> 截止時間為該日期的「當天結束 (23:59:59)」
+                                // 使用 replace 將 - 換成 / 以確保跨瀏覽器解析為當地時間 (Local Time)
+                                const localDateStr = sDateStr.replace(/-/g, '/'); 
+                                cutoffDate = new Date(localDateStr);
+                                cutoffDate.setHours(23, 59, 59, 999);
+                            } else {
+                                // 規則 2：非全天 -> 看有沒有結束時間
+                                const eTime = e.endTime || e.dueTimeEnd;
+                                if (eTime) {
+                                    // 有結束時間 -> 截止時間為 該日期 + 結束時間
+                                    cutoffDate = new Date(`${sDateStr}T${eTime}`);
+                                } else {
+                                    // 沒結束時間 -> 以「開始時間」當作截止 (時間過了就灰)
+                                    cutoffDate = new Date(e.timestamp);
+                                }
+                            }
+                        }
+
+                        // 比對：如果現在時間 > 截止時間，就變灰
+                        if (cutoffDate && now > cutoffDate) {
+                            opacityClass = 'opacity-50 grayscale';
+                        }
+                    }
+                    // ==========================================
 
                     let timeStr = "";
                     const startDateStr = e.startDate || e.dueDate;
@@ -2414,16 +2447,31 @@
             const pastItems = [];
             const futureItems = [];
 
+            // 這裡也需要用相同的 cutoff 邏輯來分類「歷史」與「未來」
             items.forEach(e => {
                 const date = new Date(e.timestamp);
                 if (isNaN(date)) return;
+                
                 let isPast = false;
                 if (e.isTodo) { isPast = e.done; } 
                 else {
-                    const endDateStr = e.endDate || e.dueDateEnd || (e.startDate || e.dueDate);
-                    const endTimeStr = e.endTime || e.dueTimeEnd || "23:59";
-                    const endDateTime = new Date(`${endDateStr}T${endTimeStr}`);
-                    if(isNaN(endDateTime)) isPast = date < now; else isPast = endDateTime < now;
+                    // 套用相同的邏輯
+                    const sDateStr = e.endDate || e.dueDateEnd || e.startDate || e.dueDate;
+                    let cutoffDate;
+                    if (sDateStr) {
+                         if (e.allDay) {
+                            const localDateStr = sDateStr.replace(/-/g, '/'); 
+                            cutoffDate = new Date(localDateStr);
+                            cutoffDate.setHours(23, 59, 59, 999);
+                        } else {
+                            const eTime = e.endTime || e.dueTimeEnd;
+                            if (eTime) cutoffDate = new Date(`${sDateStr}T${eTime}`);
+                            else cutoffDate = new Date(e.timestamp);
+                        }
+                        isPast = cutoffDate < now;
+                    } else {
+                        isPast = date < now;
+                    }
                 }
                 if (isPast) pastItems.push(e); else futureItems.push(e);
             });
