@@ -169,10 +169,13 @@
         .modal.hidden { opacity: 0; pointer-events: none; transform: scale(0.95); }
         .modal.visible { opacity: 1; pointer-events: auto; transform: scale(1); }
 
+        .bg-theme-light { background-color: var(--app-color-light) !important; }
         .custom-checkbox { appearance: none; background-color: #fff; margin: 0; font: inherit; color: currentColor; width: 20px; height: 20px; border: 2px solid #d1d5db; border-radius: 6px; display: grid; place-content: center; cursor: pointer; transition: all 0.2s; }
         .custom-checkbox::before { content: ""; width: 10px; height: 10px; transform: scale(0); transition: 120ms transform ease-in-out; box-shadow: inset 1em 1em white; transform-origin: center; clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%); }
-        .custom-checkbox:checked { background-color: #2cc998; border-color: #2cc998; }
-        .custom-checkbox:checked::before { transform: scale(1); }
+        .custom-checkbox:checked { 
+            background-color: var(--app-color) !important; 
+            border-color: var(--app-color) !important; 
+        }        .custom-checkbox:checked::before { transform: scale(1); }
         
         .cat-chip { padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 500; border: 1px solid #e5e7eb; background: white; color: #6b7280; white-space: nowrap; transition: all 0.2s; }
         .cat-chip.active { background: #2cc998; color: white; border-color: #2cc998; box-shadow: 0 2px 5px rgba(44, 201, 152, 0.2); }
@@ -270,9 +273,9 @@
             transition: all 0.2s;
         }
         .recur-btn.active {
-            background-color: #ecfdf5;
-            border-color: #2cc998;
-            color: #2cc998;
+            background-color: var(--app-color-light) !important;
+            border-color: var(--app-color) !important;
+            color: var(--app-color) !important;
             font-weight: bold;
         }
         .day-circle {
@@ -288,10 +291,9 @@
             transition: all 0.2s;
         }
         .day-circle.active {
-            background-color: #2cc998;
-            border-color: #2cc998;
+            background-color: var(--app-color) !important;
+            border-color: var(--app-color) !important;
             color: white;
-            font-weight: bold;
         }
         
         /* Custom Calendar Styles */
@@ -354,8 +356,8 @@
 
         /* 今天樣式 (原本是圓圈，現在改簡單點，或者維持圓圈但要包住數字) */
         .big-cal-cell.today .big-cal-day-num {
-            background-color: #2cc998;
-            color: white;
+            background-color: var(--app-color) !important; /* 改用變數 */
+            color: white !important;
             border-radius: 50%;
             width: 20px;
             height: 20px;
@@ -647,10 +649,10 @@
         
         /* 選中樣式 (綠色放大) */
         .time-cell.selected {
-            color: #2cc998;
+            color: var(--app-color) !important; /* 改用變數 */
             font-weight: 800;
-            font-size: 26px; /* 再大一點 */
-            transform: scale(1); /* 不用 scale 改用 font-size 比較清晰 */
+            font-size: 26px;
+            transform: scale(1);
             opacity: 1;
         }
 
@@ -788,7 +790,7 @@
                             <h2 id="big-cal-title" class="text-lg font-bold text-gray-800 pl-2">...</h2>
                             
                             <div class="flex items-center gap-2">
-                                <button onclick="window.jumpToToday()" class="text-xs font-bold text-ttgreen bg-green-50 px-3 py-1.5 rounded-full hover:bg-green-100 transition active:scale-95 mr-1">
+                                <button onclick="window.jumpToToday()" class="text-xs font-bold text-theme bg-theme-light px-3 py-1.5 rounded-full hover:bg-green-100 transition active:scale-95 mr-1">
                                     今天
                                 </button>
                                 <button onclick="window.changeBigCalMonth(-1)" class="p-1.5 rounded-full hover:bg-gray-100 active:bg-gray-200 transition">
@@ -961,7 +963,7 @@
         <div class="flex justify-between items-center px-4 py-3 border-b border-gray-100">
             <button onclick="window.closeAddModal()" class="text-gray-500 text-sm font-medium px-2 py-1 hover:bg-gray-50 rounded-lg transition cursor-pointer">取消</button>
             <span class="text-sm font-bold text-gray-800">行程詳情</span>
-            <button onclick="window.saveEvent()" class="text-ttgreen text-sm font-bold px-2 py-1 hover:bg-green-50 rounded-lg transition">保存</button>
+            <button onclick="window.saveEvent()" class="text-theme text-sm font-bold px-2 py-1 hover:hover:bg-gray-50 rounded-lg transition">保存</button>
         </div>
 
         <!-- Title -->
@@ -1145,7 +1147,7 @@
             <div class="flex justify-between items-center px-4 py-3 border-b border-gray-100">
                 <button onclick="window.closeAddTodoModal()" class="text-gray-500 text-sm font-medium px-2 py-1 hover:bg-gray-50 rounded-lg transition cursor-pointer">取消</button>
                 <span id="todo-modal-title" class="text-sm font-bold text-gray-800">新增待辦事項</span>
-                <button onclick="window.saveTodoItem()" id="todo-modal-btn" class="text-ttgreen text-sm font-bold px-2 py-1 hover:bg-green-50 rounded-lg transition">新增</button>
+                <button onclick="window.saveTodoItem()" id="todo-modal-btn" class="text-theme text-sm font-bold px-2 py-1 hover:hover:bg-gray-50 rounded-lg transition">新增</button>
             </div>
 
             <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
@@ -2075,7 +2077,7 @@
             header.innerHTML = `
                 <button onclick="window.closeTimePicker()" class="text-sm text-gray-500 min-w-[40px]">取消</button>
                 <span class="text-sm font-bold text-gray-800">選擇時間</span>
-                <button onclick="window.confirmTimeSelection()" class="text-sm font-bold text-ttgreen min-w-[40px]">確定</button>
+                <button onclick="window.confirmTimeSelection()" class="text-sm font-bold text-theme min-w-[40px]">確定</button>
             `;
             container.appendChild(header);
 
@@ -2310,10 +2312,24 @@
         window.setNowToInputs = function() { const now = new Date(); const dStr = now.toISOString().split('T')[0]; let h = now.getHours(), m = now.getMinutes(); if(m < 30) { m = 30; } else { m = 0; h += 1; } if(h > 23) h = 0; const tStr = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`; const startEl = document.getElementById('input-date-start'); if(startEl) { startEl.value = dStr; document.getElementById('input-time-start').value = tStr; window.updateDateDisplay('start', dStr); window.updateTimeDisplay('start', tStr); const endD = document.getElementById('input-date-end'); if(endD) endD.value = dStr; const endT = document.getElementById('input-time-end'); if(endT) endT.value = tStr; window.updateDateDisplay('end', dStr); window.updateTimeDisplay('end', tStr); } };
         
         window.updateRoleUI = function() {
-            // === 新增：更新全域主題色變數 ===
+            // === 修改：更新全域主題色與淺色版變數 ===
             if (currentUserRole) {
                 const color = roleColors[currentUserRole] || '#2cc998';
                 document.documentElement.style.setProperty('--app-color', color);
+                
+                // 計算淺色版 (Hex -> RGBA 0.1)
+                let r = 0, g = 0, b = 0;
+                if (color.length === 4) {
+                    r = parseInt(color[1] + color[1], 16);
+                    g = parseInt(color[2] + color[2], 16);
+                    b = parseInt(color[3] + color[3], 16);
+                } else if (color.length === 7) {
+                    r = parseInt(color.slice(1, 3), 16);
+                    g = parseInt(color.slice(3, 5), 16);
+                    b = parseInt(color.slice(5, 7), 16);
+                }
+                const lightColor = `rgba(${r}, ${g}, ${b}, 0.1)`; // 10% 透明度
+                document.documentElement.style.setProperty('--app-color-light', lightColor);
             }
             const btnHaohao = document.getElementById('role-haohao');
             const btnMaomao = document.getElementById('role-maomao');
@@ -2612,7 +2628,7 @@
                         htmlBuffer += `
                         <div class="sticky top-0 z-30 bg-gray-100/95 backdrop-blur-sm px-4 py-2 text-xs font-bold text-gray-500 border-b border-gray-200 shadow-sm flex items-center justify-between">
                             <span>${currentMonthLabel}</span>
-                            ${currentMonthLabel === `${now.getFullYear()}年 ${now.getMonth() + 1}月` ? '<span class="text-[10px] bg-ttgreen text-white px-1.5 py-0.5 rounded-full">本月</span>' : ''}
+                            ${currentMonthLabel === `${now.getFullYear()}年 ${now.getMonth() + 1}月` ? '<span class="text-[10px] bg-theme text-white px-1.5 py-0.5 rounded-full">本月</span>' : ''}
                         </div>`;
                         lastMonthLabel = currentMonthLabel;
                     }
@@ -3153,13 +3169,13 @@
             if(mode === 'list') {
                 vList.classList.remove('hidden');
                 if(calendarViewMonthContainer) calendarViewMonthContainer.classList.add('hidden');
-                bList.classList.add('bg-white','shadow-sm','text-ttgreen','font-bold'); bList.classList.remove('text-gray-500','font-medium');
-                bMonth.classList.remove('bg-white','shadow-sm','text-ttgreen','font-bold'); bMonth.classList.add('text-gray-500','font-medium');
+                bList.classList.add('bg-white','shadow-sm','text-theme','font-bold'); bList.classList.remove('text-gray-500','font-medium');
+                bMonth.classList.remove('bg-white','shadow-sm','text-theme','font-bold'); bMonth.classList.add('text-gray-500','font-medium');
             } else {
                 vList.classList.add('hidden');
                 if(calendarViewMonthContainer) calendarViewMonthContainer.classList.remove('hidden');
-                bMonth.classList.add('bg-white','shadow-sm','text-ttgreen','font-bold'); bMonth.classList.remove('text-gray-500','font-medium');
-                bList.classList.remove('bg-white','shadow-sm','text-ttgreen','font-bold'); bList.classList.add('text-gray-500','font-medium');
+                bMonth.classList.add('bg-white','shadow-sm','text-theme','font-bold'); bMonth.classList.remove('text-gray-500','font-medium');
+                bList.classList.remove('bg-white','shadow-sm','text-theme','font-bold'); bList.classList.add('text-gray-500','font-medium');
                 window.renderBigCalendar();
             }
         };
