@@ -675,6 +675,17 @@
         .sort-btn:active { transform: scale(0.9); background-color: #e5e7eb; }
         .sort-btn.disabled { opacity: 0.3; cursor: default; pointer-events: none; }
 
+        /* === 新增：分類編輯/刪除按鈕樣式 === */
+        .cat-action-btn {
+            padding: 4px;
+            margin-left: 2px;
+            color: #9ca3af;
+            transition: all 0.2s;
+            border-radius: 4px;
+        }
+        .cat-action-btn:hover { background-color: #f3f4f6; color: #4b5563; }
+        .cat-action-btn.delete:hover { background-color: #fee2e2; color: #ef4444; }
+
     </style>
 </head>
 <body class="text-gray-700 h-screen flex flex-col overflow-hidden bg-white">
@@ -3890,7 +3901,7 @@ function initApp(db) {
             return finalOrder;
         };
 
-        // === 修改：渲染設定頁面的分類 (加入排序按鈕) ===
+        // === 修改：渲染設定頁面的分類 (加入編輯/刪除功能) ===
         window.renderCategorySettings = function() {
             const container = document.getElementById('settings-category-list');
             if (!container) return;
@@ -3903,16 +3914,33 @@ function initApp(db) {
             // 2. 產生 UI
             sortedCats.forEach((cat, index) => {
                 const isVisible = window.todoCategoryVisibility[cat] !== false;
-                const defCat = defaultCategories.find(c => c.name === cat);
-                const color = defCat ? defCat.color : '#f3f4f6'; 
                 
-                // 判斷是否為第一項或最後一項 (用來禁用按鈕)
+                // 判斷是否為預設分類
+                const defCat = defaultCategories.find(c => c.name === cat);
+                const isDefault = !!defCat;
+                const color = defCat ? defCat.color : '#f3f4f6'; // 自訂分類預設灰色
+                
+                // 排序按鈕狀態
                 const isFirst = index === 0;
                 const isLast = index === sortedCats.length - 1;
 
+                // 產生 編輯/刪除 按鈕 (只有自訂分類才顯示)
+                let actionBtns = '';
+                if (!isDefault) {
+                    actionBtns = `
+                    <div class="flex items-center border-l border-gray-200 pl-2 ml-2 gap-1">
+                        <button onclick="window.renameCategory('${cat}')" class="cat-action-btn" title="重新命名">
+                            <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button onclick="window.deleteCategory('${cat}')" class="cat-action-btn delete" title="刪除分類">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>`;
+                }
+
                 const html = `
                 <div class="flex items-center justify-between py-2 border-b border-gray-50 last:border-0 group">
-                    <div class="flex items-center gap-3 flex-1">
+                    <div class="flex items-center gap-2 flex-1 min-w-0">
                         <div class="flex flex-col gap-0.5">
                             <button onclick="window.moveCategory('${cat}', -1)" class="sort-btn ${isFirst ? 'disabled' : ''}">
                                 <i data-lucide="chevron-up" class="w-3 h-3"></i>
@@ -3922,11 +3950,16 @@ function initApp(db) {
                             </button>
                         </div>
                         
-                        <div class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${color}"></div>
-                        <span class="text-sm text-gray-700 font-medium">${cat}</span>
+                        <div class="flex items-center gap-2 flex-1 min-w-0">
+                            <div class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${color}"></div>
+                            <span class="text-sm text-gray-700 font-medium truncate">${cat}</span>
+                            ${!isDefault ? '<span class="text-[9px] bg-gray-100 text-gray-400 px-1 rounded">自訂</span>' : ''}
+                        </div>
+
+                        ${actionBtns}
                     </div>
 
-                    <label class="relative inline-flex items-center cursor-pointer ml-4">
+                    <label class="relative inline-flex items-center cursor-pointer ml-3 flex-shrink-0">
                         <input type="checkbox" class="sr-only toggle-checkbox" onchange="window.toggleCategoryVisibility('${cat}')" ${isVisible ? 'checked' : ''}>
                         <div class="w-9 h-5 bg-gray-200 rounded-full toggle-bg transition-colors duration-200 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all input:checked:after:translate-x-full peer-checked:after:translate-x-full"></div>
                     </label>
@@ -3935,6 +3968,111 @@ function initApp(db) {
             });
             
             if (typeof lucide !== 'undefined') lucide.createIcons();
+        };
+
+        // === 新增：重新命名自訂分類 ===
+        window.renameCategory = async function(oldName) {
+            const newName = prompt(`請輸入「${oldName}」的新名稱：`, oldName);
+            
+            // 檢查有效性
+            if (!newName || newName.trim() === "" || newName === oldName) return;
+            const cleanName = newName.trim();
+
+            // 檢查是否重複 (跟預設或現有自訂重複)
+            if (defaultCategories.find(c => c.name === cleanName) || window.customCategories.includes(cleanName)) {
+                alert('這個分類名稱已經存在囉！');
+                return;
+            }
+
+            try {
+                window.showToast('正在更新分類名稱...');
+
+                // 1. 更新本地設定 (customCategories)
+                const idx = window.customCategories.indexOf(oldName);
+                if (idx !== -1) {
+                    window.customCategories[idx] = cleanName;
+                    localStorage.setItem('my_custom_categories', JSON.stringify(window.customCategories));
+                }
+
+                // 2. 更新本地設定 (排序 order)
+                let order = window.getCategoryOrder();
+                const orderIdx = order.indexOf(oldName);
+                if (orderIdx !== -1) {
+                    order[orderIdx] = cleanName;
+                    localStorage.setItem('todo_category_order', JSON.stringify(order));
+                }
+
+                // 3. 更新本地設定 (顯示 visibility)
+                if (window.todoCategoryVisibility[oldName] !== undefined) {
+                    window.todoCategoryVisibility[cleanName] = window.todoCategoryVisibility[oldName];
+                    delete window.todoCategoryVisibility[oldName];
+                    localStorage.setItem('todo_category_visibility', JSON.stringify(window.todoCategoryVisibility));
+                }
+
+                // 4. 重頭戲：更新 Firestore 資料庫中的待辦事項
+                // 找出所有分類是 oldName 的待辦，批次更新為 newName
+                const batch = db.batch();
+                const snapshot = await db.collection('todos').where('category', '==', oldName).get();
+                
+                if (!snapshot.empty) {
+                    snapshot.forEach(doc => {
+                        batch.update(doc.ref, { category: cleanName });
+                    });
+                    await batch.commit();
+                }
+
+                // 5. 重新渲染畫面
+                window.renderCategorySettings();
+                window.showToast(`分類已更名為：${cleanName}`);
+
+            } catch (err) {
+                console.error("Rename failed:", err);
+                window.showToast('更名失敗，請檢查網路');
+            }
+        };
+
+        // === 新增：刪除自訂分類 ===
+        window.deleteCategory = async function(catName) {
+            if (!confirm(`確定要刪除分類「${catName}」嗎？\n\n注意：屬於此分類的待辦事項不會被刪除，但會變成「未分類」。`)) {
+                return;
+            }
+
+            try {
+                // 1. 更新本地設定 (移除 customCategories)
+                window.customCategories = window.customCategories.filter(c => c !== catName);
+                localStorage.setItem('my_custom_categories', JSON.stringify(window.customCategories));
+
+                // 2. 更新本地設定 (移除 order)
+                let order = JSON.parse(localStorage.getItem('todo_category_order') || '[]');
+                order = order.filter(c => c !== catName);
+                localStorage.setItem('todo_category_order', JSON.stringify(order));
+
+                // 3. 更新本地設定 (移除 visibility)
+                delete window.todoCategoryVisibility[catName];
+                localStorage.setItem('todo_category_visibility', JSON.stringify(window.todoCategoryVisibility));
+
+                // 4. 更新 Firestore：將該分類的待辦事項改為 "" (未分類)
+                // 這樣它們才不會消失，而是回到未分類區塊
+                window.showToast('正在刪除分類...');
+                
+                const batch = db.batch();
+                const snapshot = await db.collection('todos').where('category', '==', catName).get();
+                
+                if (!snapshot.empty) {
+                    snapshot.forEach(doc => {
+                        batch.update(doc.ref, { category: '' }); // 清空分類
+                    });
+                    await batch.commit();
+                }
+
+                // 5. 重新渲染
+                window.renderCategorySettings();
+                window.showToast('分類已刪除');
+
+            } catch (err) {
+                console.error("Delete failed:", err);
+                window.showToast('刪除失敗');
+            }
         };
 
         // === 新增：移動分類順序 ===
