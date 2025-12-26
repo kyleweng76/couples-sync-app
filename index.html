@@ -2009,15 +2009,21 @@
         let tempHour = 0;
         let tempMinute = 0;
 
-    // === 時間選擇器核心邏輯 (修正版：變數全域化，解決無法選擇的問題) ===
+ // === 時間選擇器 (最終修正版：解決雙重捲軸與點擊無效問題) ===
         
         // 1. 開啟時間選擇器
         window.openTimePicker = function(type) {
-            window._timePickerTarget = type; // 改用 window._ 變數，確保全域存取
+            window._timePickerTarget = type;
             const container = document.getElementById('time-list-container');
             container.innerHTML = '';
             
-            // 取得目前設定的時間 (或預設為現在)
+            // --- 關鍵修正：重置容器樣式，移除原本 CSS 的高度限制，避免雙重捲軸 ---
+            // 移除原本的 class，改用 Tailwind 直接控制，確保它是固定大小且不捲動
+            container.className = "relative bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden w-[300px]"; 
+            container.style.maxHeight = "none"; // 強制覆寫原本的 300px 限制
+            // -------------------------------------------------------------
+
+            // 取得目前時間
             const currentVal = document.getElementById(`input-time-${type}`).value;
             const now = new Date();
             
@@ -2030,9 +2036,9 @@
                 window._tempMinute = now.getMinutes(); 
             }
 
-            // A. 渲染標題列
+            // A. 標題列
             const header = document.createElement('div');
-            header.className = "sticky top-0 bg-white border-b border-gray-100 flex justify-between items-center px-4 py-3 z-20 flex-none"; // z-20 確保在最上層
+            header.className = "bg-white border-b border-gray-100 flex justify-between items-center px-4 py-3 flex-none z-10";
             header.innerHTML = `
                 <button onclick="window.closeTimePicker()" class="text-sm text-gray-500 min-w-[40px]">取消</button>
                 <span class="text-sm font-bold text-gray-800">選擇時間</span>
@@ -2040,57 +2046,59 @@
             `;
             container.appendChild(header);
 
-            // B. 渲染分欄容器
+            // B. 內容區 (左右分欄)
             const body = document.createElement('div');
-            body.className = "time-picker-body";
+            body.className = "flex bg-white relative flex-1"; 
+            body.style.height = "220px"; // 固定高度
             
-            // --- 小時欄 (00-23) ---
+            // --- 小時欄 ---
             const hourCol = document.createElement('div');
-            hourCol.className = "time-column";
             hourCol.id = "time-col-hour";
-            hourCol.innerHTML += '<div style="height: 90px;"></div>'; // 增加留白
+            hourCol.className = "flex-1 overflow-y-auto text-center py-2 no-scrollbar";
+            hourCol.innerHTML = '<div style="height: 90px;"></div>'; // 上方留白
             
             for(let h=0; h<24; h++) {
-                const cell = document.createElement('div');
-                cell.className = `time-cell ${h === window._tempHour ? 'selected' : ''}`;
-                cell.textContent = String(h).padStart(2, '0');
-                cell.dataset.val = h;
-                // 使用 addEventListener 確保點擊事件正確綁定
-                cell.addEventListener('click', function() { window.updateTimePickerSelection('hour', h); });
-                hourCol.appendChild(cell);
+                // 使用直接的 onclick 字串，確保事件絕對綁定成功
+                const isSelected = h === window._tempHour;
+                hourCol.innerHTML += `
+                    <div class="time-cell ${isSelected ? 'selected' : ''}" 
+                         id="hour-cell-${h}"
+                         onclick="window.updateTimePickerSelection('hour', ${h})">
+                        ${String(h).padStart(2, '0')}
+                    </div>`;
             }
-            hourCol.innerHTML += '<div style="height: 90px;"></div>';
+            hourCol.innerHTML += '<div style="height: 90px;"></div>'; // 下方留白
 
-            // --- 分隔線 (:) ---
+            // --- 分隔線 ---
             const divider = document.createElement('div');
-            divider.className = "time-divider";
+            divider.className = "flex items-center justify-center font-bold text-gray-300 pb-4";
             divider.textContent = ":";
 
-            // --- 分鐘欄 (00-59) ---
+            // --- 分鐘欄 ---
             const minCol = document.createElement('div');
-            minCol.className = "time-column";
             minCol.id = "time-col-minute";
-            minCol.innerHTML += '<div style="height: 90px;"></div>'; // 增加留白
+            minCol.className = "flex-1 overflow-y-auto text-center py-2 no-scrollbar";
+            minCol.innerHTML = '<div style="height: 90px;"></div>'; // 上方留白
             
             for(let m=0; m<60; m++) {
-                const cell = document.createElement('div');
-                cell.className = `time-cell ${m === window._tempMinute ? 'selected' : ''}`;
-                cell.textContent = String(m).padStart(2, '0');
-                cell.dataset.val = m;
-                // 使用 addEventListener
-                cell.addEventListener('click', function() { window.updateTimePickerSelection('minute', m); });
-                minCol.appendChild(cell);
+                const isSelected = m === window._tempMinute;
+                minCol.innerHTML += `
+                    <div class="time-cell ${isSelected ? 'selected' : ''}" 
+                         id="min-cell-${m}"
+                         onclick="window.updateTimePickerSelection('minute', ${m})">
+                        ${String(m).padStart(2, '0')}
+                    </div>`;
             }
-            minCol.innerHTML += '<div style="height: 90px;"></div>';
+            minCol.innerHTML += '<div style="height: 90px;"></div>'; // 下方留白
 
             body.appendChild(hourCol);
             body.appendChild(divider);
             body.appendChild(minCol);
             container.appendChild(body);
 
-            // C. 底部清除按鈕
+            // C. 底部按鈕
             const footer = document.createElement('div');
-            footer.className = "p-3 border-t border-gray-100 flex justify-center bg-gray-50";
+            footer.className = "p-3 border-t border-gray-100 flex justify-center bg-gray-50 flex-none z-10";
             footer.innerHTML = '<button onclick="window.clearTime()" class="text-xs text-red-400 font-medium px-4 py-1.5 rounded-lg hover:bg-red-50 transition border border-transparent hover:border-red-100">清除時間</button>';
             container.appendChild(footer);
 
@@ -2099,38 +2107,45 @@
             m.classList.remove('hidden');
             setTimeout(() => m.classList.add('visible'), 10);
 
-            // E. 自動捲動到選取項目 (延遲執行確保 DOM 已渲染)
+            // E. 自動捲動 (稍微延遲，等待畫面長好)
             setTimeout(() => {
-                const hEl = hourCol.querySelector('.selected');
-                const mEl = minCol.querySelector('.selected');
-                if(hEl) hEl.scrollIntoView({ block: 'center', behavior: 'auto' });
-                if(mEl) mEl.scrollIntoView({ block: 'center', behavior: 'auto' });
-            }, 50);
+                window.scrollToSelectedTime('hour', window._tempHour);
+                window.scrollToSelectedTime('minute', window._tempMinute);
+            }, 100);
         };
 
-        // 2. 點擊選項時更新 (修正版)
+        // 2. 更新選擇 (包含視覺更新)
         window.updateTimePickerSelection = function(colType, val) {
-            // 更新全域變數
             if(colType === 'hour') window._tempHour = val;
             if(colType === 'minute') window._tempMinute = val;
-            
+
             const colId = colType === 'hour' ? 'time-col-hour' : 'time-col-minute';
+            const cellPrefix = colType === 'hour' ? 'hour-cell-' : 'min-cell-';
             const col = document.getElementById(colId);
-            
-            if(col) {
-                col.querySelectorAll('.time-cell').forEach(cell => {
-                    // 確保型別轉換正確
-                    if(parseInt(cell.dataset.val, 10) === val) {
-                        cell.classList.add('selected');
-                        cell.scrollIntoView({ block: 'center', behavior: 'smooth' });
-                    } else {
-                        cell.classList.remove('selected');
-                    }
-                });
+
+            // 移除舊的 selected
+            const old = col.querySelector('.selected');
+            if(old) old.classList.remove('selected');
+
+            // 加上新的 selected
+            const target = document.getElementById(cellPrefix + val);
+            if(target) {
+                target.classList.add('selected');
+                // 滑動置中
+                target.scrollIntoView({ block: 'center', behavior: 'smooth' });
             }
         };
 
-        // 3. 按下「確定」時儲存 (修正版)
+        // 輔助：初始開啟時的捲動 (無動畫，直接定位)
+        window.scrollToSelectedTime = function(colType, val) {
+            const cellPrefix = colType === 'hour' ? 'hour-cell-' : 'min-cell-';
+            const target = document.getElementById(cellPrefix + val);
+            if(target) {
+                target.scrollIntoView({ block: 'center', behavior: 'auto' });
+            }
+        };
+
+        // 3. 確定儲存
         window.confirmTimeSelection = function() {
             const h = String(window._tempHour || 0).padStart(2, '0');
             const m = String(window._tempMinute || 0).padStart(2, '0');
@@ -2151,7 +2166,7 @@
             window.closeTimePicker();
         };
 
-        // 4. 清除時間 (修正版)
+        // 4. 清除
         window.clearTime = function() {
             const targetType = window._timePickerTarget;
             const inputEl = document.getElementById(`input-time-${targetType}`);
@@ -2160,7 +2175,7 @@
             window.closeTimePicker();
         };
 
-        // 5. 關閉 Picker (不變)
+        // 5. 關閉
         window.closeTimePicker = function() {
             const m = document.getElementById('time-picker-modal');
             m.classList.remove('visible');
