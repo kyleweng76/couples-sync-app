@@ -302,16 +302,17 @@
             border-right: none;
         }
 
-        /* 修改：日期頭部容器 */
+        /* 修改：日期頭部容器 (加大間距版) */
         .big-cal-day-header {
             display: flex;
             align-items: baseline;
             justify-content: center;
             gap: 3px;
             padding-top: 2px;
-            margin-bottom: 6px; /* <--- 改成 6px，拉開與下方行程的距離 */
-            height: 20px;
-            line-height: 20px;
+            padding-bottom: 2px; /* 增加一點內部留白 */
+            margin-bottom: 12px; /* <--- 改成 12px，強制拉開與下方行程的距離 */
+            height: 24px;        /* 稍微加高容器，避免圓圈被切到 */
+            line-height: 24px;
             position: relative;
         }
 
