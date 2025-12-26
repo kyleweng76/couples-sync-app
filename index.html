@@ -3443,7 +3443,7 @@
             }
         };
 
-// === 每日資訊卡片功能 (修正農曆格式版) ===
+        // === 每日資訊卡片功能 (智慧定位版：自動抓取當前位置天氣) ===
         window.renderDailyBrief = function() {
             const now = new Date();
             const weekDays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
@@ -3453,16 +3453,15 @@
             document.getElementById('brief-day-word').textContent = weekDays[now.getDay()];
             document.getElementById('brief-month-year').textContent = `${now.getMonth() + 1}月 / ${now.getFullYear()}`;
 
-            // 2. 更新農曆 (使用 Intl API + 強制轉國字)
+            // 2. 更新農曆
             try {
                 const parts = new Intl.DateTimeFormat('zh-TW-u-ca-chinese', { 
                     day: 'numeric', month: 'long' 
                 }).formatToParts(now);
                 
-                const lunarMonth = parts.find(p => p.type === 'month')?.value; // ex: 十一月, 正月
-                let lunarDay = parts.find(p => p.type === 'day')?.value;       // ex: 7, 15, 初一
+                const lunarMonth = parts.find(p => p.type === 'month')?.value;
+                let lunarDay = parts.find(p => p.type === 'day')?.value;
 
-                // 強制轉國字對照表
                 const dayMap = {
                     '1': '初一', '2': '初二', '3': '初三', '4': '初四', '5': '初五',
                     '6': '初六', '7': '初七', '8': '初八', '9': '初九', '10': '初十',
@@ -3471,81 +3470,88 @@
                     '21': '廿一', '22': '廿二', '23': '廿三', '24': '廿四', '25': '廿五',
                     '26': '廿六', '27': '廿七', '28': '廿八', '29': '廿九', '30': '三十'
                 };
-
-                // 嘗試將 lunarDay 轉為純數字 (去除 '日' 等字元)
                 const dayNum = parseInt(lunarDay.replace(/[^\d]/g, ''));
-                
-                // 如果是數字，就查表轉換
-                if (!isNaN(dayNum) && dayMap[dayNum]) {
-                    lunarDay = dayMap[dayNum];
-                }
-
-                // 組合顯示：例如 "農曆 十一月初七"
+                if (!isNaN(dayNum) && dayMap[dayNum]) { lunarDay = dayMap[dayNum]; }
                 document.getElementById('brief-lunar').textContent = `農曆 ${lunarMonth}${lunarDay}`;
             } catch (e) {
                 console.error(e);
                 document.getElementById('brief-lunar').textContent = '';
             }
 
-            // 3. 更新天氣 (使用 Open-Meteo 免費 API)
-            // 預設座標：新北市中和 (25.00, 121.48)
-            const lat = 25.00;
-            const lon = 121.48;
-            
-            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
+            // === 3. 天氣邏輯 (封裝成函式) ===
+            const fetchWeather = (lat, lon) => {
+                const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
 
-            fetch(apiUrl)
-                .then(response => response.json())
-                .then(data => {
-                    const current = data.current;
-                    const daily = data.daily;
-                    
-                    // 溫度
-                    document.getElementById('brief-temp-current').textContent = `${Math.round(current.temperature_2m)}°`;
-                    document.getElementById('brief-temp-range').textContent = `H:${Math.round(daily.temperature_2m_max[0])}° L:${Math.round(daily.temperature_2m_min[0])}°`;
-                    
-                    // 天氣代碼轉換
-                    const code = current.weather_code;
-                    const isDay = current.is_day;
-                    let iconName = 'cloud';
-                    let desc = '多雲';
-                    let iconColor = 'text-gray-400';
+                fetch(apiUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        const current = data.current;
+                        const daily = data.daily;
+                        
+                        // 溫度
+                        document.getElementById('brief-temp-current').textContent = `${Math.round(current.temperature_2m)}°`;
+                        document.getElementById('brief-temp-range').textContent = `H:${Math.round(daily.temperature_2m_max[0])}° L:${Math.round(daily.temperature_2m_min[0])}°`;
+                        
+                        // 天氣圖示邏輯
+                        const code = current.weather_code;
+                        const isDay = current.is_day;
+                        let iconName = 'cloud';
+                        let desc = '多雲';
+                        let iconColor = 'text-gray-400';
 
-                    if (code === 0) { 
-                        iconName = isDay ? 'sun' : 'moon'; 
-                        desc = '晴朗'; 
-                        iconColor = isDay ? 'text-orange-400' : 'text-indigo-400';
-                    } else if (code >= 1 && code <= 3) {
-                        iconName = isDay ? 'cloud-sun' : 'cloud-moon';
-                        desc = '多雲';
-                        iconColor = 'text-gray-400';
-                    } else if (code >= 45 && code <= 48) {
-                        iconName = 'cloud-fog';
-                        desc = '有霧';
-                    } else if (code >= 51 && code <= 67) {
-                        iconName = 'cloud-drizzle';
-                        desc = '細雨';
-                        iconColor = 'text-blue-400';
-                    } else if (code >= 80 && code <= 99) {
-                        iconName = 'cloud-rain';
-                        desc = '陣雨';
-                        iconColor = 'text-blue-500';
-                    } else if (code >= 71) {
-                        iconName = 'snowflake';
-                        desc = '下雪';
-                    }
+                        if (code === 0) { 
+                            iconName = isDay ? 'sun' : 'moon'; 
+                            desc = '晴朗'; 
+                            iconColor = isDay ? 'text-orange-400' : 'text-indigo-400';
+                        } else if (code >= 1 && code <= 3) {
+                            iconName = isDay ? 'cloud-sun' : 'cloud-moon'; 
+                            desc = '多雲'; iconColor = 'text-gray-400';
+                        } else if (code >= 45 && code <= 48) {
+                            iconName = 'cloud-fog'; desc = '有霧';
+                        } else if (code >= 51 && code <= 67) {
+                            iconName = 'cloud-drizzle'; desc = '細雨'; iconColor = 'text-blue-400';
+                        } else if (code >= 80 && code <= 99) {
+                            iconName = 'cloud-rain'; desc = '陣雨'; iconColor = 'text-blue-500';
+                        } else if (code >= 71) {
+                            iconName = 'snowflake'; desc = '下雪';
+                        }
 
-                    const iconEl = document.getElementById('brief-weather-icon');
-                    iconEl.setAttribute('data-lucide', iconName);
-                    iconEl.className = `w-6 h-6 ${iconColor}`; 
-                    document.getElementById('brief-weather-desc').textContent = desc;
+                        const iconEl = document.getElementById('brief-weather-icon');
+                        iconEl.setAttribute('data-lucide', iconName);
+                        iconEl.className = `w-6 h-6 ${iconColor}`; 
+                        document.getElementById('brief-weather-desc').textContent = desc;
 
-                    if (typeof lucide !== 'undefined') lucide.createIcons();
-                })
-                .catch(err => {
-                    console.error("Weather fetch failed", err);
-                    document.getElementById('brief-weather-desc').textContent = "天氣載入失敗";
-                });
+                        if (typeof lucide !== 'undefined') lucide.createIcons();
+                    })
+                    .catch(err => {
+                        console.error("Weather fetch failed", err);
+                        document.getElementById('brief-weather-desc').textContent = "載入失敗";
+                    });
+            };
+
+            // === 4. 開始定位 ===
+            // 預設座標：新北市中和 (如果使用者拒絕定位，就用這個)
+            const defaultLat = 25.00;
+            const defaultLon = 121.48;
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        // 定位成功！使用當前 GPS 座標
+                        console.log("GPS定位成功:", position.coords.latitude, position.coords.longitude);
+                        fetchWeather(position.coords.latitude, position.coords.longitude);
+                    },
+                    (error) => {
+                        // 定位失敗或被拒絕，使用預設值
+                        console.warn("定位失敗，使用預設座標 (中和)", error);
+                        fetchWeather(defaultLat, defaultLon);
+                    },
+                    { timeout: 5000 } // 設定超時，避免等太久
+                );
+            } else {
+                // 瀏覽器不支援定位
+                fetchWeather(defaultLat, defaultLon);
+            }
         };
 
         // === 農曆與假日輔助函式 (修正時區偏移版) ===
