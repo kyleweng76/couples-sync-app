@@ -934,6 +934,21 @@
                     </div>
                 </div>
                 <div class="space-y-3">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">應用程式設定</p>
+                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <div class="bg-blue-100 p-1.5 rounded-lg text-blue-500">
+                                <i data-lucide="bell" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-sm font-medium text-gray-700">聊天通知</span>
+                        </div>
+                        <button onclick="window.requestNotifyPermission()" id="btn-notify-perm" class="text-xs bg-white border border-gray-200 px-3 py-1.5 rounded-lg font-bold text-gray-500 hover:bg-gray-100 transition">
+                            開啟
+                        </button>
+                    </div>
+                    <p class="text-[10px] text-gray-400 px-1">iPhone 用戶請先「加入主畫面」才能啟用通知。</p>
+                </div>
+                <div class="space-y-3">
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">首頁摘要顯示設定</p>
                     <p class="text-[10px] text-gray-400 -mt-2 mb-1">關閉的分類將不會出現在首頁，但仍可在待辦清單查看。</p>
                     <div id="settings-category-list" class="bg-gray-50 p-3 rounded-xl border border-gray-100 max-h-[150px] overflow-y-auto space-y-1">
@@ -2250,9 +2265,8 @@
         window.openSettingsModal = function() {
             const m = document.getElementById('settings-modal');
             
-            // === 加入這行：打開設定時，渲染分類開關 ===
             window.renderCategorySettings(); 
-            // ======================================
+            window.updateNotifyBtnState(); // <--- 加入這行：打開設定時檢查按鈕狀態
             
             m.classList.remove('hidden');
             setTimeout(() => m.classList.add('visible'), 10);
@@ -2322,7 +2336,50 @@
         };
         window.checkEndDateValidity = function() { const sD = document.getElementById('input-date-start').value; const sT = document.getElementById('input-time-start').value; const eD = document.getElementById('input-date-end').value; const eT = document.getElementById('input-time-end').value; if(new Date(`${eD}T${eT}`) < new Date(`${sD}T${sT}`)) { window.autoUpdateEnd(); } else { window.checkRecurValidity(); } };
         window.setNowToInputs = function() { const now = new Date(); const dStr = now.toISOString().split('T')[0]; let h = now.getHours(), m = now.getMinutes(); if(m < 30) { m = 30; } else { m = 0; h += 1; } if(h > 23) h = 0; const tStr = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`; const startEl = document.getElementById('input-date-start'); if(startEl) { startEl.value = dStr; document.getElementById('input-time-start').value = tStr; window.updateDateDisplay('start', dStr); window.updateTimeDisplay('start', tStr); const endD = document.getElementById('input-date-end'); if(endD) endD.value = dStr; const endT = document.getElementById('input-time-end'); if(endT) endT.value = tStr; window.updateDateDisplay('end', dStr); window.updateTimeDisplay('end', tStr); } };
-        
+        // === 新增：請求通知權限 ===
+        window.requestNotifyPermission = function() {
+            if (!("Notification" in window)) {
+                window.showToast("此瀏覽器不支援通知 😢");
+                return;
+            }
+
+            // iOS PWA 檢查
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const isStandalone = window.navigator.standalone || (window.matchMedia('(display-mode: standalone)').matches);
+            
+            if (isIOS && !isStandalone) {
+                alert("請先將此網頁「加入主畫面」\n才能啟用通知功能喔！");
+                return;
+            }
+
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                    window.showToast("通知已啟用！🎉");
+                    window.updateNotifyBtnState();
+                } else {
+                    window.showToast("通知權限被拒絕 😭");
+                }
+            });
+        };
+
+        window.updateNotifyBtnState = function() {
+            const btn = document.getElementById('btn-notify-perm');
+            if (!btn) return;
+            
+            if (!("Notification" in window)) {
+                btn.textContent = "不支援";
+                return;
+            }
+
+            if (Notification.permission === "granted") {
+                btn.textContent = "已開啟";
+                btn.className = "text-xs bg-green-100 border border-green-200 px-3 py-1.5 rounded-lg font-bold text-green-600 cursor-default";
+                btn.onclick = null;
+            } else if (Notification.permission === "denied") {
+                btn.textContent = "已封鎖";
+                btn.className = "text-xs bg-red-100 border border-red-200 px-3 py-1.5 rounded-lg font-bold text-red-500";
+            }
+        };
         window.updateRoleUI = function() {
             // === 修改：更新全域主題色與淺色版變數 ===
             if (currentUserRole) {
@@ -3580,7 +3637,9 @@ function initApp(db) {
               }
             }, 'todos');
             
-            // 3. 聊天室 (Chat) 監聽 (包含自動刪除過期 + 標記已讀)
+            // 3. 聊天室 (Chat) 監聽 (包含通知功能)
+            let isFirstChatLoad = true; // 用來避免剛打開網頁時一口氣跳一堆通知
+
             bindSnapshot(db.collection('messages').orderBy('timestamp', 'desc').limit(50), (snapshot) => {
                 const msgs = [];
                 const now = new Date();
@@ -3590,22 +3649,53 @@ function initApp(db) {
                     const data = doc.data();
                     const msgTime = new Date(data.timestamp);
                     
-                    // A. 檢查過期：超過24小時自動刪除
+                    // A. 檢查過期
                     if ((now - msgTime) > expirationMs) {
                         db.collection('messages').doc(doc.id).delete().catch(e => {});
                     } else {
                         msgs.push({ id: doc.id, ...data });
 
-                        // B. 關鍵邏輯：標記已讀
-                        // 如果這則訊息「不是我傳的」(是對方傳的) 且「還沒已讀」
+                        // B. 標記已讀
                         if (data.creator && currentUserRole && data.creator !== currentUserRole && !data.read) {
-                            // 標記為已讀 (這會觸發資料庫更新，讓對方看到已讀)
                             db.collection('messages').doc(doc.id).update({ read: true });
                         }
                     }
                 });
+                
+                // === C. 通知邏輯 (新增部分) ===
+                if (!isFirstChatLoad && snapshot.docChanges) {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            const newData = change.doc.data();
+                            // 1. 不是我傳的
+                            // 2. 真的很新 (10秒內發生的，避免延遲載入舊訊息也跳通知)
+                            const msgTime = new Date(newData.timestamp);
+                            if (newData.creator !== currentUserRole && (new Date() - msgTime < 10000)) {
+                                
+                                // 判斷對方是誰
+                                const senderName = newData.creator === 'haohao' ? '皓皓' : '毛毛';
+                                
+                                // 發送通知
+                                if (Notification.permission === "granted") {
+                                    // 嘗試發送通知
+                                    try {
+                                        new Notification(`來自 ${senderName} 的訊息`, {
+                                            body: newData.text,
+                                            icon: 'icon.png', // 如果你有 icon 的話
+                                            tag: 'chat-msg'   // 避免重複堆疊
+                                        });
+                                    } catch (e) {
+                                        console.log("Notification failed", e);
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                isFirstChatLoad = false; // 第一次載入後，設為 false，開始允許通知
+                // ==========================
 
-                // 顯示時反轉 (舊 -> 新)
                 window.renderChat(msgs.reverse());
             }, 'chat');
 
