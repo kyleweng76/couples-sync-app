@@ -76,24 +76,24 @@
             display: none; 
         }
 
-        /* 2. 聊天室容器樣式 (方案三：可愛點點風) */
+        /* 2. 聊天室容器樣式 (修正版：解決無法滑動問題) */
         #chat-container {
             scroll-behavior: smooth; 
             
-            /* === 關鍵修正：把 hidden 改回 auto，捲軸就回來了 === */
             overflow-y: auto !important; 
-            height: auto; 
+            /* height: auto; <--- 這一行是兇手，一定要刪掉或註解掉！ */
+            
+            /* === 加入這兩行，確保它乖乖填滿中間區域 === */
+            flex: 1;
+            min-height: 0; 
             
             position: relative; 
             z-index: 0;
 
-            /* === 背景設定：用 CSS 畫出淡淡的點點 === */
-            background-color: #ffffff; /* 白底 */
-            /* 這裡是灰色小圓點，如果你想要有顏色，可以把 #e5e7eb 改成 var(--app-color-light) */
+            /* 背景設定 (維持原本的點點風) */
+            background-color: #ffffff; 
             background-image: radial-gradient(#e5e7eb 2px, transparent 2px);
-            background-size: 24px 24px; /* 控制點點的疏密，數字越大越寬鬆 */
-            
-            /* 讓背景跟著內容一起捲動，更有紙張的感覺 */
+            background-size: 24px 24px; 
             background-attachment: local;
         }
 
@@ -3670,7 +3670,8 @@ function initApp(db) {
                             // 1. 不是我傳的
                             // 2. 真的很新 (10秒內發生的，避免延遲載入舊訊息也跳通知)
                             const msgTime = new Date(newData.timestamp);
-                            if (newData.creator !== currentUserRole && (new Date() - msgTime < 10000)) {
+                            // 放寬到 60000 (1分鐘)，避免網路延遲導致通知沒跳
+                            if (newData.creator !== currentUserRole && (new Date() - msgTime < 60000)) {
                                 
                                 // 判斷對方是誰
                                 const senderName = newData.creator === 'haohao' ? '皓皓' : '毛毛';
