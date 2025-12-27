@@ -3662,28 +3662,23 @@ function initApp(db) {
                     }
                 });
                 
-                // === C. 通知邏輯 (新增部分) ===
+                // === C. 通知邏輯 (移除時間限制版) ===
                 if (!isFirstChatLoad && snapshot.docChanges) {
                     snapshot.docChanges().forEach(change => {
                         if (change.type === 'added') {
                             const newData = change.doc.data();
-                            // 1. 不是我傳的
-                            // 2. 真的很新 (10秒內發生的，避免延遲載入舊訊息也跳通知)
-                            const msgTime = new Date(newData.timestamp);
-                            // 放寬到 60000 (1分鐘)，避免網路延遲導致通知沒跳
-                            if (newData.creator !== currentUserRole && (new Date() - msgTime < 60000)) {
+                            
+                            // 只要這是新同步到的訊息，且不是我自己傳的，就直接通知
+                            if (newData.creator !== currentUserRole) {
                                 
-                                // 判斷對方是誰
                                 const senderName = newData.creator === 'haohao' ? '皓皓' : '毛毛';
                                 
-                                // 發送通知
                                 if (Notification.permission === "granted") {
-                                    // 嘗試發送通知
                                     try {
                                         new Notification(`來自 ${senderName} 的訊息`, {
                                             body: newData.text,
-                                            icon: 'icon.png', // 如果你有 icon 的話
-                                            tag: 'chat-msg'   // 避免重複堆疊
+                                            icon: 'icon.png',
+                                            tag: 'chat-msg'
                                         });
                                     } catch (e) {
                                         console.log("Notification failed", e);
