@@ -686,6 +686,46 @@
         .cat-action-btn:hover { background-color: #f3f4f6; color: #4b5563; }
         .cat-action-btn.delete:hover { background-color: #fee2e2; color: #ef4444; }
 
+        /* === 貼圖選擇器樣式 === */
+        #sticker-picker-container {
+            height: 0;
+            overflow: hidden;
+            transition: height 0.2s ease-out;
+            background-color: #f9fafb;
+            border-top: 1px solid #f0f0f0;
+        }
+        #sticker-picker-container.open {
+            height: 200px; /* 貼圖區高度 */
+        }
+        .sticker-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            padding: 10px;
+            height: 100%;
+            overflow-y: auto;
+        }
+        .sticker-item {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: contain;
+            cursor: pointer;
+            border-radius: 8px;
+            padding: 5px;
+            transition: transform 0.1s;
+        }
+        .sticker-item:active {
+            transform: scale(0.9);
+            background-color: #e5e7eb;
+        }
+        
+        /* 聊天室內的貼圖顯示樣式 */
+        .chat-sticker {
+            max-width: 120px; /* 貼圖最大寬度 */
+            border-radius: 12px;
+            display: block;
+        }
+
     </style>
 </head>
 <body class="text-gray-700 h-screen flex flex-col overflow-hidden bg-white">
@@ -870,18 +910,29 @@
                 </div>
             </div>
 
-            <div class="flex-none bg-gray-50 p-3 border-t border-gray-200">
-                <div class="flex flex-nowrap items-center bg-white rounded-full px-2 py-2 shadow-sm border border-gray-200 focus-within:ring-2 focus-within:ring-ttgreen focus-within:ring-opacity-50 transition-all">
-                    <div class="w-8 h-8 flex items-center justify-center text-gray-400 flex-shrink-0 cursor-pointer hover:text-gray-600 active:scale-95 transition" onclick="window.scrollToBottom()">
-                        <i data-lucide="arrow-down-circle" class="w-6 h-6"></i>
-                    </div>
-                    <input type="text" id="note-input" placeholder="傳送訊息..." class="flex-1 min-w-0 bg-transparent border-none text-base text-gray-700 placeholder-gray-400 focus:ring-0 px-2 outline-none text-left h-full py-1">
-                    <button id="note-send-btn" onclick="window.sendNote()" class="w-9 h-9 flex items-center justify-center rounded-full bg-ttgreen text-white shadow-md active:scale-90 transition ml-1 flex-shrink-0 hover:bg-green-500">
-                        <i data-lucide="send" class="w-4 h-4 ml-0.5"></i>
+            <div class="flex-none bg-white border-t border-gray-200 z-20">
+                <div class="p-3 bg-gray-50 flex items-center gap-2">
+                    
+                    <button onclick="window.toggleStickerPicker()" class="p-2 text-gray-400 hover:text-gray-600 active:scale-95 transition rounded-full hover:bg-gray-200">
+                        <i data-lucide="smile" class="w-6 h-6"></i>
                     </button>
+
+                    <div class="flex-1 flex flex-nowrap items-center bg-white rounded-full px-2 py-2 shadow-sm border border-gray-200 focus-within:ring-2 focus-within:ring-ttgreen focus-within:ring-opacity-50 transition-all">
+                        <div class="w-8 h-8 flex items-center justify-center text-gray-400 flex-shrink-0 cursor-pointer hover:text-gray-600 active:scale-95 transition" onclick="window.scrollToBottom()">
+                            <i data-lucide="arrow-down-circle" class="w-6 h-6"></i>
+                        </div>
+                        <input type="text" id="note-input" placeholder="傳送訊息..." class="flex-1 min-w-0 bg-transparent border-none text-base text-gray-700 placeholder-gray-400 focus:ring-0 px-2 outline-none text-left h-full py-1" onfocus="window.closeStickerPicker()">
+                        <button id="note-send-btn" onclick="window.sendNote()" class="w-9 h-9 flex items-center justify-center rounded-full bg-ttgreen text-white shadow-md active:scale-90 transition ml-1 flex-shrink-0 hover:bg-green-500">
+                            <i data-lucide="send" class="w-4 h-4 ml-0.5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="sticker-picker-container">
+                    <div id="sticker-grid" class="sticker-grid">
+                        </div>
                 </div>
             </div>
-        </div>
 
     </main>
 
@@ -1368,6 +1419,77 @@
 
         // === 新增：待辦分類顯示設定 (預設全部顯示，false 代表隱藏) ===
         window.todoCategoryVisibility = JSON.parse(localStorage.getItem('todo_category_visibility') || '{}');
+
+        // === 貼圖設定 ===
+        // 請將你的貼圖檔案放在跟 index.html 同一個資料夾，並在這裡加入檔名
+        window.stickerList = [
+            '4659D2A6-5B8B-421A-A66C-803E7BF699D9_1_102_a.jpg', // 你剛上傳的那張手繪圖
+            'https://cdn-icons-png.flaticon.com/512/742/742751.png', // 範例：笑臉
+            'https://cdn-icons-png.flaticon.com/512/742/742752.png', // 範例：愛心
+            'https://cdn-icons-png.flaticon.com/512/742/742920.png', // 範例：哭哭
+            'https://cdn-icons-png.flaticon.com/512/742/742760.png', // 範例：生氣
+            'https://cdn-icons-png.flaticon.com/512/1620/1620023.png' // 範例：OK
+        ];
+
+        // === 新增：貼圖相關功能 ===
+        
+        // 1. 切換貼圖選單顯示/隱藏
+        window.toggleStickerPicker = function() {
+            const container = document.getElementById('sticker-picker-container');
+            const isOpen = container.classList.contains('open');
+            
+            if (isOpen) {
+                container.classList.remove('open');
+            } else {
+                // 如果還沒渲染過，先渲染
+                if (document.getElementById('sticker-grid').innerHTML.trim() === '') {
+                    window.renderStickerPicker();
+                }
+                container.classList.add('open');
+                // 貼圖開啟時，捲動到底部以免被遮擋
+                setTimeout(() => window.scrollToBottom(), 250);
+            }
+        };
+
+        // 2. 關閉貼圖選單 (點擊輸入框時呼叫)
+        window.closeStickerPicker = function() {
+            document.getElementById('sticker-picker-container').classList.remove('open');
+        };
+
+        // 3. 渲染貼圖列表
+        window.renderStickerPicker = function() {
+            const grid = document.getElementById('sticker-grid');
+            let html = '';
+            window.stickerList.forEach(src => {
+                html += `<img src="${src}" class="sticker-item" onclick="window.sendSticker('${src}')">`;
+            });
+            grid.innerHTML = html;
+        };
+
+        // 4. 發送貼圖 (格式：type='sticker')
+        window.sendSticker = function(url) {
+            if (!window.checkRoleEnforcement()) return;
+            
+            // 發送後關閉選單
+            window.closeStickerPicker();
+
+            const data = {
+                text: url, // 貼圖模式下，text 欄位存圖片路徑
+                type: 'sticker', // 標記為貼圖
+                timestamp: new Date().toISOString(),
+                creator: currentUserRole
+            };
+
+            db.collection('messages').add(data)
+                .then(() => {
+                    window.showToast('已傳送貼圖');
+                    window.scrollToBottom();
+                })
+                .catch((error) => {
+                    console.error("Error: ", error);
+                    window.showToast('傳送失敗');
+                });
+        };
 
        /* ===== STABLE PATCH: SafeRun Helper ===== */
         window.safeRun = function (fn, label = 'unknown') {
@@ -3812,6 +3934,7 @@ function initApp(db) {
             }
         };
     
+        // === 修改版：支援貼圖顯示 ===
         window.renderChat = function(messages) {
             const container = document.getElementById('chat-container');
             if(!container) return;
@@ -3827,7 +3950,22 @@ function initApp(db) {
             messages.forEach(msg => {
                 const isMe = msg.creator === currentUserRole;
                 const bubbleColor = roleColors[msg.creator] || '#9ca3af';
-                const bubbleStyle = `background-color: ${bubbleColor}; color: white;`;
+                
+                // === 判斷內容是文字還是貼圖 ===
+                let contentHtml = '';
+                // 如果是貼圖類型
+                if (msg.type === 'sticker') {
+                    // 貼圖背景設為透明，不使用氣泡顏色
+                    contentHtml = `<img src="${msg.text}" class="chat-sticker" onclick="window.confirmDeleteMsg('${msg.id}')">`;
+                } else {
+                    // 一般文字 (維持原本樣式)
+                    const bubbleStyle = `background-color: ${bubbleColor}; color: white;`;
+                    contentHtml = `<div class="chat-bubble shadow-md" style="${bubbleStyle}" onclick="window.confirmDeleteMsg('${msg.id}')">
+                                        ${msg.text}
+                                   </div>`;
+                }
+                // ==========================
+
                 const avatarChar = msg.creator === 'haohao' ? '皓' : '毛';
                 const displayName = msg.creator === 'haohao' ? '皓皓' : '毛毛';
                 
@@ -3843,9 +3981,7 @@ function initApp(db) {
                             ${readHtml}
                             <span class="chat-time">${timeStr}</span>
                         </div>
-                        <div class="chat-bubble shadow-md" style="${bubbleStyle}">
-                            ${msg.text}
-                        </div>
+                        ${contentHtml}
                     </div>`;
                 } else {
                     // === 左側 (對方) ===
@@ -3857,9 +3993,7 @@ function initApp(db) {
                             <span class="text-[10px] text-gray-400 mb-0.5 ml-0.5 font-medium">${displayName}</span>
                             
                             <div class="flex items-end">
-                                <div class="chat-bubble shadow-md" style="${bubbleStyle}">
-                                    ${msg.text}
-                                </div>
+                                ${contentHtml}
                                 <div class="chat-info-col">
                                     <span class="chat-time">${timeStr}</span>
                                 </div>
