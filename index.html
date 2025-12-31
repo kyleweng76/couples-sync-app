@@ -1119,16 +1119,14 @@
           <div class="dt-row border-t border-gray-50">
               <div class="dt-label">提醒</div>
               <div class="dt-value group relative">
-                <select id="input-remind" class="appearance-none bg-transparent text-right w-full font-medium text-gray-700 outline-none pr-4 z-10 relative cursor-pointer">
-                    <option value="0" selected>不通知</option>
-                    <option value="on_time">準時</option>
-                    <option value="5">5 分鐘前</option>
-                    <option value="10">10 分鐘前</option>
-                    <option value="30">30 分鐘前</option>
-                    <option value="60">1 小時前</option>
-                    <option value="120">2 小時前</option>
-                    <option value="1440">1 天前</option>
-                </select>
+                <div class="dt-row border-t border-gray-50" onclick="window.openReminderPicker()">
+              <div class="dt-label">提醒</div>
+              <div class="dt-value group">
+                <span id="display-remind" class="dt-text-value">不通知</span>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 ml-1 group-active:text-gray-500"></i>
+              </div>
+              <input type="hidden" id="input-remind" value="0">
+            </div>
                 <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 absolute right-0 top-1/2 transform -translate-y-1/2 pointer-events-none group-active:text-gray-500"></i>
               </div>
             </div>
@@ -1379,6 +1377,28 @@
          <div id="time-list-container" class="relative time-picker-modal-content flex flex-col">
              <!-- Time slots will be populated here -->
          </div>
+    </div>
+
+    <div id="reminder-picker-modal" class="fixed inset-0 z-[60] flex items-center justify-center hidden modal">
+        <div class="absolute inset-0 bg-black/20 backdrop-blur-[1px]" onclick="window.closeReminderPicker()"></div>
+        <div class="relative bg-white w-[260px] rounded-2xl shadow-xl overflow-hidden py-2">
+            <h3 class="text-center text-sm font-bold text-gray-400 py-2 border-b border-gray-50">選擇提醒時間</h3>
+            
+            <div class="max-h-[320px] overflow-y-auto">
+                <div onclick="window.selectReminder('0', '不通知')" class="p-3 text-center text-gray-700 font-medium hover:bg-gray-50 cursor-pointer border-b border-gray-50 active:bg-green-50 active:text-theme">不通知</div>
+                <div onclick="window.selectReminder('on_time', '準時')" class="p-3 text-center text-gray-700 font-medium hover:bg-gray-50 cursor-pointer border-b border-gray-50 active:bg-green-50 active:text-theme">準時</div>
+                <div onclick="window.selectReminder('5', '5 分鐘前')" class="p-3 text-center text-gray-700 font-medium hover:bg-gray-50 cursor-pointer border-b border-gray-50 active:bg-green-50 active:text-theme">5 分鐘前</div>
+                <div onclick="window.selectReminder('10', '10 分鐘前')" class="p-3 text-center text-gray-700 font-medium hover:bg-gray-50 cursor-pointer border-b border-gray-50 active:bg-green-50 active:text-theme">10 分鐘前</div>
+                <div onclick="window.selectReminder('30', '30 分鐘前')" class="p-3 text-center text-gray-700 font-medium hover:bg-gray-50 cursor-pointer border-b border-gray-50 active:bg-green-50 active:text-theme">30 分鐘前</div>
+                <div onclick="window.selectReminder('60', '1 小時前')" class="p-3 text-center text-gray-700 font-medium hover:bg-gray-50 cursor-pointer border-b border-gray-50 active:bg-green-50 active:text-theme">1 小時前</div>
+                <div onclick="window.selectReminder('120', '2 小時前')" class="p-3 text-center text-gray-700 font-medium hover:bg-gray-50 cursor-pointer border-b border-gray-50 active:bg-green-50 active:text-theme">2 小時前</div>
+                <div onclick="window.selectReminder('1440', '1 天前')" class="p-3 text-center text-gray-700 font-medium hover:bg-gray-50 cursor-pointer border-b border-gray-50 active:bg-green-50 active:text-theme">1 天前</div>
+            </div>
+            
+            <div class="p-2 pt-0 text-center">
+                <button onclick="window.closeReminderPicker()" class="text-xs text-gray-400 font-medium py-3 w-full hover:text-gray-600 transition">取消</button>
+            </div>
+        </div>
     </div>
 
     <!-- Dropdowns & Pickers -->
@@ -1752,7 +1772,9 @@
           const te = document.getElementById('input-time-end'); if (te) te.value = '';
           const tde = document.getElementById('display-time-end'); if (tde) { tde.textContent = '請選擇'; tde.classList.add('dt-text-placeholder'); tde.classList.remove('dt-text-value'); }
           const loc = document.getElementById('input-location'); if (loc) loc.value = '';
+          // 重置提醒
           document.getElementById('input-remind').value = '0';
+          document.getElementById('display-remind').textContent = '不通知'; // 新增這行
           const partner = document.getElementById('check-partner'); partner.checked = false;
           
           document.getElementById('check-recur-event').checked = false; window.toggleRecurOptions('event');
@@ -1780,7 +1802,10 @@
           if (evt.endTime) { document.getElementById('input-time-end').value = evt.endTime; window.updateTimeDisplay('end', evt.endTime); } 
           else { document.getElementById('input-time-end').value = ''; window.updateTimeDisplay('end', ''); }
           document.getElementById('input-location').value = evt.location || '';
-          document.getElementById('input-remind').value = evt.remind || '0';
+          // 讀取提醒設定
+          const rVal = evt.remind || '0';
+          document.getElementById('input-remind').value = rVal;
+          document.getElementById('display-remind').textContent = window.getRemindLabel(rVal); // 新增這行：把 '30' 轉成 '30 分鐘前'
           const partner = document.getElementById('check-partner'); partner.checked = !!evt.isJoint;
           window.setStatus(evt.status || 'confirmed');
           document.getElementById('input-note').value = evt.note || '';
@@ -4694,6 +4719,54 @@ function initApp(db) {
             } catch(e) { console.error(e); }
 
             return { lunar, holiday };
+        };
+
+        // === 新增：提醒選擇器邏輯 ===
+        
+        // 1. 定義選項對照表 (方便反查文字)
+        const reminderOptionsMap = {
+            '0': '不通知',
+            'on_time': '準時',
+            '5': '5 分鐘前',
+            '10': '10 分鐘前',
+            '30': '30 分鐘前',
+            '60': '1 小時前',
+            '120': '2 小時前',
+            '1440': '1 天前'
+        };
+
+        // 2. 取得顯示文字的輔助函式
+        window.getRemindLabel = function(val) {
+            return reminderOptionsMap[val] || '不通知';
+        };
+
+        // 3. 開啟選擇視窗
+        window.openReminderPicker = function() {
+            const m = document.getElementById('reminder-picker-modal');
+            m.classList.remove('hidden');
+            setTimeout(() => m.classList.add('visible'), 10);
+        };
+
+        // 4. 關閉選擇視窗
+        window.closeReminderPicker = function() {
+            const m = document.getElementById('reminder-picker-modal');
+            m.classList.remove('visible');
+            setTimeout(() => m.classList.add('hidden'), 200);
+        };
+
+        // 5. 使用者選擇了某個選項
+        window.selectReminder = function(val, label) {
+            // 更新隱藏的 input 值 (存進資料庫用)
+            document.getElementById('input-remind').value = val;
+            
+            // 更新介面上顯示的文字 (給人看)
+            const displayEl = document.getElementById('display-remind');
+            displayEl.textContent = label;
+            displayEl.classList.remove('dt-text-placeholder');
+            displayEl.classList.add('dt-text-value');
+            
+            // 關閉視窗
+            window.closeReminderPicker();
         };
 
     </script>
