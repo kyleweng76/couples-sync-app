@@ -762,6 +762,10 @@
                             <span id="brief-day-num" class="text-3xl font-bold text-gray-800 tracking-tight">--</span>
                             <span id="brief-day-word" class="text-sm font-bold text-gray-500">週--</span>
                         </div>
+                        
+                        <div id="brief-special" class="hidden text-sm font-bold text-rose-500 mt-1 mb-0.5 animate-pulse">
+                            </div>
+
                         <div class="flex items-center gap-2 mt-0.5">
                             <span id="brief-month-year" class="text-xs text-gray-400 font-medium">--月 / 20--</span>
                             <span class="w-0.5 h-3 bg-gray-200 rounded-full"></span>
@@ -4347,7 +4351,7 @@ function initApp(db) {
             }
         };
 
-        // === 每日資訊卡片功能 (智慧定位版：自動抓取當前位置天氣) ===
+        // === 每日資訊卡片功能 (含紀念日祝賀) ===
         window.renderDailyBrief = function() {
             const now = new Date();
             const weekDays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
@@ -4357,15 +4361,20 @@ function initApp(db) {
             document.getElementById('brief-day-word').textContent = weekDays[now.getDay()];
             document.getElementById('brief-month-year').textContent = `${now.getMonth() + 1}月 / ${now.getFullYear()}`;
 
-            // 2. 更新農曆
+            // 2. 農曆與節日邏輯
+            let lunarText = '';
+            let specialMsg = ''; // 儲存祝賀語
+            
             try {
+                // 取得今天農曆
                 const parts = new Intl.DateTimeFormat('zh-TW-u-ca-chinese', { 
                     day: 'numeric', month: 'long' 
                 }).formatToParts(now);
                 
-                const lunarMonth = parts.find(p => p.type === 'month')?.value;
-                let lunarDay = parts.find(p => p.type === 'day')?.value;
+                const lunarMonth = parts.find(p => p.type === 'month')?.value; // ex: 正月, 十二月
+                let lunarDay = parts.find(p => p.type === 'day')?.value;       // ex: 初一, 15
 
+                // 修正純數字的農曆日期
                 const dayMap = {
                     '1': '初一', '2': '初二', '3': '初三', '4': '初四', '5': '初五',
                     '6': '初六', '7': '初七', '8': '初八', '9': '初九', '10': '初十',
@@ -4376,13 +4385,58 @@ function initApp(db) {
                 };
                 const dayNum = parseInt(lunarDay.replace(/[^\d]/g, ''));
                 if (!isNaN(dayNum) && dayMap[dayNum]) { lunarDay = dayMap[dayNum]; }
-                document.getElementById('brief-lunar').textContent = `農曆 ${lunarMonth}${lunarDay}`;
+                
+                lunarText = `農曆 ${lunarMonth}${lunarDay}`;
+
+                // === ✨ 紀念日判斷邏輯 ✨ ===
+                const m = now.getMonth() + 1; // 西元月
+                const d = now.getDate();      // 西元日
+
+                // 1. 固定國曆節日
+                if (m === 3 && d === 17) specialMsg = "🎂 毛毛生日快樂！";
+                else if (m === 8 && d === 1) specialMsg = "🎂 皓皓生日快樂！";
+                else if (m === 6 && d === 20) specialMsg = "❤️ 交往紀念日快樂！";
+                else if (m === 1 && d === 1) specialMsg = "🎉 新年快樂！";
+                else if (m === 12 && d === 25) specialMsg = "🎄 聖誕快樂！";
+
+                // 2. 農曆節日 (初一)
+                if (lunarMonth === '正月' && lunarDay === '初一') {
+                    specialMsg = "🧧 農曆新年快樂！";
+                }
+
+                // 3. 農曆除夕 (判斷邏輯：如果明天是初一，今天就是除夕)
+                // 這樣不管是 29 日還是 30 日除夕都抓得到
+                const tmr = new Date(now);
+                tmr.setDate(tmr.getDate() + 1);
+                const tmrParts = new Intl.DateTimeFormat('zh-TW-u-ca-chinese', { day: 'numeric', month: 'long' }).formatToParts(tmr);
+                const tmrMonth = tmrParts.find(p => p.type === 'month')?.value;
+                let tmrDay = tmrParts.find(p => p.type === 'day')?.value;
+                // 簡單正規化
+                if (tmrDay === '1') tmrDay = '初一';
+
+                if (tmrMonth === '正月' && tmrDay === '初一') {
+                    specialMsg = "🧨 除舊佈新！除夕快樂";
+                }
+                
+                // ==========================
+
             } catch (e) {
                 console.error(e);
-                document.getElementById('brief-lunar').textContent = '';
+                lunarText = '';
             }
 
-            // === 3. 天氣邏輯 (封裝成函式) ===
+            document.getElementById('brief-lunar').textContent = lunarText;
+
+            // === 更新 UI：顯示或隱藏祝福語 ===
+            const specialEl = document.getElementById('brief-special');
+            if (specialMsg) {
+                specialEl.textContent = specialMsg;
+                specialEl.classList.remove('hidden');
+            } else {
+                specialEl.classList.add('hidden');
+            }
+
+            // === 3. 天氣邏輯 (維持不變) ===
             const fetchWeather = (lat, lon) => {
                 const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
 
@@ -4392,11 +4446,9 @@ function initApp(db) {
                         const current = data.current;
                         const daily = data.daily;
                         
-                        // 溫度
                         document.getElementById('brief-temp-current').textContent = `${Math.round(current.temperature_2m)}°`;
                         document.getElementById('brief-temp-range').textContent = `H:${Math.round(daily.temperature_2m_max[0])}° L:${Math.round(daily.temperature_2m_min[0])}°`;
                         
-                        // 天氣圖示邏輯
                         const code = current.weather_code;
                         const isDay = current.is_day;
                         let iconName = 'cloud';
@@ -4433,27 +4485,17 @@ function initApp(db) {
                     });
             };
 
-            // === 4. 開始定位 ===
-            // 預設座標：新北市中和 (如果使用者拒絕定位，就用這個)
+            // === 4. 開始定位 (維持不變) ===
             const defaultLat = 25.00;
             const defaultLon = 121.48;
 
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        // 定位成功！使用當前 GPS 座標
-                        console.log("GPS定位成功:", position.coords.latitude, position.coords.longitude);
-                        fetchWeather(position.coords.latitude, position.coords.longitude);
-                    },
-                    (error) => {
-                        // 定位失敗或被拒絕，使用預設值
-                        console.warn("定位失敗，使用預設座標 (中和)", error);
-                        fetchWeather(defaultLat, defaultLon);
-                    },
-                    { timeout: 5000 } // 設定超時，避免等太久
+                    (position) => { fetchWeather(position.coords.latitude, position.coords.longitude); },
+                    (error) => { fetchWeather(defaultLat, defaultLon); },
+                    { timeout: 5000 }
                 );
             } else {
-                // 瀏覽器不支援定位
                 fetchWeather(defaultLat, defaultLon);
             }
         };
