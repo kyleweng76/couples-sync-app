@@ -1116,6 +1116,23 @@
             </div>
           </div>
 
+          <div class="dt-row border-t border-gray-50">
+              <div class="dt-label">提醒</div>
+              <div class="dt-value group relative">
+                <select id="input-remind" class="appearance-none bg-transparent text-right w-full font-medium text-gray-700 outline-none pr-4 z-10 relative cursor-pointer" dir="rtl">
+                    <option value="0" selected>不通知</option>
+                    <option value="on_time">準時</option>
+                    <option value="5">5 分鐘前</option>
+                    <option value="10">10 分鐘前</option>
+                    <option value="30">30 分鐘前</option>
+                    <option value="60">1 小時前</option>
+                    <option value="120">2 小時前</option>
+                    <option value="1440">1 天前</option>
+                </select>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 absolute right-0 top-1/2 transform -translate-y-1/2 pointer-events-none group-active:text-gray-500"></i>
+              </div>
+            </div>
+
           <!-- Partner -->
           <div class="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between">
             <span class="text-sm text-gray-700">與對方一起</span>
@@ -1735,6 +1752,7 @@
           const te = document.getElementById('input-time-end'); if (te) te.value = '';
           const tde = document.getElementById('display-time-end'); if (tde) { tde.textContent = '請選擇'; tde.classList.add('dt-text-placeholder'); tde.classList.remove('dt-text-value'); }
           const loc = document.getElementById('input-location'); if (loc) loc.value = '';
+          document.getElementById('input-remind').value = '0';
           const partner = document.getElementById('check-partner'); partner.checked = false;
           
           document.getElementById('check-recur-event').checked = false; window.toggleRecurOptions('event');
@@ -1762,6 +1780,7 @@
           if (evt.endTime) { document.getElementById('input-time-end').value = evt.endTime; window.updateTimeDisplay('end', evt.endTime); } 
           else { document.getElementById('input-time-end').value = ''; window.updateTimeDisplay('end', ''); }
           document.getElementById('input-location').value = evt.location || '';
+          document.getElementById('input-remind').value = evt.remind || '0';
           const partner = document.getElementById('check-partner'); partner.checked = !!evt.isJoint;
           window.setStatus(evt.status || 'confirmed');
           document.getElementById('input-note').value = evt.note || '';
@@ -1904,6 +1923,7 @@
               note: document.getElementById('input-note').value || '',
               creator: currentUserRole, color: currentSelectedColor,
               location: document.getElementById('input-location').value || '',
+              remind: document.getElementById('input-remind').value || '0',
               endDate: endDate, endTime: endTime || '', createdAt: new Date().toISOString()
             };
 
@@ -3737,6 +3757,71 @@
             if(grid) grid.innerHTML = html;
         };
 
+// === 行程提醒檢查核心 ===
+        window.checkEventReminders = function() {
+            // 如果沒有開通知權限，就不檢查了
+            if (Notification.permission !== "granted") return;
+
+            const now = new Date();
+            // 為了避免秒數差異導致錯過，我們只比對「年-月-日 時:分」
+            const currentMinuteStr = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()} ${now.getHours()}:${now.getMinutes()}`;
+            
+            // 避免同一分鐘重複跳通知
+            if (window._lastRemindTime === currentMinuteStr) return;
+            window._lastRemindTime = currentMinuteStr;
+
+            // 檢查所有快取中的行程
+            if (!window.allEventsCache) return;
+
+            window.allEventsCache.forEach(evt => {
+                // 1. 如果設定為「不通知」或「已完成(待辦)」，跳過
+                if (!evt.remind || evt.remind === '0' || evt.remind === 0) return;
+                
+                // 2. 計算行程開始時間
+                const startStr = `${evt.startDate}T${evt.endTime ? evt.endTime.split('T')[0] : (evt.timestamp ? evt.timestamp.split('T')[1].substring(0,5) : '00:00')}`;
+                
+                // 這裡要很小心處理時間格式，我們統一用 timestamp 來算
+                let eventTime = new Date(evt.timestamp);
+                
+                // 如果是全天行程，通常預設是 00:00，我們假設全天行程的提醒基準是當天早上 09:00
+                if (evt.allDay) {
+                    eventTime = new Date(evt.startDate);
+                    eventTime.setHours(9, 0, 0, 0);
+                }
+
+                // 3. 計算「應該跳通知的時間」
+                let notifyTime = new Date(eventTime);
+                if (evt.remind === 'on_time') {
+                    // 準時
+                } else {
+                    // 扣掉分鐘數
+                    notifyTime.setMinutes(notifyTime.getMinutes() - parseInt(evt.remind));
+                }
+
+                // 4. 比對時間：如果「現在時間」等於「應該通知的時間」(誤差在1分鐘內)
+                const notifyStr = `${notifyTime.getFullYear()}-${notifyTime.getMonth()}-${notifyTime.getDate()} ${notifyTime.getHours()}:${notifyTime.getMinutes()}`;
+
+                if (currentMinuteStr === notifyStr) {
+                    // 觸發通知！
+                    const titlePrefix = evt.remind === 'on_time' ? '現在：' : `${evt.remind >= 60 ? evt.remind/60+'小時' : evt.remind+'分鐘'}後：`;
+                    const bodyText = `${evt.title} ${evt.location ? '@ ' + evt.location : ''}`;
+                    
+                    try {
+                        // 播放一點聲音 (如果瀏覽器允許)
+                        // window.navigator.vibrate([200, 100, 200]); 
+                        
+                        new Notification(titlePrefix + " " + evt.title, {
+                            body: evt.startDate + (evt.allDay ? '' : ' ' + (evt.endTime || '')),
+                            icon: 'icon.png',
+                            tag: `event-${evt.id}` // 避免重複
+                        });
+                    } catch (e) {
+                        console.error("Notification trigger failed", e);
+                    }
+                }
+            });
+        };
+
 function initApp(db) {
             if (!db) { console.error("Firebase not initialized"); return; }
             
@@ -3837,6 +3922,9 @@ function initApp(db) {
             bindSnapshot(db.collection('status').doc('current'), (doc) => { 
                 if (doc.exists) safeRun(() => window.renderStatus?.(doc.data()), 'status'); 
             }, 'status');
+            setInterval(() => {
+                window.checkEventReminders();
+            }, 30000);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
