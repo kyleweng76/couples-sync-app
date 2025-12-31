@@ -3380,6 +3380,9 @@
         };
 
             window.changeBigCalMonth = function(delta) {
+            // === 關鍵修正：先把日期設為 1 號，避免從 31 號切換到短月份時發生溢位跳號 ===
+            bigCalDate.setDate(1); 
+            
             bigCalDate.setMonth(bigCalDate.getMonth() + delta);
             window.renderBigCalendar();
         };
