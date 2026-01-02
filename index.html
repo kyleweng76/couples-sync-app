@@ -146,23 +146,48 @@ window.updateBatchUI = function() {
 
 // 5. 執行批次刪除
 window.executeBatchDelete = function() {
-    const count = window.batchState.selectedIds.size;
-    if (count === 0) return;
+    const selectedIds = Array.from(window.batchState.selectedIds);
+    if (selectedIds.length === 0) return;
 
-    if (!confirm(`確定要刪除這 ${count} 個項目嗎？此動作無法復原。`)) return;
+    // === 🛑 權限過濾 ===
+    const targetCache = window.batchState.target === 'event' ? window.allEventsCache : window.allTodosCache;
+    
+    // 只保留 creator 是自己的 ID
+    const myIds = selectedIds.filter(id => {
+        const item = targetCache.find(i => i.id === id);
+        return item && item.creator === currentUserRole;
+    });
+
+    // 如果完全沒有自己的項目
+    if (myIds.length === 0) {
+        window.showToast('⚠️ 您選取的項目都不是您建立的，無法刪除');
+        return;
+    }
+
+    // 如果部分不是自己的
+    let confirmMsg = `確定要刪除這 ${myIds.length} 個項目嗎？`;
+    if (myIds.length < selectedIds.length) {
+        confirmMsg = `您選了 ${selectedIds.length} 個項目，但其中只有 ${myIds.length} 個是您建立的。\n\n確定要刪除這 ${myIds.length} 個項目嗎？`;
+    } else {
+        confirmMsg += `此動作無法復原。`;
+    }
+    // ==================
+
+    if (!confirm(confirmMsg)) return;
 
     const targetCollection = window.batchState.target === 'event' ? 'events' : 'todos';
     const batch = db.batch();
     
-    window.batchState.selectedIds.forEach(id => {
+    // 只刪除過濾後的 ID
+    myIds.forEach(id => {
         const ref = db.collection(targetCollection).doc(id);
         batch.delete(ref);
     });
 
     batch.commit()
         .then(() => {
-            window.showToast(`已刪除 ${count} 個項目`);
-            window.exitBatchMode(); // 刪除完自動退出
+            window.showToast(`已刪除 ${myIds.length} 個項目`);
+            window.exitBatchMode(); 
         })
         .catch(err => {
             console.error("Batch delete failed", err);
@@ -2613,6 +2638,18 @@ window.executeBatchDelete = function() {
         };
 
         window.deleteTodo = function(id) {
+            // === 🛑 權限檢查 ===
+            const todo = window.allTodosCache.find(t => t.id === id);
+            if (todo && todo.creator !== currentUserRole) {
+                if (window.triggerHaptic) window.triggerHaptic('ERROR');
+                window.showToast('🙅‍♂️ 只能刪除自己建立的待辦');
+                
+                // 關閉滑動
+                const item = document.querySelector(`.swipe-item[data-swipe-id="${id}"] .swipe-content`);
+                if (item) item.style.transform = 'translateX(0px)';
+                return;
+            }
+            // ==================
             editingTodoId = id;
             deleteTarget = 'todo';
 
@@ -2638,6 +2675,14 @@ window.executeBatchDelete = function() {
             if(iconBg) iconBg.className = "mx-auto w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4";
 
             if (typeof lucide !== 'undefined') lucide.createIcons();
+            
+            // 👇👇👇 新增這段：點擊後立刻把滑動的項目「關起來」 👇👇👇
+            const item = document.querySelector(`.swipe-item[data-swipe-id="${id}"] .swipe-content`);
+            if (item) {
+                item.style.transform = 'translateX(0px)';
+            }
+            // 👆👆👆 新增結束 👆👆👆
+
             window.confirmDelete();
         };
 
@@ -3774,6 +3819,16 @@ window.executeBatchDelete = function() {
 
         window.deleteCurrentEvent = function() {
             if (!editingEventId) return;
+
+            // === 🛑 權限檢查 ===
+            const evt = window.allEventsCache.find(e => e.id === editingEventId);
+            if (evt && evt.creator !== currentUserRole) {
+                if (window.triggerHaptic) window.triggerHaptic('ERROR');
+                window.showToast('🙅‍♂️ 只能刪除自己建立的行程');
+                return;
+            }
+            // ==================
+
             deleteTarget = 'event';
             
             const m = document.getElementById('confirm-modal');
@@ -3806,6 +3861,15 @@ window.executeBatchDelete = function() {
         window.deleteCurrentTodo = function() {
             // 確保有正在編輯的 ID
             if (!editingTodoId) return;
+
+            // === 🛑 權限檢查 ===
+            const todo = window.allTodosCache.find(t => t.id === editingTodoId);
+            if (todo && todo.creator !== currentUserRole) {
+                if (window.triggerHaptic) window.triggerHaptic('ERROR');
+                window.showToast('🙅‍♂️ 只能刪除自己建立的待辦');
+                return;
+            }
+            // ==================
             
             deleteTarget = 'todo';
             
@@ -4963,7 +5027,7 @@ function initApp(db) {
         };
     
         // === 長按偵測核心邏輯 ===
-        window.attachLongPressEvent = function(element, msgId) {
+        window.attachLongPressEvent = function(element, msgId, creator) {
             let pressTimer;
             let startX, startY;
             const PRESS_DURATION = 500; // 長按時間 (毫秒)
@@ -4976,6 +5040,8 @@ function initApp(db) {
                 
                 // 加入視覺回饋 class
                 element.classList.add('pressing');
+
+                window.confirmDeleteMsg(msgId, creator);
 
                 // 開始倒數
                 pressTimer = setTimeout(() => {
@@ -5092,11 +5158,11 @@ function initApp(db) {
 
             container.innerHTML = html;
             
-            // === 關鍵修改 2：HTML 渲染完後，批次綁定長按事件 ===
             messages.forEach(msg => {
                 const el = document.getElementById(`msg-${msg.id}`);
                 if (el) {
-                    window.attachLongPressEvent(el, msg.id);
+                    // 👇 這裡多傳一個參數 msg.creator
+                    window.attachLongPressEvent(el, msg.id, msg.creator);
                 }
             });
 
@@ -5125,7 +5191,14 @@ function initApp(db) {
             }
         };
 
-        window.confirmDeleteMsg = function(msgId) {
+        window.confirmDeleteMsg = function(msgId, creator) { // 👈 接收 creator
+            // === 🛑 權限檢查 ===
+            if (creator && creator !== currentUserRole) {
+                if (window.triggerHaptic) window.triggerHaptic('ERROR'); // 錯誤震動
+                window.showToast('🙅‍♂️ 只能收回自己的訊息喔！');
+                return;
+            }
+            // ==================
             deleteTarget = 'message';
             noteToDelete = msgId; 
             
@@ -5133,8 +5206,6 @@ function initApp(db) {
             const title = m.querySelector('#confirm-title');
             const desc = m.querySelector('#confirm-desc');
             const btn = document.getElementById('confirm-delete-btn');
-            
-            // 變色元素
             const iconBg = document.getElementById('confirm-icon-bg');
             const icon = document.getElementById('confirm-icon');
 
@@ -5143,18 +5214,15 @@ function initApp(db) {
             
             if(btn) {
                 btn.textContent = '確認收回';
-                // 橘色風格
                 btn.className = "py-3.5 rounded-2xl bg-orange-500 text-white font-bold text-sm shadow-lg shadow-orange-200 active:scale-95 transition duration-200";
             }
 
-            // 設定圖示為 Undo (復原)
             if(icon) {
                 icon.setAttribute('data-lucide', 'undo-2');
                 icon.className = "w-8 h-8 text-orange-500";
             }
             if(iconBg) iconBg.className = "mx-auto w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mb-4";
 
-            // 重新渲染圖示
             if (typeof lucide !== 'undefined') lucide.createIcons();
             
             window.confirmDelete();
@@ -5868,49 +5936,60 @@ window.initSwipeListeners = function(container) {
     });
 };
 
-// === 修正版：滑動刪除 (確保樣式重置為紅色) ===
 window.quickDeleteEvent = function(id) {
-    editingEventId = id;
-    deleteTarget = 'event'; 
+            // === 🛑 權限檢查 ===
+            const evt = window.allEventsCache.find(e => e.id === id);
+            if (evt && evt.creator !== currentUserRole) {
+                if (window.triggerHaptic) window.triggerHaptic('ERROR');
+                window.showToast('🙅‍♂️ 只能刪除自己建立的行程');
+                
+                // 記得把滑開的按鈕關回去，不然會卡住
+                const item = document.querySelector(`.swipe-item[data-swipe-id="${id}"] .swipe-content`);
+                if (item) item.style.transform = 'translateX(0px)';
+                return;
+            }
+            // ==================
+            editingEventId = id;
+            deleteTarget = 'event'; 
 
-    // 取得所有 UI 元素
-    const m = document.getElementById('confirm-modal');
-    const title = m.querySelector('#confirm-title');
-    const desc = m.querySelector('#confirm-desc');
-    const btn = document.getElementById('confirm-delete-btn');
-    const iconBg = document.getElementById('confirm-icon-bg');
-    const icon = document.getElementById('confirm-icon');
+            // 取得所有 UI 元素
+            const m = document.getElementById('confirm-modal');
+            const title = m.querySelector('#confirm-title');
+            const desc = m.querySelector('#confirm-desc');
+            const btn = document.getElementById('confirm-delete-btn');
+            const iconBg = document.getElementById('confirm-icon-bg');
+            const icon = document.getElementById('confirm-icon');
 
-    // 1. 設定文字
-    if(title) title.textContent = '刪除行程？';
-    if(desc) desc.textContent = '確定要刪除這個行程嗎？';
-    
-    // 2. 👇👇👇 補上這段：強制重置按鈕為「紅色刪除」樣式 👇👇👇
-    if(btn) {
-        btn.textContent = '確認刪除';
-        // 恢復紅色樣式
-        btn.className = "py-3.5 rounded-2xl bg-red-500 text-white font-bold text-sm shadow-lg shadow-red-200 hover:bg-red-600 active:scale-95 transition duration-200 flex items-center justify-center gap-2";
-    }
+            // 1. 設定文字
+            if(title) title.textContent = '刪除行程？';
+            if(desc) desc.textContent = '確定要刪除這個行程嗎？';
+            
+            // 2. 強制重置按鈕為「紅色刪除」樣式 (修復之前的 Bug)
+            if(btn) {
+                btn.textContent = '確認刪除';
+                btn.className = "py-3.5 rounded-2xl bg-red-500 text-white font-bold text-sm shadow-lg shadow-red-200 hover:bg-red-600 active:scale-95 transition duration-200 flex items-center justify-center gap-2";
+            }
 
-    // 3. 👇👇👇 補上這段：強制重置圖示為「垃圾桶」 👇👇👇
-    if(icon) {
-        icon.setAttribute('data-lucide', 'trash-2');
-        icon.className = "w-8 h-8 text-red-500 transition-colors duration-300";
-    }
-    if(iconBg) {
-        iconBg.className = "mx-auto w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4 transition-colors duration-300";
-    }
+            // 3. 強制重置圖示為「垃圾桶」
+            if(icon) {
+                icon.setAttribute('data-lucide', 'trash-2');
+                icon.className = "w-8 h-8 text-red-500 transition-colors duration-300";
+            }
+            if(iconBg) {
+                iconBg.className = "mx-auto w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4 transition-colors duration-300";
+            }
 
-    // 重繪圖示 (重要！不然 trash-2 不會出來)
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-    
-    // 顯示視窗
-    window.confirmDelete();
-    
-    // 關閉滑動狀態 (把那一行彈回去)
-    const item = document.querySelector(`.swipe-item[data-swipe-id="${id}"] .swipe-content`);
-    if (item) item.style.transform = 'translateX(0px)';
-};
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            
+            // 👇👇👇 新增這段：立刻把滑動的項目「關起來」 👇👇👇
+            const item = document.querySelector(`.swipe-item[data-swipe-id="${id}"] .swipe-content`);
+            if (item) {
+                item.style.transform = 'translateX(0px)';
+            }
+            // 👆👆👆 新增結束 👆👆👆
+            
+            window.confirmDelete();
+        };
 
     // === 新增：更新待辦事項順序 ===
         window.updateTodoOrder = function(category, listElement) {
