@@ -1257,12 +1257,12 @@ window.updateBatchUI = function() {
             </div>
 
             <div class="px-4 flex gap-3 mb-6">
-                <button onclick="window.openAddModal()" class="flex-1 bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-gray-600 flex items-center justify-center gap-2 active:bg-gray-50 transition">
-                    <i data-lucide="calendar-plus" class="w-5 h-5 text-theme"></i>
+                <button onclick="window.openAddModal()" class="flex-1 bg-theme p-4 rounded-xl shadow-md text-white flex items-center justify-center gap-2 active:scale-95 transition">
+                    <i data-lucide="calendar-plus" class="w-5 h-5 text-white"></i>
                     <span class="text-sm font-bold">新增行程</span>
                 </button>
-                <button onclick="window.openAddTodoModal()" class="flex-1 bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-gray-600 flex items-center justify-center gap-2 active:bg-gray-50 transition">
-                    <i data-lucide="check-square" class="w-5 h-5 text-blue-400"></i>
+                <button onclick="window.openAddTodoModal()" class="flex-1 bg-theme p-4 rounded-xl shadow-md text-white flex items-center justify-center gap-2 active:scale-95 transition">
+                    <i data-lucide="check-square" class="w-5 h-5 text-white"></i>
                     <span class="text-sm font-bold">新增待辦</span>
                 </button>
             </div>
@@ -1518,7 +1518,7 @@ window.updateBatchUI = function() {
     </div>
     
     <div id="toast-container" class="fixed left-1/2 transform -translate-x-1/2 z-[90] pointer-events-none transition-opacity duration-300 opacity-0" style="top: calc(env(safe-area-inset-top) + 10px);">
-        <div id="toast-message" class="bg-gray-800/90 text-white px-4 py-2 rounded-full text-sm shadow-lg backdrop-blur-sm flex items-center gap-2">
+        <div id="toast-message" class="bg-gray-800/90 text-white px-4 py-2 rounded-full text-sm shadow-lg backdrop-blur-sm flex items-center gap-2 whitespace-nowrap">
             </div>
     </div>
 
@@ -2546,12 +2546,16 @@ window.updateBatchUI = function() {
             let category = document.getElementById('todo-input-category').value;
             const customCat = document.getElementById('todo-input-category-custom').value.trim();
             
-            // 如果有輸入自訂分類，優先使用，並存入 localStorage
+            // 如果有輸入自訂分類，優先使用，並存入 localStorage (綁定身分)
             if (customCat) {
                 category = customCat;
-                if (!customCategories.includes(customCat)) {
-                    customCategories.push(customCat);
-                    localStorage.setItem('my_custom_categories', JSON.stringify(customCategories));
+                
+                const key = window.getScopedKey('my_custom_categories');
+                let myCustomCats = JSON.parse(localStorage.getItem(key) || '[]');
+
+                if (!myCustomCats.includes(customCat)) {
+                    myCustomCats.push(customCat);
+                    localStorage.setItem(key, JSON.stringify(myCustomCats));
                 }
             }
             // ========================
@@ -3291,7 +3295,32 @@ window.updateBatchUI = function() {
           else currentSelectedColor = roleColors[currentUserRole];
         };
 
-        window.setRole = function(role) { localStorage.setItem('user_role', role); currentUserRole = role; window.updateRoleUI(); document.documentElement.style.setProperty('--active-tab-color', roleColors[role]); };
+        // === 輔助：取得綁定身分的儲存 Key ===
+        window.getScopedKey = function(keyName) {
+            // 如果沒有身分，就用預設 key (避免報錯)
+            const prefix = currentUserRole || 'default';
+            return `${prefix}_${keyName}`;
+        };
+
+        window.setRole = function(role) { 
+            localStorage.setItem('user_role', role); 
+            currentUserRole = role; 
+            window.updateRoleUI(); 
+            document.documentElement.style.setProperty('--active-tab-color', roleColors[role]); 
+            
+            // 👇👇👇 新增：切換身分後，強制刷新所有視圖 👇👇👇
+            if (window.allEventsCache) {
+                // 刷新摘要頁與月曆資料 (會重新觸發 getCalendarItems 的過濾)
+                window.renderDashboardNextUp(window.getCalendarItems());
+                window.renderCalendarListView();
+                if (currentViewMode === 'month') window.renderBigCalendar();
+            }
+            if (window.allTodosCache) {
+                // 刷新待辦清單 (會重新觸發 renderTodos 的過濾)
+                window.renderTodos(window.allTodosCache);
+            }
+        };
+        
         window.updateMyStatus = function(status) {
             if (!window.checkRoleEnforcement()) return;
              if(!db) return; const moods = ['normal', 'charging', 'sleepy', 'love', 'busy']; 
@@ -3355,14 +3384,16 @@ window.updateBatchUI = function() {
 
         window.renderEvents = function(ignored) { const items = window.getCalendarItems(); const now = new Date(); const future = items.filter(e => { const date = new Date(e.timestamp); if(e.isTodo && e.done) return false; return !isNaN(date) && date >= now; }); const titleEl = document.getElementById('next-event-title'); if(titleEl && future.length > 0) { const n = future[0], d = new Date(n.timestamp); titleEl.textContent = n.title; const timeStr = n.allDay ? "All Day" : d.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',hour12:false}); document.getElementById('next-event-time').textContent = timeStr; document.getElementById('next-event-date').textContent = d.toLocaleDateString('zh-TW',{month:'numeric',day:'numeric',weekday:'short'}); const diff = Math.ceil((d-now)/(1000*60*60*24)); document.getElementById('countdown').textContent = diff<=0?"TODAY":`D - ${diff}`; } else if(titleEl) { titleEl.textContent = "No Upcoming Events"; } const listEl = document.getElementById('event-list'); if(listEl) { if (items.length === 0) listEl.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">無行程</div>`; else window.renderEventListItems(items, listEl); } };
         window.getCalendarItems = function() {
-            // 1. 確保 events 是陣列
+            // 1. 行程 (Events)：維持全公開 (跟行事曆邏輯不同)
             const eventsRaw = Array.isArray(window.allEventsCache) ? window.allEventsCache : [];
             const events = eventsRaw.map(e => ({...e, type: 'event'}));
             
-            // 2. 確保 todos 是陣列
+            // 2. 待辦 (Todos)：嚴格過濾 (只看自己的 OR 共同的)
             const todosRaw = Array.isArray(window.allTodosCache) ? window.allTodosCache : [];
+            
             const todos = todosRaw
-                .filter(t => t.timestamp) 
+                // 👇👇👇 關鍵修改：增加這行過濾條件 👇👇👇
+                .filter(t => t.timestamp && (t.creator === currentUserRole || t.isJoint)) 
                 .map(t => ({
                     ...t, 
                     id: t.id,
@@ -3375,7 +3406,6 @@ window.updateBatchUI = function() {
                     color: null 
                 }));
 
-            // 3. 使用 concat 取代 ... (Spread Syntax) 以避免錯誤
             return events.concat(todos).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
         };       
 
@@ -3655,58 +3685,55 @@ window.updateBatchUI = function() {
                         </div>`;
                     } else {
                         // === 一般行程樣式 (三行高度 + 日期變色版) ===
-                        let ic = ''; if (e.category === 'travel') ic = 'plane'; else if (e.category === 'appointment') ic = 'scissors'; else if (e.category === 'gathering') ic = 'users'; else if (e.category === 'vacation') ic = 'palmtree';
-                        let ico = ic ? `<i data-lucide="${ic}" class="w-3 h-3 text-gray-400 mr-1 flex-shrink-0"></i>` : '';
-                        let st = ''; if (e.status === 'tbc') st = `<span class="ml-2 status-tag tbc">TBC</span>`; else if (e.status === 'tbd') st = `<span class="ml-2 status-tag tbd">TBD</span>`;
-                        
-                        // 備註處理：獨立成第三行顯示
-                        let noteDisplay = ''; 
-                        if (e.note && e.note.trim()) {
-                            noteDisplay = `<div class="text-xs text-gray-400 truncate flex items-center gap-1 min-h-[16px]"><i data-lucide="sticky-note" class="w-3 h-3"></i>${e.note}</div>`;
-                        } else {
-                            // 即使沒有備註，也保留一個空的佔位，確保視覺高度一致 (可選，這裡我讓它自動垂直置中)
-                            // 如果你希望沒備註時是一片空白但高度不變，這裡留空即可
-                        }
+                    let ic = ''; if (e.category === 'travel') ic = 'plane'; else if (e.category === 'appointment') ic = 'scissors'; else if (e.category === 'gathering') ic = 'users'; else if (e.category === 'vacation') ic = 'palmtree';
+                    let ico = ic ? `<i data-lucide="${ic}" class="w-3 h-3 text-gray-400 mr-1 flex-shrink-0"></i>` : '';
+                    let st = ''; if (e.status === 'tbc') st = `<span class="ml-2 status-tag tbc">TBC</span>`; else if (e.status === 'tbd') st = `<span class="ml-2 status-tag tbd">TBD</span>`;
+                    
+                    // 備註處理
+                    let noteDisplay = ''; 
+                    if (e.note && e.note.trim()) {
+                        noteDisplay = `<div class="text-xs text-gray-400 truncate flex items-center gap-1 min-h-[16px] mt-0.5"><i data-lucide="sticky-note" class="w-3 h-3"></i>${e.note}</div>`;
+                    }
 
-                        // 時間與地點合併在第二行
-                        let locationDisplay = e.location ? `<span class="mx-1">·</span><span>${e.location}</span>` : '';
+                    // 時間與地點
+                    let locationDisplay = e.location ? `<span class="mx-1">·</span><span>${e.location}</span>` : '';
 
-                        htmlBuffer += `
-                        <div class="swipe-item border-b border-gray-50 last:border-0 ${opacityClass} ${isBatch ? 'selection-mode' : ''}" data-swipe-id="${e.id}">
-                            ${!isBatch ? `<div class="swipe-action-bg" onclick="${deleteAction}"><i data-lucide="trash-2" class="w-5 h-5"></i></div>` : ''}
+                    htmlBuffer += `
+                    <div class="swipe-item border-b border-gray-50 last:border-0 ${opacityClass} ${isBatch ? 'selection-mode' : ''}" data-swipe-id="${e.id}">
+                        ${!isBatch ? `<div class="swipe-action-bg" onclick="${deleteAction}"><i data-lucide="trash-2" class="w-5 h-5"></i></div>` : ''}
 
-                            <div class="swipe-content h-[88px] flex items-center bg-white card-press" onclick="${clickAction}">
+                        <div class="swipe-content h-[88px] flex items-center bg-white card-press" onclick="${clickAction}">
+                            
+                            ${checkboxHtml} 
+                            
+                            <div class="flex-1 flex items-center h-full min-w-0 pr-4"> 
                                 
-                                ${checkboxHtml} 
-                                
-                                <div class="flex-1 flex items-center h-full min-w-0 pr-4"> 
-                                    
-                                    <div class="w-[60px] flex flex-col items-center justify-center flex-shrink-0 h-full">
-                                        <span class="text-[10px] text-gray-400 font-medium uppercase tracking-wider">${dayName}</span>
-                                        <span class="text-xl font-bold leading-none mt-0.5" style="color:${displayColor}">${dayNum}</span>
-                                    </div>
-                                    
-                                    <div class="w-[4px] h-[48px] rounded-full mx-1 flex-shrink-0" style="background-color:${displayColor}"></div>
-                                    
-                                    <div class="flex-1 min-w-0 flex flex-col justify-center ml-3 gap-0.5">
-                                        
-                                        <div class="flex items-center">
-                                            ${ico}
-                                            <h4 class="font-bold text-gray-800 text-sm truncate leading-tight">${displayIcon||''}${e.title}</h4>
-                                            ${st}
-                                        </div>
-
-                                        <div class="flex items-center text-xs text-gray-500 truncate leading-tight font-medium h-[16px]">
-                                            <span>${timeStr}</span>
-                                            ${locationDisplay}
-                                        </div>
-
-                                        ${noteDisplay}
-                                    </div>
-                                    
+                                <div class="w-[68px] flex flex-col items-center justify-center flex-shrink-0 h-full">
+                                    <span class="text-xs text-gray-400 font-medium uppercase tracking-wider">${dayName}</span>
+                                    <span class="text-2xl font-bold leading-none mt-1.5" style="color:${displayColor}">${dayNum}</span>
                                 </div>
+                                
+                                <div class="w-[4px] h-[48px] rounded-full mx-1 flex-shrink-0" style="background-color:${displayColor}"></div>
+                                
+                                <div class="flex-1 min-w-0 flex flex-col justify-center ml-3 gap-0.5">
+                                    
+                                    <div class="flex items-center">
+                                        ${ico}
+                                        <h4 class="font-bold text-gray-800 text-base truncate leading-tight">${displayIcon||''}${e.title}</h4>
+                                        ${st}
+                                    </div>
+
+                                    <div class="flex items-center text-xs text-gray-500 truncate leading-tight font-medium h-[16px]">
+                                        <span>${timeStr}</span>
+                                        ${locationDisplay}
+                                    </div>
+
+                                    ${noteDisplay}
+                                </div>
+                                
                             </div>
-                        </div>`;
+                        </div>
+                    </div>`;
                     }
                 });
                 return htmlBuffer;
@@ -3887,6 +3914,11 @@ window.updateBatchUI = function() {
 
         // === 優化版：待辦清單渲染 (字串組裝模式) ===
         window.renderTodos = function(todos) {
+            // 👇👇👇 新增：讀取當前身分的顯示設定 👇👇👇
+            const visKey = window.getScopedKey('todo_category_visibility');
+            const visibilitySettings = JSON.parse(localStorage.getItem(visKey) || '{}');
+            // 👆👆👆
+            
             const container = document.getElementById('todo-category-container');
             const dashboardList = document.getElementById('dashboard-todo-list');
             
@@ -3899,6 +3931,11 @@ window.updateBatchUI = function() {
             } else if (Array.isArray(window.allTodosCache)) {
                 dataToRender = window.allTodosCache;
             }
+
+            // 👇👇👇 關鍵修改：在渲染前先過濾掉別人的私人待辦 👇👇👇
+            // 邏輯：保留 (是共同的 OR 是我建的)
+            dataToRender = dataToRender.filter(t => t.isJoint || t.creator === currentUserRole);
+            // 👆👆👆 修改結束 👆👆👆
 
             try {
                 // 2. 資料分組與排序
@@ -4050,7 +4087,8 @@ window.updateBatchUI = function() {
                         dashboardList.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">沒有未完成的待辦事項 🎉</p>`;
                     } else {
                         dashboardList.innerHTML = '';
-                        const pendings = dataToRender.filter(t => !t.done && (!t.category || window.todoCategoryVisibility[t.category] !== false)).slice(0, 3);
+                        // 👇 改成這樣：使用 visibilitySettings 來判斷顯示
+                        const pendings = dataToRender.filter(t => !t.done && (!t.category || visibilitySettings[t.category] !== false)).slice(0, 3);
                         
                         if (pendings.length === 0 && pendingCount > 0) {
                             dashboardList.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">待辦事項已隱藏</p>`;
@@ -4790,9 +4828,14 @@ function initApp(db) {
                 });
             }
 
-            // === 新增：點擊空白處收起鍵盤 (LINE 體驗) ===
+            // === 修改：點擊空白處 -> 收起鍵盤 & 收起貼圖 ===
             window.dismissKeyboard = async function() {
-                // 如果是在電腦瀏覽器測試，不需要這行
+                // 1. 順便關閉貼圖選單 (如果有打開的話)
+                if (window.closeStickerPicker) {
+                    window.closeStickerPicker();
+                }
+
+                // 2. 收起鍵盤 (Capacitor 原生功能)
                 if (window.Capacitor) {
                     await Capacitor.Plugins.Keyboard.hide();
                 }
@@ -5024,7 +5067,7 @@ function initApp(db) {
             }
         };
     
-        // === 長按偵測核心邏輯 ===
+        // === 長按偵測核心邏輯 (修正版：防止誤觸) ===
         window.attachLongPressEvent = function(element, msgId, creator) {
             let pressTimer;
             let startX, startY;
@@ -5032,14 +5075,14 @@ function initApp(db) {
 
             // 1. 手指按下
             element.addEventListener('touchstart', (e) => {
-                // 記錄起始位置 (用來判斷是否移動)
                 startX = e.touches[0].clientX;
                 startY = e.touches[0].clientY;
                 
                 // 加入視覺回饋 class
                 element.classList.add('pressing');
 
-                window.confirmDeleteMsg(msgId, creator);
+                // ❌ 刪除這一行！這就是害你一摸就跳出來的兇手！
+                // window.confirmDeleteMsg(msgId, creator); 
 
                 // 開始倒數
                 pressTimer = setTimeout(() => {
@@ -5047,8 +5090,8 @@ function initApp(db) {
                     triggerHaptic('MEDIUM'); // 震動回饋
                     element.classList.remove('pressing'); // 移除視覺回饋
                     
-                    // 呼叫原本的刪除/收回函式
-                    window.confirmDeleteMsg(msgId);
+                    // ✅ 只有計時結束後，才執行這行 (記得補上 creator 參數)
+                    window.confirmDeleteMsg(msgId, creator);
                     
                 }, PRESS_DURATION);
             }, { passive: true });
@@ -5070,11 +5113,11 @@ function initApp(db) {
                 element.classList.remove('pressing');
             }, { passive: true });
 
-            // 4. 針對電腦版滑鼠的支援 (選配)
+            // 4. 電腦版滑鼠支援 (這部分原本邏輯是對的，補上 creator 即可)
             element.addEventListener('mousedown', () => {
                 element.classList.add('pressing');
                 pressTimer = setTimeout(() => {
-                    window.confirmDeleteMsg(msgId);
+                    window.confirmDeleteMsg(msgId, creator); // 👈 這裡也要補 creator
                     element.classList.remove('pressing');
                 }, PRESS_DURATION);
             });
@@ -5272,45 +5315,56 @@ function initApp(db) {
             }
         };
 
-        // === 修改：取得分類順序 (優先讀取使用者設定) ===
+        // === 修改版：取得分類順序 (綁定身分 + 隱私過濾) ===
         window.getCategoryOrder = function() {
-            // 1. 預設順序
+            // 1. 預設分類
             const defaultOrder = ['重要', 'Debug', '工作', '生活', '購物', '請假', 'Party', '財務', '未分類'];
             
-            // 2. 讀取儲存的順序
-            let savedOrder = JSON.parse(localStorage.getItem('todo_category_order') || '[]');
+            // 2. 讀取「個人化」的排序設定
+            const storageKey = window.getScopedKey('todo_category_order');
+            let savedOrder = JSON.parse(localStorage.getItem(storageKey) || '[]');
             
-            // 3. 收集目前系統中所有已知的分類 (預設 + 自訂 + 現有待辦中出現的)
-            const allCats = new Set(defaultCategories.map(c => c.name));
-            if(window.customCategories) window.customCategories.forEach(c => allCats.add(c));
-            if(window.allTodosCache) window.allTodosCache.forEach(t => { if(t.category) allCats.add(t.category); });
-            allCats.add('未分類'); // 確保有未分類
+            // 3. 讀取「個人化」的自訂分類
+            const customKey = window.getScopedKey('my_custom_categories');
+            let myCustomCats = JSON.parse(localStorage.getItem(customKey) || '[]');
 
-            // 4. 合併邏輯：
-            //    a. 先放 savedOrder 裡有的
-            //    b. 再放 savedOrder 裡沒有，但在 defaultOrder 裡有的 (插在後面)
-            //    c. 最後放全新的 (自訂的)
-            
+            // 4. 收集系統中「我看得到」的分類
+            const visibleCats = new Set(defaultOrder);
+            myCustomCats.forEach(c => visibleCats.add(c));
+
+            // 👇👇👇 關鍵修改：只掃描「我可以看見」的待辦事項 👇👇👇
+            if(window.allTodosCache) {
+                window.allTodosCache.forEach(t => {
+                    // 權限檢查：只看 (我是建立者 OR 這是共同待辦)
+                    if (t.category && (t.creator === currentUserRole || t.isJoint)) {
+                        visibleCats.add(t.category);
+                    }
+                });
+            }
+            visibleCats.add('未分類'); 
+
+            // 5. 合併邏輯 (維持原本演算法，但資料源已淨化)
             const finalOrder = [];
             
-            // a. 既有設定
+            // a. 先放 savedOrder 裡有的 (且合法的)
             savedOrder.forEach(cat => {
-                if (allCats.has(cat)) {
+                if (visibleCats.has(cat)) {
                     finalOrder.push(cat);
-                    allCats.delete(cat);
+                    visibleCats.delete(cat);
                 }
             });
             
-            // b. 補上預設 (如果還沒被加進去)
+            // b. 補上剩下的 (預設 + 新自訂 + 新發現的)
+            // 為了保持體驗，我們可以讓剩下的依照 defaultOrder 的順序優先排列
             defaultOrder.forEach(cat => {
-                if (allCats.has(cat)) {
+                if (visibleCats.has(cat)) {
                     finalOrder.push(cat);
-                    allCats.delete(cat);
+                    visibleCats.delete(cat);
                 }
             });
-            
-            // c. 補上剩下的 (新自訂的)
-            allCats.forEach(cat => finalOrder.push(cat));
+
+            // c. 最後補上剩下的 (通常是新自訂的)
+            visibleCats.forEach(cat => finalOrder.push(cat));
             
             return finalOrder;
         };
@@ -5327,7 +5381,12 @@ function initApp(db) {
 
             // 2. 產生 UI (加入 data-cat 屬性以便識別)
             sortedCats.forEach((cat) => {
-                const isVisible = window.todoCategoryVisibility[cat] !== false;
+                // 在 forEach 迴圈的一開始加入這段
+            const visKey = window.getScopedKey('todo_category_visibility');
+            const visibilitySettings = JSON.parse(localStorage.getItem(visKey) || '{}');
+
+            // 👇 修改這行：改成從 visibilitySettings 讀取
+            const isVisible = visibilitySettings[cat] !== false;
                 
                 // 判斷是否為預設分類
                 const defCat = defaultCategories.find(c => c.name === cat);
@@ -5540,17 +5599,22 @@ function initApp(db) {
             }
         };
 
-        // === 新增：切換分類顯示狀態 ===
+        // === 修改版：切換分類顯示狀態 (綁定身分) ===
         window.toggleCategoryVisibility = function(cat) {
-            const current = window.todoCategoryVisibility[cat] !== false;
-            window.todoCategoryVisibility[cat] = !current; // 反轉狀態
+            // 1. 讀取個人設定
+            const key = window.getScopedKey('todo_category_visibility');
+            const visibilitySettings = JSON.parse(localStorage.getItem(key) || '{}');
             
-            // 存入 LocalStorage
-            localStorage.setItem('todo_category_visibility', JSON.stringify(window.todoCategoryVisibility));
+            // 2. 切換狀態
+            const current = visibilitySettings[cat] !== false;
+            visibilitySettings[cat] = !current; 
             
-            // 立即刷新摘要頁面 (如果有資料的話)
-            if (typeof window.renderTodos === 'function' && allTodosCache.length > 0) {
-                window.renderTodos(allTodosCache);
+            // 3. 存回個人設定
+            localStorage.setItem(key, JSON.stringify(visibilitySettings));
+            
+            // 4. 立即刷新待辦清單
+            if (typeof window.renderTodos === 'function' && window.allTodosCache) {
+                window.renderTodos(window.allTodosCache);
             }
         };
 
