@@ -242,25 +242,42 @@ window.executeBatchDelete = function() {
             display: none; 
         }
 
-        /* 2. 聊天室容器樣式 (修正版：解決無法滑動問題) */
-        #chat-container {
-            scroll-behavior: smooth; 
-            
-            overflow-y: auto !important; 
-            /* height: auto; <--- 這一行是兇手，一定要刪掉或註解掉！ */
-            -webkit-overflow-scrolling: touch;
-            /* === 加入這兩行，確保它乖乖填滿中間區域 === */
-            flex: 1;
-            min-height: 0; 
-            
-            position: relative; 
-            z-index: 0;
+        /* === 修正：終極版 (恢復彈性 + 完美白底) === */
+        
+        /* 1. 設定底色為白色：這樣彈起來時，露出的底層就是白的，不會是黑的 */
+        html {
+            background-color: #ffffff;
+            height: 100%;
+        }
 
-            /* 背景設定 (維持原本的點點風) */
+        body {
+            background-color: #ffffff; /* 確保 Body 也是白的 */
+            height: 100%;
+            width: 100%;
+            position: fixed; /* 關鍵：固定 Body 位置，避免整個視窗被拖走 */
+            overflow: hidden; /* 內容過長時隱藏，交給內層處理 */
+        }
+
+        /* 2. 聊天室：完全恢復 iOS 原生滾動手感 */
+        #chat-container {
+            /* 基礎設定 */
+            scroll-behavior: smooth;
+            flex: 1;
+            min-height: 0;
+            position: relative;
+            z-index: 0;
+            
+            /* 滾動設定：恢復原廠設定 */
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch; /* 這是 iOS 順滑滾動的關鍵 */
+            
+            /* 背景設定：固定背景，避免背景跟著彈 */
             background-color: #ffffff; 
             background-image: radial-gradient(#e5e7eb 2px, transparent 2px);
             background-size: 24px 24px; 
-            background-attachment: local;
+            background-attachment: scroll; 
+            
+            /* 👇 移除 overscroll-behavior 設定，讓它自由彈跳 👇 */
         }
 
         /* === 重要：強制隱藏之前寫的 ::before (那張圖片層)，避免干擾 === */
@@ -269,13 +286,15 @@ window.executeBatchDelete = function() {
         }
 
         #page-chat.active {
-        display: flex;
-        flex-direction: column;
-        padding: 0;
-        overflow: hidden;
-        /* 修改這一行：加上 env(safe-area-inset-top) */
-        padding-top: calc(70px + env(safe-area-inset-top)); 
-        padding-bottom: 90px;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            overflow: hidden;
+            padding-top: calc(70px + env(safe-area-inset-top)); 
+            padding-bottom: 90px;
+            
+            /* 👇 加入這一行：強制背景全白，當作第二層防護 */
+            background-color: #ffffff !important; 
         }
         
         /* 3. 聊天氣泡樣式優化 (支援顯示名字) */
@@ -1283,14 +1302,6 @@ window.executeBatchDelete = function() {
 
         <div id="page-chat" class="page-content h-full">
             
-            <div class="flex-none bg-white z-20 border-b border-gray-200 px-4 flex items-center justify-between h-[60px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
-                <h2 class="text-xl font-bold text-gray-800">聊天室</h2>
-                <div class="flex -space-x-2">
-                     <div class="w-8 h-8 rounded-full border-2 border-white bg-ttgreen flex items-center justify-center text-white text-xs font-bold shadow-sm">皓</div>
-                     <div class="w-8 h-8 rounded-full border-2 border-white bg-[#e6688d] flex items-center justify-center text-white text-xs font-bold shadow-sm">毛</div>
-                </div>
-            </div>
-
             <div id="chat-container" onclick="window.dismissKeyboard()" class="flex-1 overflow-y-auto p-3 flex flex-col gap-3 bg-[#9bbbd4] shadow-inner no-scrollbar">
                 <div class="text-center text-xs text-gray-500 mt-4 bg-white/50 py-1 rounded-full mx-auto px-4 w-fit">
                     載入對話中...
