@@ -5868,21 +5868,43 @@ window.initSwipeListeners = function(container) {
     });
 };
 
-// === 新增：行程快速刪除函式 ===
+// === 修正版：滑動刪除 (確保樣式重置為紅色) ===
 window.quickDeleteEvent = function(id) {
-    // 設定 ID，為了讓 executeDelete 知道要刪誰
     editingEventId = id;
-    // 設定全域刪除目標
     deleteTarget = 'event'; 
 
-    // 呼叫確認視窗
+    // 取得所有 UI 元素
     const m = document.getElementById('confirm-modal');
-    const title = m.querySelector('h3');
-    const desc = m.querySelector('p');
+    const title = m.querySelector('#confirm-title');
+    const desc = m.querySelector('#confirm-desc');
+    const btn = document.getElementById('confirm-delete-btn');
+    const iconBg = document.getElementById('confirm-icon-bg');
+    const icon = document.getElementById('confirm-icon');
+
+    // 1. 設定文字
     if(title) title.textContent = '刪除行程？';
     if(desc) desc.textContent = '確定要刪除這個行程嗎？';
     
-    // 顯示確認視窗
+    // 2. 👇👇👇 補上這段：強制重置按鈕為「紅色刪除」樣式 👇👇👇
+    if(btn) {
+        btn.textContent = '確認刪除';
+        // 恢復紅色樣式
+        btn.className = "py-3.5 rounded-2xl bg-red-500 text-white font-bold text-sm shadow-lg shadow-red-200 hover:bg-red-600 active:scale-95 transition duration-200 flex items-center justify-center gap-2";
+    }
+
+    // 3. 👇👇👇 補上這段：強制重置圖示為「垃圾桶」 👇👇👇
+    if(icon) {
+        icon.setAttribute('data-lucide', 'trash-2');
+        icon.className = "w-8 h-8 text-red-500 transition-colors duration-300";
+    }
+    if(iconBg) {
+        iconBg.className = "mx-auto w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4 transition-colors duration-300";
+    }
+
+    // 重繪圖示 (重要！不然 trash-2 不會出來)
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    
+    // 顯示視窗
     window.confirmDelete();
     
     // 關閉滑動狀態 (把那一行彈回去)
