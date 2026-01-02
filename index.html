@@ -551,15 +551,18 @@ window.executeBatchDelete = function() {
         }
         
         .big-cal-cell {
-            /* 關鍵：固定高度，讓每個格子一樣大 */
             height: 110px; 
             border-bottom: 1px solid #f0f0f0;
-            border-right: 1px solid #f0f0f0; /* 垂直分隔線 */
-            padding: 2px 0 0 0; /* 減少內距，爭取空間 */
+            border-right: 1px solid #f0f0f0; 
+            padding: 2px 0 0 0;
             display: flex;
             flex-direction: column;
             position: relative;
-            overflow: hidden; /* 超出範圍隱藏，避免撐開 */
+            
+            /* 👇👇👇 加入這一行！防止被長文字撐開格子 👇👇👇 */
+            min-width: 0; 
+            
+            /* overflow: hidden;  <-- 這行保持刪除 (或註解) */
         }
 
         /* 移除最右邊的線，讓畫面更乾淨 */
@@ -633,10 +636,10 @@ window.executeBatchDelete = function() {
 
         /* 行程條樣式：更扁、文字更小 */
         .event-bar { 
-            height: 18px; /* 固定高度 */
-            line-height: 18px;
-            font-size: 10px; 
-            padding: 0 4px; 
+            height: 20px; /*稍微加高一點點，視覺比較飽滿 (原本18) */
+            line-height: 20px;
+            font-size: 11px; /* 字體微調大一點點 (原本10) */
+            padding: 0 6px; 
             color: white; 
             white-space: nowrap; 
             overflow: hidden; 
@@ -645,6 +648,9 @@ window.executeBatchDelete = function() {
             position: relative;
             box-sizing: border-box;
             z-index: 10;
+            margin-bottom: 1px; /* 條與條之間留一點縫隙 */
+            font-weight: 500;
+            text-shadow: 0 1px 1px rgba(0,0,0,0.1); /* 增加一點文字立體感 */
         }
 
         /* 休假樣式優化 */
@@ -1129,6 +1135,29 @@ window.executeBatchDelete = function() {
             opacity: 0;               /* 完全透明 */
         }
 
+        /* === 修正：鍵盤開啟時，移除 Modal 底部的多餘留白 === */
+        body.keyboard-open .modal .pb-20 {
+            padding-bottom: 10px !important; /* 從 80px 縮小成 10px，釋放空間 */
+        }
+
+        /* === 聊天氣泡長按特效 === */
+        .chat-bubble, .chat-sticker {
+            /* 禁止 iOS 長按跳出預設選單 */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            
+            /* 按壓時的縮放動畫 */
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+
+        /* 當被長按時的縮放效果 */
+        .chat-bubble.pressing, .chat-sticker.pressing {
+            transform: scale(0.92);
+            opacity: 0.9;
+        }
+
     </style>
 </head>
 <body class="text-gray-700 h-screen flex flex-col overflow-hidden bg-white">
@@ -1236,7 +1265,7 @@ window.executeBatchDelete = function() {
         <button onclick="window.switchCalendarView('month')" id="btn-view-month" class="w-16 py-1.5 text-xs font-medium rounded-md text-gray-500 transition-all">月曆</button>
     </div>
     
-    <button id="btn-add-event-main" onclick="window.openAddModal()" class="bg-theme text-white w-9 h-9 flex items-center justify-center rounded-lg shadow-sm active:scale-95 transition hover:bg-green-500">
+    <button id="btn-add-event-main" onclick="window.openAddModal()" class="ml-auto bg-theme text-white w-9 h-9 flex items-center justify-center rounded-lg shadow-sm active:scale-95 transition hover:bg-green-500">
         <i data-lucide="plus" class="w-5 h-5"></i>
     </button>
 </div>
@@ -3982,22 +4011,20 @@ window.executeBatchDelete = function() {
             window.closeCalendar();
         };
 
-        // === 修改後的 switchTab：加入小紅點消除邏輯 ===
-        window.currentTab = 'dashboard'; // 預設初始頁面
+        // === 修改後的 switchTab：包含清除 App Icon 紅點 ===
+        window.currentTab = 'dashboard'; 
 
         window.switchTab = function(tabId) {
             triggerHaptic('LIGHT');
             
-            // 更新目前所在的頁面變數
             window.currentTab = tabId;
 
-            // 1. 隱藏所有頁面 & 捲動歸零
+            // 1. UI 切換邏輯 (維持不變)
             document.querySelectorAll('.page-content').forEach(page => {
                 page.classList.remove('active');
                 page.scrollTop = 0;
             });
             
-            // 2. 顯示目標頁面
             const targetPage = document.getElementById(`page-${tabId}`);
             if(targetPage) {
                 targetPage.classList.add('active');
@@ -4005,28 +4032,45 @@ window.executeBatchDelete = function() {
                 if (tabId === 'chat' && typeof window.scrollToBottom === 'function') window.scrollToBottom();
             }
             
-            // 3. 更新按鈕狀態
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 if(btn.dataset.tab === tabId) btn.classList.add('active');
                 else btn.classList.remove('active');
             });
 
-            // === 🔴 新增：如果切換到聊天室，把累積的未讀訊息一次標記為已讀 ===
-            if (tabId === 'chat' && window.unreadMsgIds && window.unreadMsgIds.length > 0) {
-                const batch = db.batch();
-                window.unreadMsgIds.forEach(id => {
-                    const ref = db.collection('messages').doc(id);
-                    batch.update(ref, { read: true });
-                });
-                batch.commit().then(() => {
-                    console.log('Batch marked read');
-                    // 清除紅點 UI
+            // 2. 🔴 聊天室處理邏輯 (App 內紅點 + iOS 系統紅點)
+            if (tabId === 'chat') {
+                // A. 清除資料庫的未讀標記 (維持不變)
+                if (window.unreadMsgIds && window.unreadMsgIds.length > 0) {
+                    const batch = db.batch();
+                    window.unreadMsgIds.forEach(id => {
+                        const ref = db.collection('messages').doc(id);
+                        batch.update(ref, { read: true });
+                    });
+                    batch.commit().then(() => {
+                        const badge = document.getElementById('chat-badge');
+                        if(badge) badge.classList.add('hidden');
+                        window.unreadMsgIds = [];
+                    });
+                } else {
+                    // 即使沒有新訊息，切換過來也要確保紅點隱藏
                     const badge = document.getElementById('chat-badge');
                     if(badge) badge.classList.add('hidden');
-                    window.unreadMsgIds = [];
-                });
+                }
+
+                // 👉👉👉 B. 新增：清除 iPhone 主畫面 Icon 的紅點 👈👈👈
+                if (window.Capacitor) {
+                    // 使用 PushNotifications 外掛來移除「已遞送的通知」
+                    // 這在 iOS 上通常會連帶把 Icon 的數字歸零
+                    try {
+                        const { PushNotifications } = Capacitor.Plugins;
+                        if (PushNotifications) {
+                            PushNotifications.removeAllDeliveredNotifications();
+                        }
+                    } catch (e) {
+                        console.log("清除 Badge 失敗 (可能在電腦版):", e);
+                    }
+                }
             }
-            // ========================================================
 
             if (navigator.vibrate) navigator.vibrate(5);
         };
@@ -4038,16 +4082,45 @@ window.executeBatchDelete = function() {
             const bMonth = document.getElementById('btn-view-month');
             const calendarViewMonthContainer = document.getElementById('calendar-view-month-container');
             
+            // 👇 取得「選擇」按鈕與佔位符
+            const batchBtn = document.getElementById('btn-batch-event');
+            const spacer = document.getElementById('calendar-header-spacer');
+            
             if(mode === 'list') {
+                // === 切換到列表模式 ===
                 vList.classList.remove('hidden');
                 if(calendarViewMonthContainer) calendarViewMonthContainer.classList.add('hidden');
-                bList.classList.add('bg-white','shadow-sm','text-theme','font-bold'); bList.classList.remove('text-gray-500','font-medium');
-                bMonth.classList.remove('bg-white','shadow-sm','text-theme','font-bold'); bMonth.classList.add('text-gray-500','font-medium');
+                
+                // 按鈕樣式切換
+                bList.classList.add('bg-white','shadow-sm','text-theme','font-bold'); 
+                bList.classList.remove('text-gray-500','font-medium');
+                bMonth.classList.remove('bg-white','shadow-sm','text-theme','font-bold'); 
+                bMonth.classList.add('text-gray-500','font-medium');
+
+                // 🌟 把「選擇」按鈕叫回來
+                if(batchBtn) batchBtn.classList.remove('hidden');
+                if(spacer) spacer.classList.remove('hidden');
+
             } else {
+                // === 切換到月曆模式 ===
                 vList.classList.add('hidden');
                 if(calendarViewMonthContainer) calendarViewMonthContainer.classList.remove('hidden');
-                bMonth.classList.add('bg-white','shadow-sm','text-theme','font-bold'); bMonth.classList.remove('text-gray-500','font-medium');
-                bList.classList.remove('bg-white','shadow-sm','text-theme','font-bold'); bList.classList.add('text-gray-500','font-medium');
+                
+                // 按鈕樣式切換
+                bMonth.classList.add('bg-white','shadow-sm','text-theme','font-bold'); 
+                bMonth.classList.remove('text-gray-500','font-medium');
+                bList.classList.remove('bg-white','shadow-sm','text-theme','font-bold'); 
+                bList.classList.add('text-gray-500','font-medium');
+                
+                // 🌟 強制隱藏「選擇」按鈕
+                if(batchBtn) batchBtn.classList.add('hidden');
+                if(spacer) spacer.classList.add('hidden');
+                
+                // 如果是在批次選取模式下切換過來，強制退出批次模式 (避免 bug)
+                if (window.batchState && window.batchState.active) {
+                    window.exitBatchMode();
+                }
+
                 window.renderBigCalendar();
             }
         };
@@ -4358,6 +4431,7 @@ window.initSwipe = function() {
                 // 如果有休假，顯示空間會被壓縮一點，但我們讓它自然往下擠
                 const renderLimit = Math.min(maxTrackUsed, MAX_VISIBLE_TRACKS - 1);
                 
+                // === 修正後的渲染迴圈：實現無縫連接效果 ===
                 for (let t = 0; t <= renderLimit; t++) {
                     const evt = dayBarEvents.find(e => eventTrack[e.id] === t);
                     if (evt) {
@@ -4372,26 +4446,42 @@ window.initSwipe = function() {
                         const isStart = current.getTime() === s.getTime();
                         const isEnd = current.getTime() === end.getTime();
                         const isSingle = isStart && isEnd;
-                        const showLabel = isStart || isSingle || (d === 1);
+                        const showLabel = isStart || isSingle || (d === 1) || (current.getDay() === 1); // 週一也顯示文字
 
                         let styleAttr = `background-color:${bg};`;
                         let content = evt.title;
-                        let shapeClass = 'rounded-[3px] mx-[2px] relative z-0'; 
+                        
+                        // 🌟 核心修改：移除 overflow 後，加大負邊距 (-2px) 來確保完全覆蓋白線
+                        let shapeClass = ''; 
 
-                        if (!isSingle) {
+                        if (isSingle) {
+                            // A. 單日行程：維持可愛圓角
+                            shapeClass = 'rounded-[4px] mx-[3px]';
+                        } else {
+                            // B. 連續行程
                             if (isStart) {
-                                shapeClass = 'rounded-l-[3px] rounded-r-none mr-[-3px] pr-2 relative z-10 ml-[2px]'; 
+                                // 頭：右邊伸出去 2px
+                                shapeClass = 'rounded-l-[4px] rounded-r-none ml-[3px] mr-[-2px] pr-2 z-10 relative'; 
                             } else if (isEnd) {
-                                shapeClass = 'rounded-l-none rounded-r-[3px] ml-[-3px] pl-2 relative z-10 mr-[2px]';
+                                // 尾：左邊伸出去 2px
+                                shapeClass = 'rounded-l-none rounded-r-[4px] ml-[-2px] mr-[3px] pl-2 z-10 relative';
                                 if (!showLabel) content = '&nbsp;'; 
                             } else {
-                                shapeClass = 'rounded-none mx-[-3px] relative z-10';
+                                // 中間：左右都伸出去 2px
+                                shapeClass = 'rounded-none mx-[-2px] z-10 relative';
                                 if (!showLabel) content = '&nbsp;'; 
                             }
                         }
+                        
+                        // 如果是週六(最右邊)，右邊不要伸出去，不然會凸出螢幕
+                        if (current.getDay() === 6 && !isSingle && !isEnd) {
+                             shapeClass = shapeClass.replace('mr-[-2px]', 'mr-0');
+                        }
+                        
                         bars += `<div class="event-bar ${evt.isTodo&&evt.done?'done':''} ${shapeClass}" style="${styleAttr}" onclick="event.stopPropagation(); window.selectBigCalendarDate(${y},${m},${d}, '${evt.id}')">${content}</div>`;
                     } else {
-                        bars += `<div class="event-bar invisible"></div>`;
+                        // 佔位符 (透明)
+                        bars += `<div class="event-bar invisible mb-[1px]"></div>`;
                     }
                 }
 
@@ -4550,20 +4640,38 @@ function initApp(db) {
                 });
             }
 
-            // === 鍵盤行為監聽 ===
+            // === 鍵盤行為監聽 (零延遲優化版) ===
             if (window.Capacitor && Capacitor.Plugins.Keyboard) {
                 const { Keyboard } = Capacitor.Plugins;
 
-                // 1. 隱藏鍵盤輔助列 (維持原本的)
-                try { Keyboard.setAccessoryBarVisible({ isVisible: false }); } catch(e){}
+                // 1. 設定 Resize 模式為 Native (關鍵！讓 App 高度直接變矮，而不是被推上去)
+                // 這樣底部的輸入框會自動貼在鍵盤上方，不需要等 JS 計算
+                try { 
+                    Keyboard.setResizeMode({ mode: 'native' }); 
+                } catch(e) { console.log(e); }
 
-                // 2. 鍵盤「即將」彈出 (同步執行)
+                // 2. 禁止 WebView 自動捲動 (關鍵！這是造成「頓一下」的主因)
+                try { 
+                    Keyboard.setScroll({ isDisabled: true }); 
+                } catch(e) { console.log(e); }
+
+                // 3. 隱藏鍵盤輔助列 (維持原本設定)
+                try { 
+                    Keyboard.setAccessoryBarVisible({ isVisible: false }); 
+                } catch(e) { console.log(e); }
+
+                // 4. 監聽鍵盤彈出
                 Keyboard.addListener('keyboardWillShow', info => {
                     document.body.classList.add('keyboard-open');
-                    window.scrollToBottom('auto'); 
+                    
+                    // 因為高度變矮了，為了確保你看得見最新的訊息，強制捲到底部
+                    // 使用 'auto' 讓它是瞬間跳轉，不要有動畫延遲
+                    setTimeout(() => {
+                        if (window.scrollToBottom) window.scrollToBottom('auto');
+                    }, 50);
                 });
 
-                // 2. 鍵盤「即將」收起
+                // 5. 監聽鍵盤收起
                 Keyboard.addListener('keyboardWillHide', () => {
                     document.body.classList.remove('keyboard-open');
                 });
@@ -4803,7 +4911,69 @@ function initApp(db) {
             }
         };
     
-        // === 修改版：支援貼圖顯示 ===
+        // === 長按偵測核心邏輯 ===
+        window.attachLongPressEvent = function(element, msgId) {
+            let pressTimer;
+            let startX, startY;
+            const PRESS_DURATION = 500; // 長按時間 (毫秒)
+
+            // 1. 手指按下
+            element.addEventListener('touchstart', (e) => {
+                // 記錄起始位置 (用來判斷是否移動)
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                
+                // 加入視覺回饋 class
+                element.classList.add('pressing');
+
+                // 開始倒數
+                pressTimer = setTimeout(() => {
+                    // === 長按成功觸發區 ===
+                    triggerHaptic('MEDIUM'); // 震動回饋
+                    element.classList.remove('pressing'); // 移除視覺回饋
+                    
+                    // 呼叫原本的刪除/收回函式
+                    window.confirmDeleteMsg(msgId);
+                    
+                }, PRESS_DURATION);
+            }, { passive: true });
+
+            // 2. 手指移動 (如果滑動超過 10px，視為捲動，取消長按)
+            element.addEventListener('touchmove', (e) => {
+                const diffX = Math.abs(e.touches[0].clientX - startX);
+                const diffY = Math.abs(e.touches[0].clientY - startY);
+
+                if (diffX > 10 || diffY > 10) {
+                    clearTimeout(pressTimer);
+                    element.classList.remove('pressing');
+                }
+            }, { passive: true });
+
+            // 3. 手指放開 (取消長按)
+            element.addEventListener('touchend', () => {
+                clearTimeout(pressTimer);
+                element.classList.remove('pressing');
+            }, { passive: true });
+
+            // 4. 針對電腦版滑鼠的支援 (選配)
+            element.addEventListener('mousedown', () => {
+                element.classList.add('pressing');
+                pressTimer = setTimeout(() => {
+                    window.confirmDeleteMsg(msgId);
+                    element.classList.remove('pressing');
+                }, PRESS_DURATION);
+            });
+            element.addEventListener('mouseup', () => {
+                clearTimeout(pressTimer);
+                element.classList.remove('pressing');
+            });
+            element.addEventListener('mouseleave', () => {
+                clearTimeout(pressTimer);
+                element.classList.remove('pressing');
+            });
+        };
+
+        // === 修改版：支援長按收回的 renderChat ===
         window.renderChat = function(messages) {
             const container = document.getElementById('chat-container');
             if(!container) return;
@@ -4820,20 +4990,19 @@ function initApp(db) {
                 const isMe = msg.creator === currentUserRole;
                 const bubbleColor = roleColors[msg.creator] || '#9ca3af';
                 
-                // === 判斷內容是文字還是貼圖 ===
+                // === 關鍵修改 1：移除 onclick，改加 id 與 class 識別 ===
+                // 我們給每個訊息一個唯一的 DOM ID，方便等一下綁定事件
+                const domId = `msg-${msg.id}`;
+                
                 let contentHtml = '';
-                // 如果是貼圖類型
                 if (msg.type === 'sticker') {
-                    // 貼圖背景設為透明，不使用氣泡顏色
-                    contentHtml = `<img src="${msg.text}" class="chat-sticker" onclick="window.confirmDeleteMsg('${msg.id}')">`;
+                    contentHtml = `<img id="${domId}" src="${msg.text}" class="chat-sticker">`;
                 } else {
-                    // 一般文字 (維持原本樣式)
                     const bubbleStyle = `background-color: ${bubbleColor}; color: white;`;
-                    contentHtml = `<div class="chat-bubble shadow-md" style="${bubbleStyle}" onclick="window.confirmDeleteMsg('${msg.id}')">
+                    contentHtml = `<div id="${domId}" class="chat-bubble shadow-md" style="${bubbleStyle}">
                                         ${msg.text}
                                    </div>`;
                 }
-                // ==========================
 
                 const avatarChar = msg.creator === 'haohao' ? '皓' : '毛';
                 const displayName = msg.creator === 'haohao' ? '皓皓' : '毛毛';
@@ -4843,7 +5012,7 @@ function initApp(db) {
                 const readHtml = (isMe && msg.read) ? `<span class="chat-read">已讀</span>` : '';
 
                 if (isMe) {
-                    // === 右側 (自己) ===
+                    // 右側 (自己)
                     html += `
                     <div class="chat-row right">
                         <div class="chat-info-col">
@@ -4853,14 +5022,12 @@ function initApp(db) {
                         ${contentHtml}
                     </div>`;
                 } else {
-                    // === 左側 (對方) ===
+                    // 左側 (對方)
                     html += `
                     <div class="chat-row left">
                         <div class="chat-avatar self-start" style="background-color: ${bubbleColor}">${avatarChar}</div>
-                        
                         <div class="flex flex-col items-start ml-2 max-w-[88%]">
                             <span class="text-[10px] text-gray-400 mb-0.5 ml-0.5 font-medium">${displayName}</span>
-                            
                             <div class="flex items-end">
                                 ${contentHtml}
                                 <div class="chat-info-col">
@@ -4873,6 +5040,15 @@ function initApp(db) {
             });
 
             container.innerHTML = html;
+            
+            // === 關鍵修改 2：HTML 渲染完後，批次綁定長按事件 ===
+            messages.forEach(msg => {
+                const el = document.getElementById(`msg-${msg.id}`);
+                if (el) {
+                    window.attachLongPressEvent(el, msg.id);
+                }
+            });
+
             window.scrollToBottom();
         };
 
@@ -5036,9 +5212,9 @@ function initApp(db) {
                     </div>`;
                 }
 
-                // 🌟 修改重點：移除上下箭頭，改為拖曳把手 (.sort-handle)
+                // 🌟 修改重點：增加 px-8 (左右留白) 並稍微增加 py-3 (垂直高度)，讓視覺更集中
                 const html = `
-                <div class="flex items-center justify-between py-2 border-b border-gray-50 last:border-0 group category-sort-item" data-cat="${cat}">
+                <div class="flex items-center justify-between py-3 px-8 border-b border-gray-50 last:border-0 group category-sort-item" data-cat="${cat}">
                     <div class="flex items-center gap-2 flex-1 min-w-0">
                         
                         <div class="sort-handle cursor-grab active:cursor-grabbing p-1.5 text-gray-300 hover:text-gray-500 hover:bg-gray-100 rounded touch-none">
