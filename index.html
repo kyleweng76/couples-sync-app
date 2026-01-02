@@ -1391,6 +1391,13 @@ window.executeBatchDelete = function() {
                             <span class="text-sm font-medium text-gray-700">共同行程</span>
                             <div id="setting-color-joint" class="w-6 h-6 rounded-full border-2 border-white shadow-sm ring-1 ring-gray-200"></div>
                         </div>
+                        <div class="space-y-3">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">通知設定</p>
+                    <button onclick="window.manualSetupPush()" class="w-full bg-gray-50 p-3 rounded-xl border border-gray-100 flex items-center justify-center gap-2 active:bg-gray-200 transition text-gray-700 font-bold">
+                        <i data-lucide="bell" class="w-4 h-4"></i>
+                        重新註冊推播 (Debug)
+                    </button>
+                </div>
                     </div>
                 </div>
 
@@ -1846,9 +1853,13 @@ window.executeBatchDelete = function() {
             </button>
 
             <button onclick="window.switchTab('chat')" class="nav-btn group flex flex-col items-center justify-center w-16 h-full transition-all" data-tab="chat">
-                 <div class="nav-icon-pill p-1.5 rounded-full transition-all duration-300 group-[.active]:text-white text-gray-400">
+                 <div class="nav-icon-pill p-1.5 rounded-full transition-all duration-300 group-[.active]:text-white text-gray-400 relative">
                     <i data-lucide="message-circle" class="w-6 h-6 transition-transform duration-300 group-active:scale-95"></i>
-                </div>
+                    
+                    <div id="chat-badge" class="hidden absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 h-[18px] min-w-[18px] flex items-center justify-center rounded-full shadow-sm border border-white z-10 scale-90">
+                        0
+                    </div>
+                    </div>
                 <span class="text-[10px] font-medium mt-1 transition-all duration-300 group-[.active]:font-bold text-gray-400">聊天</span>
             </button>
 
@@ -3971,13 +3982,18 @@ window.executeBatchDelete = function() {
             window.closeCalendar();
         };
 
-        // === 修改後的 switchTab：加入聊天室自動捲動修正 ===
+        // === 修改後的 switchTab：加入小紅點消除邏輯 ===
+        window.currentTab = 'dashboard'; // 預設初始頁面
+
         window.switchTab = function(tabId) {
             triggerHaptic('LIGHT');
-            // 1. 隱藏所有頁面
+            
+            // 更新目前所在的頁面變數
+            window.currentTab = tabId;
+
+            // 1. 隱藏所有頁面 & 捲動歸零
             document.querySelectorAll('.page-content').forEach(page => {
                 page.classList.remove('active');
-                // 確保切換時捲動到頂部 (UX 優化)
                 page.scrollTop = 0;
             });
             
@@ -3985,32 +4001,33 @@ window.executeBatchDelete = function() {
             const targetPage = document.getElementById(`page-${tabId}`);
             if(targetPage) {
                 targetPage.classList.add('active');
-                
-                // 如果是行事曆，嘗試渲染大月曆
-                if(tabId === 'calendar' && typeof window.renderBigCalendar === 'function') {
-                    window.renderBigCalendar();
-                }
-
-                // === 新增：如果是切換到聊天室，強制捲到底部 ===
-                if (tabId === 'chat') {
-                    // 直接呼叫捲動函式 (函式內已有 setTimeout 確保渲染後執行)
-                    if (typeof window.scrollToBottom === 'function') {
-                        window.scrollToBottom();
-                    }
-                }
+                if(tabId === 'calendar' && typeof window.renderBigCalendar === 'function') window.renderBigCalendar();
+                if (tabId === 'chat' && typeof window.scrollToBottom === 'function') window.scrollToBottom();
             }
             
-            // 3. 更新底部導航按鈕狀態
-            const buttons = document.querySelectorAll('.nav-btn');
-            buttons.forEach(btn => {
-                if(btn.dataset.tab === tabId) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
+            // 3. 更新按鈕狀態
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if(btn.dataset.tab === tabId) btn.classList.add('active');
+                else btn.classList.remove('active');
             });
 
-            // (可選) 在切換時產生一點點觸覺回饋
+            // === 🔴 新增：如果切換到聊天室，把累積的未讀訊息一次標記為已讀 ===
+            if (tabId === 'chat' && window.unreadMsgIds && window.unreadMsgIds.length > 0) {
+                const batch = db.batch();
+                window.unreadMsgIds.forEach(id => {
+                    const ref = db.collection('messages').doc(id);
+                    batch.update(ref, { read: true });
+                });
+                batch.commit().then(() => {
+                    console.log('Batch marked read');
+                    // 清除紅點 UI
+                    const badge = document.getElementById('chat-badge');
+                    if(badge) badge.classList.add('hidden');
+                    window.unreadMsgIds = [];
+                });
+            }
+            // ========================================================
+
             if (navigator.vibrate) navigator.vibrate(5);
         };
 
@@ -4591,61 +4608,78 @@ function initApp(db) {
               }
             }, 'todos');
             
-            // 3. 聊天室 (Chat) 監聽 (包含通知功能)
-            let isFirstChatLoad = true; // 用來避免剛打開網頁時一口氣跳一堆通知
+            // 3. 聊天室 (Chat) 監聽 (包含通知與小紅點)
+            let isFirstChatLoad = true; 
+            window.unreadMsgIds = []; // 用來暫存未讀訊息的 ID
 
             bindSnapshot(db.collection('messages').orderBy('timestamp', 'desc').limit(50), (snapshot) => {
                 const msgs = [];
                 const now = new Date();
-                const expirationMs = 24 * 60 * 60 * 1000; // 24小時過期
+                const expirationMs = 24 * 60 * 60 * 1000;
+                
+                // 重置未讀計數
+                let unreadCount = 0;
+                window.unreadMsgIds = [];
 
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     const msgTime = new Date(data.timestamp);
                     
-                    // A. 檢查過期
                     if ((now - msgTime) > expirationMs) {
                         db.collection('messages').doc(doc.id).delete().catch(e => {});
                     } else {
                         msgs.push({ id: doc.id, ...data });
 
-                        // B. 標記已讀
+                        // === 🔴 小紅點核心邏輯 ===
+                        // 如果是別人的訊息，且還沒已讀
                         if (data.creator && currentUserRole && data.creator !== currentUserRole && !data.read) {
-                            db.collection('messages').doc(doc.id).update({ read: true });
+                            
+                            // 情況 A: 我現在就在聊天室 -> 馬上標記已讀 (不顯示紅點)
+                            if (window.currentTab === 'chat') {
+                                db.collection('messages').doc(doc.id).update({ read: true });
+                            } 
+                            // 情況 B: 我在看行事曆或待辦 -> 記下來，顯示紅點
+                            else {
+                                unreadCount++;
+                                window.unreadMsgIds.push(doc.id);
+                            }
                         }
                     }
                 });
+
+                // 更新 UI 上的小紅點
+                const badge = document.getElementById('chat-badge');
+                if (badge) {
+                    if (unreadCount > 0) {
+                        badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                }
                 
-                // === C. 通知邏輯 (移除時間限制版) ===
+                // === C. 通知邏輯 (維持不變) ===
                 if (!isFirstChatLoad && snapshot.docChanges) {
                     snapshot.docChanges().forEach(change => {
                         if (change.type === 'added') {
                             const newData = change.doc.data();
-                            
-                            // 只要這是新同步到的訊息，且不是我自己傳的，就直接通知
                             if (newData.creator !== currentUserRole) {
-                                
                                 const senderName = newData.creator === 'haohao' ? '皓皓' : '毛毛';
-                                
-                                if (Notification.permission === "granted") {
+                                if ('Notification' in window && Notification.permission === "granted") {
                                     try {
                                         new Notification(`來自 ${senderName} 的訊息`, {
                                             body: newData.text,
                                             icon: 'icon.png',
                                             tag: 'chat-msg'
                                         });
-                                    } catch (e) {
-                                        console.log("Notification failed", e);
-                                    }
+                                    } catch (e) { console.log(e); }
                                 }
                             }
                         }
                     });
                 }
                 
-                isFirstChatLoad = false; // 第一次載入後，設為 false，開始允許通知
-                // ==========================
-
+                isFirstChatLoad = false;
                 window.renderChat(msgs.reverse());
             }, 'chat');
 
@@ -5634,6 +5668,50 @@ window.quickDeleteEvent = function(id) {
                 .then(() => console.log(`Category [${category}] order updated`))
                 .catch(err => console.error("Order update failed", err));
         };
+
+        window.manualSetupPush = async function() {
+    // 1. 檢查外掛是否安裝
+    const { FirebaseMessaging } = Capacitor.Plugins;
+    if (!FirebaseMessaging) {
+        alert("錯誤：找不到 FirebaseMessaging 外掛，請確認有點擊 npx cap sync！");
+        return;
+    }
+
+    try {
+        // 2. 請求權限
+        alert("1. 請求權限中...");
+        const result = await FirebaseMessaging.requestPermissions();
+        
+        if (result.receive === 'granted') {
+            alert("2. 權限通過！正在向 Firebase 拿 Token...");
+            
+            // 3. 關鍵差異：這裡拿到的會是 "FCM Token" (Google 看得懂的)
+            const tokenResult = await FirebaseMessaging.getToken();
+            const fcmToken = tokenResult.token;
+            
+            alert("🎉 成功拿到 FCM Token: " + fcmToken.substring(0, 5) + "...");
+
+            // 4. 存入資料庫
+            if (db && currentUserRole) {
+                db.collection('user_tokens').doc(currentUserRole).set({
+                    token: fcmToken,  // 存進去的是正確的 FCM Token
+                    platform: 'ios',
+                    updatedAt: new Date().toISOString()
+                }, { merge: true })
+                .then(() => {
+                    alert("✅ Token 已更新！現在可以測試推播了！");
+                })
+                .catch((err) => {
+                    alert("❌ 資料庫寫入失敗: " + err.message);
+                });
+            }
+        } else {
+            alert("❌ 權限被拒絕");
+        }
+    } catch (e) {
+        alert("發生錯誤: " + e.message);
+    }
+};
 
     </script>
 
