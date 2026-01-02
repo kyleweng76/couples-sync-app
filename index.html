@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
     <link rel="manifest" href="manifest.json">
     <title>我們的小時光</title>
     <link rel="icon" type="image/png" href="icon.png">
@@ -251,17 +251,16 @@ window.executeBatchDelete = function() {
         }
 
         body {
-            background-color: #ffffff; /* 確保 Body 也是白的 */
-            height: 100%;
+            background-color: #ffffff;
+            height: 100%;       /* 👈 改回 100% 以消除鍵盤延遲 */
             width: 100%;
-            position: fixed; /* 關鍵：固定 Body 位置，避免整個視窗被拖走 */
-            overflow: hidden; /* 內容過長時隱藏，交給內層處理 */
+            position: fixed;    /* 維持 fixed 鎖定視窗 */
+            overflow: hidden;
         }
 
         /* 2. 聊天室：完全恢復 iOS 原生滾動手感 */
         #chat-container {
             /* 基礎設定 */
-            scroll-behavior: smooth;
             flex: 1;
             min-height: 0;
             position: relative;
@@ -269,15 +268,16 @@ window.executeBatchDelete = function() {
             
             /* 滾動設定：恢復原廠設定 */
             overflow-y: auto !important;
-            -webkit-overflow-scrolling: touch; /* 這是 iOS 順滑滾動的關鍵 */
+            -webkit-overflow-scrolling: touch;
             
-            /* 背景設定：固定背景，避免背景跟著彈 */
+            /* 背景設定 */
             background-color: #ffffff; 
             background-image: radial-gradient(#e5e7eb 2px, transparent 2px);
             background-size: 24px 24px; 
             background-attachment: scroll; 
             
-            /* 👇 移除 overscroll-behavior 設定，讓它自由彈跳 👇 */
+            /* 👇👇👇 關鍵！補上這一行來覆寫上面的設定 👇👇👇 */
+            overscroll-behavior-y: auto !important; 
         }
 
         /* === 重要：強制隱藏之前寫的 ::before (那張圖片層)，避免干擾 === */
@@ -983,10 +983,6 @@ window.executeBatchDelete = function() {
         display: none !important; /* 隱藏底部導航列 */
     }
 
-    body.keyboard-open .page-content {
-        padding-bottom: 0 !important; /* 移除原本留給導航列的 90px 空間 */
-    }
-
     /* 確保輸入框貼在鍵盤上方 */
     body.keyboard-open #page-chat {
         padding-bottom: 0 !important;
@@ -1118,6 +1114,20 @@ window.executeBatchDelete = function() {
         background-color: rgba(255, 255, 255, 0.2) !important;
         border: 1px solid rgba(255, 255, 255, 0.3);
     }
+
+    /* === 終極解法：強制開啟 iOS 彈性效果 (即使內容很少也會彈) === */
+        #chat-container::after {
+            content: "";
+            display: block;
+            position: absolute; /* 絕對定位，不佔據實際版面 */
+            top: 0;
+            left: 0;
+            width: 1px;
+            height: calc(100% + 1px); /* 關鍵！永遠比容器高 1px */
+            pointer-events: none;     /* 讓點擊穿透，不影響操作 */
+            z-index: -1;              /* 藏在最底下 */
+            opacity: 0;               /* 完全透明 */
+        }
 
     </style>
 </head>
@@ -1311,19 +1321,21 @@ window.executeBatchDelete = function() {
             <div class="flex-none bg-white border-t border-gray-200 z-20">
                 <div class="p-3 bg-gray-50 flex items-center gap-2">
                     
-                    <button onclick="window.toggleStickerPicker()" class="p-2 text-gray-400 hover:text-gray-600 active:scale-95 transition rounded-full hover:bg-gray-200">
+                    <button onclick="window.toggleStickerPicker()" class="p-2 text-gray-400 hover:text-gray-600 active:scale-95 transition rounded-full hover:bg-gray-200 flex-shrink-0">
                         <i data-lucide="smile" class="w-6 h-6"></i>
                     </button>
 
-                    <div class="flex-1 flex flex-nowrap items-center bg-white rounded-full px-2 py-2 shadow-sm border border-gray-200 focus-within:ring-2 focus-within:ring-ttgreen focus-within:ring-opacity-50 transition-all">
+                    <div class="flex-1 flex flex-nowrap items-center bg-white rounded-full px-2 py-2 shadow-sm border border-gray-200 focus-within:ring-2 focus-within:ring-ttgreen focus-within:ring-opacity-50">
+                        
                         <div class="w-8 h-8 flex items-center justify-center text-gray-400 flex-shrink-0 cursor-pointer hover:text-gray-600 active:scale-95 transition" onclick="window.scrollToBottom()">
                             <i data-lucide="arrow-down-circle" class="w-6 h-6"></i>
                         </div>
+
                         <input type="text" id="note-input" placeholder="傳送訊息..." class="flex-1 min-w-0 bg-transparent border-none text-base text-gray-700 placeholder-gray-400 focus:ring-0 px-2 outline-none text-left h-full py-1" onfocus="window.closeStickerPicker()">
-                        <button id="note-send-btn" onclick="window.sendNote()" class="w-9 h-9 flex items-center justify-center rounded-full bg-ttgreen text-white shadow-md active:scale-90 transition ml-1 flex-shrink-0 hover:bg-green-500">
-                            <i data-lucide="send" class="w-4 h-4 ml-0.5"></i>
-                        </button>
-                    </div>
+                    
+                    </div> <button id="note-send-btn" onclick="window.sendNote()" class="w-9 h-9 flex items-center justify-center rounded-full bg-ttgreen text-white shadow-md active:scale-90 transition ml-1 flex-shrink-0 hover:bg-green-500">
+                        <i data-lucide="send" class="w-4 h-4 ml-0.5"></i>
+                    </button>
                 </div>
 
                 <div id="sticker-picker-container">
@@ -1331,7 +1343,6 @@ window.executeBatchDelete = function() {
                         </div>
                 </div>
             </div>
-
     </main>
 
     <!-- Modals (All preserved) -->
@@ -1811,7 +1822,7 @@ window.executeBatchDelete = function() {
     </div>
 
     <!-- Bottom Nav (4 Items only) -->
-            <nav class="fixed bottom-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-200 px-2 pt-2 pb-6 flex justify-around items-center z-50 pb-safe transition-all duration-300">
+            <nav class="fixed bottom-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-200 px-2 pt-2 pb-6 flex justify-around items-center z-50 pb-safe">
             
             <button onclick="window.switchTab('dashboard')" class="nav-btn active group flex flex-col items-center justify-center w-16 h-full transition-all" data-tab="dashboard">
                 <div class="nav-icon-pill p-1.5 rounded-full transition-all duration-300 group-[.active]:text-white text-gray-400">
@@ -3223,14 +3234,16 @@ window.executeBatchDelete = function() {
 
         window.renderEvents = function(ignored) { const items = window.getCalendarItems(); const now = new Date(); const future = items.filter(e => { const date = new Date(e.timestamp); if(e.isTodo && e.done) return false; return !isNaN(date) && date >= now; }); const titleEl = document.getElementById('next-event-title'); if(titleEl && future.length > 0) { const n = future[0], d = new Date(n.timestamp); titleEl.textContent = n.title; const timeStr = n.allDay ? "All Day" : d.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',hour12:false}); document.getElementById('next-event-time').textContent = timeStr; document.getElementById('next-event-date').textContent = d.toLocaleDateString('zh-TW',{month:'numeric',day:'numeric',weekday:'short'}); const diff = Math.ceil((d-now)/(1000*60*60*24)); document.getElementById('countdown').textContent = diff<=0?"TODAY":`D - ${diff}`; } else if(titleEl) { titleEl.textContent = "No Upcoming Events"; } const listEl = document.getElementById('event-list'); if(listEl) { if (items.length === 0) listEl.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">無行程</div>`; else window.renderEventListItems(items, listEl); } };
         window.getCalendarItems = function() {
-            // 事件直接帶入
-            const events = allEventsCache.map(e => ({...e, type: 'event'}));
+            // 1. 確保 events 是陣列
+            const eventsRaw = Array.isArray(window.allEventsCache) ? window.allEventsCache : [];
+            const events = eventsRaw.map(e => ({...e, type: 'event'}));
             
-            // 待辦事項：這裡原本漏了欄位，現在改用 ...t 展開所有屬性
-            const todos = allTodosCache
-                .filter(t => t.timestamp) // 只顯示有設定時間的待辦
+            // 2. 確保 todos 是陣列
+            const todosRaw = Array.isArray(window.allTodosCache) ? window.allTodosCache : [];
+            const todos = todosRaw
+                .filter(t => t.timestamp) 
                 .map(t => ({
-                    ...t, // <--- 關鍵修正：保留原始待辦的所有欄位 (dueDate, etc.)
+                    ...t, 
                     id: t.id,
                     title: t.title,
                     timestamp: t.timestamp,
@@ -3238,13 +3251,12 @@ window.executeBatchDelete = function() {
                     isTodo: true,
                     done: t.done,
                     type: 'todo',
-                    // 如果沒有設定顏色，這欄位留空交給渲染層判斷
                     color: null 
                 }));
 
-            // 合併並排序
-            return [...events, ...todos].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-        };        
+            // 3. 使用 concat 取代 ... (Spread Syntax) 以避免錯誤
+            return events.concat(todos).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        };       
 
         window.renderDashboardNextUp = function(items) {
             const now = new Date();
@@ -3720,31 +3732,30 @@ window.executeBatchDelete = function() {
         // === 全域變數：用來記錄哪些分類是被「收起來」的 ===
         window.collapsedCategories = JSON.parse(localStorage.getItem('collapsed_categories') || '{}');
 
-        // === 優化與防呆版：待辦清單渲染 (最終修正) ===
-        // 加入預設值 (todos = []) 防止傳入 undefined 導致當機
-        window.renderTodos = function(todos = []) {
+        // === 優化版：待辦清單渲染 (字串組裝模式) ===
+        window.renderTodos = function(todos) {
             const container = document.getElementById('todo-category-container');
             const dashboardList = document.getElementById('dashboard-todo-list');
             
             if(!container) return;
             
-            // 🔥 安全網：如果傳進來的是 null/undefined，強制轉為空陣列或讀取全域變數
-            if (!todos || !Array.isArray(todos)) {
-                console.warn('renderTodos received invalid data, falling back to cache.');
-                todos = window.allTodosCache || [];
+            // 1. 資料安全檢查
+            let dataToRender = [];
+            if (Array.isArray(todos)) {
+                dataToRender = todos;
+            } else if (Array.isArray(window.allTodosCache)) {
+                dataToRender = window.allTodosCache;
             }
 
             try {
-                container.innerHTML = '';
-                
-                // 1. 資料分組與排序
+                // 2. 資料分組與排序
                 const groups = {};
                 const noCategoryKey = '未分類';
-                const categoryOrder = window.getCategoryOrder(); 
+                const categoryOrder = window.getCategoryOrder ? window.getCategoryOrder() : []; 
                 let pendingCount = 0;
 
-                // 這裡現在安全了，因為 todos 一定是陣列
-                const safeTodos = [...todos].sort((a, b) => {
+                // 使用 slice() 取代 spread 語法，相容性更高
+                const safeTodos = dataToRender.slice().sort((a, b) => {
                     const oA = a.order !== undefined ? a.order : 999999;
                     const oB = b.order !== undefined ? b.order : 999999;
                     return oA - oB;
@@ -3766,12 +3777,12 @@ window.executeBatchDelete = function() {
                     return a.localeCompare(b);
                 });
 
-                // 判斷是否為批次選取模式
                 const isBatch = window.batchState && window.batchState.active && window.batchState.target === 'todo';
+                let finalHtml = ''; // 準備一個大字串
 
-                // 2. 開始渲染
+                // 3. 產生 HTML 字串
                 if (sortedKeys.length === 0) {
-                     container.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">目前沒有待辦事項 🎉</div>`;
+                     finalHtml = `<div class="text-center py-20 text-gray-300 text-sm">目前沒有待辦事項 🎉</div>`;
                 } else {
                     sortedKeys.forEach(cat => {
                         const items = groups[cat];
@@ -3782,7 +3793,8 @@ window.executeBatchDelete = function() {
                         const chevronClass = isCollapsed ? '' : 'rotate-180';
                         const listClass = isCollapsed ? 'hidden' : 'block';
                         
-                        let sectionHtml = `
+                        // 分類標題
+                        finalHtml += `
                         <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-3">
                             <div class="flex items-center justify-between p-3 bg-gray-50/50 cursor-pointer select-none active:bg-gray-100 transition" onclick="window.toggleTodoCategory('${cat}')">
                                 <div class="flex items-center gap-2">
@@ -3791,99 +3803,101 @@ window.executeBatchDelete = function() {
                                     ${count > 0 ? `<span class="bg-theme text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">${count}</span>` : ''}
                                 </div>
                             </div>
-                            
-                            <div id="${listId}" class="${listClass} divide-y divide-gray-100 bg-white" data-category="${cat}">`;
+                            <div id="${listId}" class="${listClass} divide-y divide-gray-100 bg-white sortable-list" data-category="${cat}">`;
                         
+                        // 待辦項目
                         items.forEach(t => {
-                            try {
-                                let barColor = roleColors.haohao;
-                                if (t.isJoint) barColor = roleColors.joint;
-                                else if (t.creator === 'maomao') barColor = roleColors.maomao;
-                                
-                                const titleClass = t.done ? "text-gray-400 line-through" : "text-gray-800";
-                                const checkStyle = t.done ? `background-color: #d1d5db; border-color: #d1d5db;` : `border-color: ${barColor};`;
-                                
-                                let calInfo = '';
-                                if (t.dueDate) {
-                                    calInfo = `<span class="text-[10px] ${t.done?'text-gray-300':'text-gray-400'} ml-auto flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${t.dueDate}</span>`;
-                                }
+                            let barColor = roleColors.haohao;
+                            if (t.isJoint) barColor = roleColors.joint;
+                            else if (t.creator === 'maomao') barColor = roleColors.maomao;
+                            
+                            const titleClass = t.done ? "text-gray-400 line-through" : "text-gray-800";
+                            const checkStyle = t.done ? `background-color: #d1d5db; border-color: #d1d5db;` : `border-color: ${barColor};`;
+                            
+                            let calInfo = '';
+                            if (t.dueDate) {
+                                calInfo = `<span class="text-[10px] ${t.done?'text-gray-300':'text-gray-400'} ml-auto flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${t.dueDate}</span>`;
+                            }
 
-                                const isSelected = isBatch && window.batchState.selectedIds.has(t.id);
-                                const checkClass = isSelected ? 'checked' : '';
-                                
-                                let clickAction = `window.openEditTodoModal('${t.id}')`;
-                                if (isBatch) clickAction = `window.toggleBatchItem('${t.id}')`;
+                            const isSelected = isBatch && window.batchState.selectedIds.has(t.id);
+                            const checkClass = isSelected ? 'checked' : '';
+                            
+                            let clickAction = `window.openEditTodoModal('${t.id}')`;
+                            if (isBatch) clickAction = `window.toggleBatchItem('${t.id}')`;
 
-                                const batchCheckboxHtml = `
-                                    <div class="batch-checkbox-col">
-                                        <div id="batch-check-${t.id}" class="batch-check-circle ${checkClass}"></div>
-                                    </div>`;
+                            const batchCheckboxHtml = `
+                                <div class="batch-checkbox-col">
+                                    <div id="batch-check-${t.id}" class="batch-check-circle ${checkClass}"></div>
+                                </div>`;
 
-                                const deleteBtnHtml = !isBatch ? 
-                                    `<div class="swipe-action-bg" onclick="window.deleteTodo('${t.id}')"><i data-lucide="trash-2" class="w-5 h-5"></i></div>` : '';
+                            const deleteBtnHtml = !isBatch ? 
+                                `<div class="swipe-action-bg" onclick="window.deleteTodo('${t.id}')"><i data-lucide="trash-2" class="w-5 h-5"></i></div>` : '';
 
-                                const toggleBtnHtml = !isBatch ? `
-                                    <div class="flex-none mr-3" onclick="window.toggleTodo('${t.id}', ${!t.done}); event.stopPropagation();">
-                                        <div class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors text-white" style="${checkStyle}">
-                                            ${t.done ? '<i data-lucide="check" class="w-3 h-3"></i>' : ''}
-                                        </div>
-                                    </div>` : '';
+                            const toggleBtnHtml = !isBatch ? `
+                                <div class="flex-none mr-3" onclick="window.toggleTodo('${t.id}', ${!t.done}); event.stopPropagation();">
+                                    <div class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors text-white" style="${checkStyle}">
+                                        ${t.done ? '<i data-lucide="check" class="w-3 h-3"></i>' : ''}
+                                    </div>
+                                </div>` : '';
 
-                                sectionHtml += `
-                                <div class="swipe-item border-b border-gray-50 last:border-0 ${isBatch ? 'selection-mode' : ''}" data-swipe-id="${t.id}" data-id="${t.id}">
-                                    ${deleteBtnHtml}
-
-                                    <div class="swipe-content flex items-center p-3 bg-white hover:bg-gray-50 transition cursor-pointer group" onclick="${clickAction}">
-                                        ${batchCheckboxHtml}
-                                        <div class="flex-1 flex items-center min-w-0">
-                                            ${toggleBtnHtml}
-                                            <div class="flex-1 min-w-0">
-                                                <div class="flex items-center justify-between">
-                                                    <span class="${titleClass} font-medium truncate">${t.title}</span>
-                                                    ${calInfo}
-                                                </div>
-                                                <div class="flex items-center mt-1">
-                                                    <div class="w-1.5 h-1.5 rounded-full mr-1.5" style="background-color: ${barColor}"></div>
-                                                    <span class="text-[10px] text-gray-400">
-                                                        ${t.isJoint ? '共同' : (t.creator === 'haohao' ? '皓皓' : '毛毛')}
-                                                    </span>
-                                                </div>
+                            finalHtml += `
+                            <div class="swipe-item border-b border-gray-50 last:border-0 ${isBatch ? 'selection-mode' : ''}" data-swipe-id="${t.id}" data-id="${t.id}">
+                                ${deleteBtnHtml}
+                                <div class="swipe-content flex items-center p-3 bg-white hover:bg-gray-50 transition cursor-pointer group" onclick="${clickAction}">
+                                    ${batchCheckboxHtml}
+                                    <div class="flex-1 flex items-center min-w-0">
+                                        ${toggleBtnHtml}
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center justify-between">
+                                                <span class="${titleClass} font-medium truncate">${t.title}</span>
+                                                ${calInfo}
+                                            </div>
+                                            <div class="flex items-center mt-1">
+                                                <div class="w-1.5 h-1.5 rounded-full mr-1.5" style="background-color: ${barColor}"></div>
+                                                <span class="text-[10px] text-gray-400">
+                                                    ${t.isJoint ? '共同' : (t.creator === 'haohao' ? '皓皓' : '毛毛')}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
-                                </div>`;
-                            } catch (itemErr) { console.error(itemErr); }
+                                </div>
+                            </div>`;
                         });
                         
-                        if(items.length === 0) { sectionHtml += `<div class="p-4 text-center text-xs text-gray-300">此分類無項目</div>`; }
-                        sectionHtml += `</div></div>`;
-                        
-                        const tempDiv = document.createElement('div');
-                        tempDiv.innerHTML = sectionHtml;
-                        container.appendChild(tempDiv.firstElementChild);
-
-                        setTimeout(() => {
-                            const listEl = document.getElementById(listId);
-                            if (listEl && items.length > 0 && typeof Sortable !== 'undefined' && !isBatch) {
-                                try {
-                                    new Sortable(listEl, {
-                                        group: `cat-${cat}`, animation: 150, delay: 300, delayOnTouchOnly: true, touchStartThreshold: 5, ghostClass: 'sortable-ghost', chosenClass: 'sortable-drag',
-                                        onChoose: function() { triggerHaptic('MEDIUM'); },
-                                        onEnd: function (evt) { window.updateTodoOrder(cat, listEl); }
-                                    });
-                                } catch(e) {}
-                            }
-                        }, 50);
+                        if(items.length === 0) { finalHtml += `<div class="p-4 text-center text-xs text-gray-300">此分類無項目</div>`; }
+                        finalHtml += `</div></div>`;
                     });
                 }
 
-                // 4. 更新 Dashboard (保持不變)
+                // 4. 一次性寫入 DOM (關鍵！)
+                container.innerHTML = finalHtml;
+
+                // 5. 綁定 SortableJS (寫入後再綁定)
+                if (typeof Sortable !== 'undefined' && !isBatch) {
+                    const sortableLists = container.querySelectorAll('.sortable-list');
+                    sortableLists.forEach(listEl => {
+                        const cat = listEl.getAttribute('data-category');
+                        new Sortable(listEl, {
+                            group: `cat-${cat}`, 
+                            animation: 150, 
+                            delay: 300, 
+                            delayOnTouchOnly: true, 
+                            touchStartThreshold: 5, 
+                            ghostClass: 'sortable-ghost', 
+                            chosenClass: 'sortable-drag',
+                            onChoose: function() { triggerHaptic('MEDIUM'); },
+                            onEnd: function (evt) { window.updateTodoOrder(cat, listEl); }
+                        });
+                    });
+                }
+
+                // 6. 更新 Dashboard (保持不變)
                 if(dashboardList) {
                     if (pendingCount === 0) {
                         dashboardList.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">沒有未完成的待辦事項 🎉</p>`;
                     } else {
                         dashboardList.innerHTML = '';
-                        const pendings = todos.filter(t => !t.done && (!t.category || window.todoCategoryVisibility[t.category] !== false)).slice(0, 3);
+                        const pendings = dataToRender.filter(t => !t.done && (!t.category || window.todoCategoryVisibility[t.category] !== false)).slice(0, 3);
                         
                         if (pendings.length === 0 && pendingCount > 0) {
                             dashboardList.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">待辦事項已隱藏</p>`;
@@ -3897,7 +3911,7 @@ window.executeBatchDelete = function() {
                                     ${t.category ? `<span class="text-[9px] px-1 rounded bg-gray-200 text-gray-500">${t.category}</span>` : ''}
                                 </div>`;
                             });
-                            const remaining = todos.filter(t => !t.done).length - pendings.length;
+                            const remaining = dataToRender.filter(t => !t.done).length - pendings.length;
                             if (remaining > 0) dashboardList.innerHTML += `<div class="text-center text-xs text-gray-400 mt-1">還有 ${remaining} 個項目...</div>`;
                         }
                     }
@@ -4474,15 +4488,62 @@ function initApp(db) {
             const conn = document.getElementById('connection-status'); 
             if (conn) { conn.className = "w-2 h-2 rounded-full bg-ttgreen shadow-[0_0_8px_#2cc998]"; }
             
+            // === 🚀 新增：推播通知註冊邏輯 ===
+            if (window.Capacitor && Capacitor.Plugins.PushNotifications) {
+                const { PushNotifications } = Capacitor.Plugins;
+
+                // 1. 請求權限
+                PushNotifications.requestPermissions().then(result => {
+                    if (result.receive === 'granted') {
+                        PushNotifications.register();
+                    }
+                });
+
+                // 2. 註冊成功，拿到 Token (這是手機的地址)
+                PushNotifications.addListener('registration', (token) => {
+                    console.log('Push Token:', token.value);
+                    
+                    // 把 Token 存到 Firestore 的 user_tokens 集合
+                    // 我們用 currentUserRole (haohao/maomao) 當作文件 ID
+                    if (currentUserRole) {
+                        db.collection('user_tokens').doc(currentUserRole).set({
+                            token: token.value,
+                            platform: 'ios',
+                            updatedAt: new Date().toISOString()
+                        }, { merge: true });
+                    }
+                });
+
+                // 3. 註冊失敗
+                PushNotifications.addListener('registrationError', (error) => {
+                    console.error('Error on registration: ' + JSON.stringify(error));
+                });
+
+                // 4. 收到通知 (App 在前景時)
+                PushNotifications.addListener('pushNotificationReceived', (notification) => {
+                    window.showToast(`🔔 ${notification.title}: ${notification.body}`);
+                    // 這裡可以加入震動
+                    if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                });
+
+                // 5. 點擊通知 (App 被點開時)
+                PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
+                    // 如果是聊天通知，切換到聊天頁面
+                    window.switchTab('chat');
+                });
+            }
+
             // === 鍵盤行為監聽 ===
             if (window.Capacitor && Capacitor.Plugins.Keyboard) {
                 const { Keyboard } = Capacitor.Plugins;
 
-                // 1. 鍵盤「即將」彈出
+                // 1. 隱藏鍵盤輔助列 (維持原本的)
+                try { Keyboard.setAccessoryBarVisible({ isVisible: false }); } catch(e){}
+
+                // 2. 鍵盤「即將」彈出 (同步執行)
                 Keyboard.addListener('keyboardWillShow', info => {
                     document.body.classList.add('keyboard-open');
-                    // 強制捲動到底部，避免訊息被遮住
-                    setTimeout(window.scrollToBottom, 100); 
+                    window.scrollToBottom('auto'); 
                 });
 
                 // 2. 鍵盤「即將」收起
@@ -4781,12 +4842,25 @@ function initApp(db) {
             window.scrollToBottom();
         };
 
-        window.scrollToBottom = function() {
+        // === 優化版：捲動到底部 (修正鍵盤延遲問題) ===
+        window.scrollToBottom = function(behavior = 'smooth') {
             const container = document.getElementById('chat-container');
             if(container) {
-                setTimeout(() => {
-                    container.scrollTop = container.scrollHeight;
-                }, 100);
+                // 如果是瞬間跳轉 (auto)，不要延遲，直接執行！
+                if (behavior === 'auto') {
+                    container.scrollTo({
+                        top: container.scrollHeight,
+                        behavior: 'auto'
+                    });
+                } else {
+                    // 如果是平滑捲動，保留一點延遲確保渲染完成
+                    setTimeout(() => {
+                        container.scrollTo({
+                            top: container.scrollHeight,
+                            behavior: 'smooth'
+                        });
+                    }, 50);
+                }
             }
         };
 
