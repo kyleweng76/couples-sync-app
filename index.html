@@ -145,55 +145,54 @@ window.updateBatchUI = function() {
 };
 
 // 5. 執行批次刪除
-window.executeBatchDelete = function() {
-    const selectedIds = Array.from(window.batchState.selectedIds);
-    if (selectedIds.length === 0) return;
+        window.executeBatchDelete = function() {
+            const selectedIds = Array.from(window.batchState.selectedIds);
+            if (selectedIds.length === 0) return;
 
-    // === 🛑 權限過濾 ===
-    const targetCache = window.batchState.target === 'event' ? window.allEventsCache : window.allTodosCache;
-    
-    // 只保留 creator 是自己的 ID
-    const myIds = selectedIds.filter(id => {
-        const item = targetCache.find(i => i.id === id);
-        return item && item.creator === currentUserRole;
-    });
+            const targetCache = window.batchState.target === 'event' ? window.allEventsCache : window.allTodosCache;
+            
+            // === 🛑 修改篩選邏輯：保留 (自己建的 OR 共同的) ===
+            const myIds = selectedIds.filter(id => {
+                const item = targetCache.find(i => i.id === id);
+                // 只要是 "我的" 或 "共同的" 都可以刪
+                return item && (item.creator === currentUserRole || item.isJoint);
+            });
+            // ===============================================
 
-    // 如果完全沒有自己的項目
-    if (myIds.length === 0) {
-        window.showToast('⚠️ 您選取的項目都不是您建立的，無法刪除');
-        return;
-    }
+            // 如果完全沒有權限刪除任何一項
+            if (myIds.length === 0) {
+                window.showToast('⚠️ 您選取的項目都無權刪除 (非共同且非您建立)');
+                return;
+            }
 
-    // 如果部分不是自己的
-    let confirmMsg = `確定要刪除這 ${myIds.length} 個項目嗎？`;
-    if (myIds.length < selectedIds.length) {
-        confirmMsg = `您選了 ${selectedIds.length} 個項目，但其中只有 ${myIds.length} 個是您建立的。\n\n確定要刪除這 ${myIds.length} 個項目嗎？`;
-    } else {
-        confirmMsg += `此動作無法復原。`;
-    }
-    // ==================
+            // 如果部分被過濾掉
+            let confirmMsg = `確定要刪除這 ${myIds.length} 個項目嗎？`;
+            if (myIds.length < selectedIds.length) {
+                confirmMsg = `您選了 ${selectedIds.length} 個項目，但其中只有 ${myIds.length} 個您有權限刪除 (共同或您建立)。\n\n確定要刪除這 ${myIds.length} 個項目嗎？`;
+            } else {
+                confirmMsg += `此動作無法復原。`;
+            }
 
-    if (!confirm(confirmMsg)) return;
+            if (!confirm(confirmMsg)) return;
 
-    const targetCollection = window.batchState.target === 'event' ? 'events' : 'todos';
-    const batch = db.batch();
-    
-    // 只刪除過濾後的 ID
-    myIds.forEach(id => {
-        const ref = db.collection(targetCollection).doc(id);
-        batch.delete(ref);
-    });
+            const targetCollection = window.batchState.target === 'event' ? 'events' : 'todos';
+            const batch = db.batch();
+            
+            myIds.forEach(id => {
+                const ref = db.collection(targetCollection).doc(id);
+                batch.delete(ref);
+            });
 
-    batch.commit()
-        .then(() => {
-            window.showToast(`已刪除 ${myIds.length} 個項目`);
-            window.exitBatchMode(); 
-        })
-        .catch(err => {
-            console.error("Batch delete failed", err);
-            window.showToast('刪除失敗');
-        });
-};
+            batch.commit()
+                .then(() => {
+                    window.showToast(`已刪除 ${myIds.length} 個項目`);
+                    window.exitBatchMode(); 
+                })
+                .catch(err => {
+                    console.error("Batch delete failed", err);
+                    window.showToast('刪除失敗');
+                });
+        };
 
     </script>
 
@@ -1518,9 +1517,9 @@ window.executeBatchDelete = function() {
         </div>
     </div>
     
-    <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-[90] pointer-events-none transition-opacity duration-300 opacity-0">
-        <div id="toast-message" class="bg-gray-800/90 text-white px-4 py-2 rounded-full text-sm shadow-lg backdrop-blur-sm">
-        </div>
+    <div id="toast-container" class="fixed left-1/2 transform -translate-x-1/2 z-[90] pointer-events-none transition-opacity duration-300 opacity-0" style="top: calc(env(safe-area-inset-top) + 10px);">
+        <div id="toast-message" class="bg-gray-800/90 text-white px-4 py-2 rounded-full text-sm shadow-lg backdrop-blur-sm flex items-center gap-2">
+            </div>
     </div>
 
     <!-- Add Event Modal -->
@@ -2638,18 +2637,18 @@ window.executeBatchDelete = function() {
         };
 
         window.deleteTodo = function(id) {
-            // === 🛑 權限檢查 ===
             const todo = window.allTodosCache.find(t => t.id === id);
-            if (todo && todo.creator !== currentUserRole) {
+            
+            // === 🛑 修改權限檢查 ===
+            if (todo && todo.creator !== currentUserRole && !todo.isJoint) {
                 if (window.triggerHaptic) window.triggerHaptic('ERROR');
-                window.showToast('🙅‍♂️ 只能刪除自己建立的待辦');
+                window.showToast('🙅‍♂️ 您無權刪除對方的私人待辦');
                 
                 // 關閉滑動
                 const item = document.querySelector(`.swipe-item[data-swipe-id="${id}"] .swipe-content`);
                 if (item) item.style.transform = 'translateX(0px)';
                 return;
             }
-            // ==================
             editingTodoId = id;
             deleteTarget = 'todo';
 
@@ -3820,14 +3819,14 @@ window.executeBatchDelete = function() {
         window.deleteCurrentEvent = function() {
             if (!editingEventId) return;
 
-            // === 🛑 權限檢查 ===
             const evt = window.allEventsCache.find(e => e.id === editingEventId);
-            if (evt && evt.creator !== currentUserRole) {
+            
+            // === 🛑 修改權限檢查：如果是共同行程 (isJoint) 也可以刪 ===
+            if (evt && evt.creator !== currentUserRole && !evt.isJoint) {
                 if (window.triggerHaptic) window.triggerHaptic('ERROR');
-                window.showToast('🙅‍♂️ 只能刪除自己建立的行程');
+                window.showToast('🙅‍♂️ 您無權刪除對方的私人行程');
                 return;
             }
-            // ==================
 
             deleteTarget = 'event';
             
@@ -3859,17 +3858,16 @@ window.executeBatchDelete = function() {
         };
 
         window.deleteCurrentTodo = function() {
-            // 確保有正在編輯的 ID
             if (!editingTodoId) return;
 
-            // === 🛑 權限檢查 ===
             const todo = window.allTodosCache.find(t => t.id === editingTodoId);
-            if (todo && todo.creator !== currentUserRole) {
+            
+            // === 🛑 修改權限檢查 ===
+            if (todo && todo.creator !== currentUserRole && !todo.isJoint) {
                 if (window.triggerHaptic) window.triggerHaptic('ERROR');
-                window.showToast('🙅‍♂️ 只能刪除自己建立的待辦');
+                window.showToast('🙅‍♂️ 您無權刪除對方的私人待辦');
                 return;
             }
-            // ==================
             
             deleteTarget = 'todo';
             
@@ -5937,18 +5935,18 @@ window.initSwipeListeners = function(container) {
 };
 
 window.quickDeleteEvent = function(id) {
-            // === 🛑 權限檢查 ===
             const evt = window.allEventsCache.find(e => e.id === id);
-            if (evt && evt.creator !== currentUserRole) {
+            
+            // === 🛑 修改權限檢查 ===
+            if (evt && evt.creator !== currentUserRole && !evt.isJoint) {
                 if (window.triggerHaptic) window.triggerHaptic('ERROR');
-                window.showToast('🙅‍♂️ 只能刪除自己建立的行程');
+                window.showToast('🙅‍♂️ 您無權刪除對方的私人行程');
                 
-                // 記得把滑開的按鈕關回去，不然會卡住
+                // 記得把滑開的按鈕關回去
                 const item = document.querySelector(`.swipe-item[data-swipe-id="${id}"] .swipe-content`);
                 if (item) item.style.transform = 'translateX(0px)';
                 return;
             }
-            // ==================
             editingEventId = id;
             deleteTarget = 'event'; 
 
