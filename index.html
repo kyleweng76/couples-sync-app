@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <link rel="manifest" href="manifest.json">
     <title>我們的小時光</title>
     <link rel="icon" type="image/png" href="icon.png">
@@ -18,6 +18,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -30,6 +32,144 @@
                 }
             }
         }
+
+        // === 批次選取功能核心 ===
+
+// 狀態變數
+window.batchState = {
+    active: false,
+    target: null, // 'event' 或 'todo'
+    selectedIds: new Set()
+};
+
+// 1. 切換模式 (進入/退出)
+window.toggleBatchMode = function(target) {
+    const isActive = window.batchState.active;
+    
+    // 如果已經在模式中且按的是同一個 target -> 退出
+    if (isActive && window.batchState.target === target) {
+        window.exitBatchMode();
+        return;
+    }
+
+    // 進入選取模式
+    window.batchState.active = true;
+    window.batchState.target = target;
+    window.batchState.selectedIds.clear();
+    
+    // 更新 UI 文字與按鈕
+    const btn = document.getElementById(`btn-batch-${target}`);
+    if(btn) {
+        btn.textContent = '完成';
+        btn.classList.add('text-theme', 'font-bold');
+        btn.classList.remove('text-gray-500');
+    }
+    
+    // 隱藏右上角的新增按鈕 (避免誤觸)
+    const addBtn = document.getElementById(`btn-add-${target}-main`);
+    if(addBtn) addBtn.classList.add('opacity-0', 'pointer-events-none');
+
+    // 顯示底部操作列
+    const bar = document.getElementById('batch-action-bar');
+    bar.classList.add('visible');
+    window.updateBatchUI(); // 重置計數
+
+    // 觸發重新渲染 (讓勾選框跑出來)
+    if (target === 'event') {
+        window.renderCalendarListView();
+    } else {
+        window.renderTodos(window.allTodosCache);
+    }
+};
+
+// 2. 退出模式
+window.exitBatchMode = function() {
+    const target = window.batchState.target;
+    window.batchState.active = false;
+    window.batchState.selectedIds.clear();
+    window.batchState.target = null;
+
+    // 還原按鈕文字
+    if(target) {
+        const btn = document.getElementById(`btn-batch-${target}`);
+        if(btn) {
+            btn.textContent = '選擇';
+            btn.classList.remove('text-theme', 'font-bold');
+            btn.classList.add('text-gray-500');
+        }
+        const addBtn = document.getElementById(`btn-add-${target}-main`);
+        if(addBtn) addBtn.classList.remove('opacity-0', 'pointer-events-none');
+    }
+
+    // 隱藏底部列
+    document.getElementById('batch-action-bar').classList.remove('visible');
+
+    // 重新渲染列表 (還原成滑動刪除模式)
+    if (target === 'event') {
+        window.renderCalendarListView();
+    } else if (target === 'todo') {
+        window.renderTodos(window.allTodosCache);
+    }
+};
+
+// 3. 點選單一項目
+window.toggleBatchItem = function(id) {
+    if (window.batchState.selectedIds.has(id)) {
+        window.batchState.selectedIds.delete(id);
+    } else {
+        window.batchState.selectedIds.add(id);
+    }
+    window.updateBatchUI();
+    
+    // 更新該項目的勾選圈圈樣式 (不用重繪整個列表)
+    const checkCircle = document.getElementById(`batch-check-${id}`);
+    if (checkCircle) {
+        if (window.batchState.selectedIds.has(id)) checkCircle.classList.add('checked');
+        else checkCircle.classList.remove('checked');
+    }
+};
+
+// 4. 更新底部 UI (計數與按鈕狀態)
+window.updateBatchUI = function() {
+    const count = window.batchState.selectedIds.size;
+    document.getElementById('batch-count').textContent = count;
+    
+    const delBtn = document.getElementById('btn-batch-delete');
+    if (count > 0) {
+        delBtn.disabled = false;
+        delBtn.textContent = `刪除 (${count})`;
+    } else {
+        delBtn.disabled = true;
+        delBtn.textContent = '刪除';
+    }
+};
+
+// 5. 執行批次刪除
+window.executeBatchDelete = function() {
+    const count = window.batchState.selectedIds.size;
+    if (count === 0) return;
+
+    if (!confirm(`確定要刪除這 ${count} 個項目嗎？此動作無法復原。`)) return;
+
+    const targetCollection = window.batchState.target === 'event' ? 'events' : 'todos';
+    const batch = db.batch();
+    
+    window.batchState.selectedIds.forEach(id => {
+        const ref = db.collection(targetCollection).doc(id);
+        batch.delete(ref);
+    });
+
+    batch.commit()
+        .then(() => {
+            window.showToast(`已刪除 ${count} 個項目`);
+            window.exitBatchMode(); // 刪除完自動退出
+        })
+        .catch(err => {
+            console.error("Batch delete failed", err);
+            window.showToast('刪除失敗');
+        });
+};
+
     </script>
 
     <style>
@@ -37,7 +177,21 @@
         :root {
             --app-color: #2cc998; /* 預設為皓皓綠 */
         }
-        
+        /* === 優化3：強制開啟 iOS 慣性捲動 (針對所有捲動區域) === */
+        .scroller-smooth,
+        .page-content,        /* 儀表板頁面 */
+        #todo-scroll-area,    /* 待辦清單捲動區 */
+        #calendar-scroll-area,/* 月曆捲動區 */
+        #calendar-view-list,  /* 行事曆列表模式 */
+        #chat-container,      /* 聊天室 */
+        .overflow-y-auto      /* 所有 Tailwind 的捲動容器 */
+        {
+            -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior-y: contain; /* 防止滑到底部時拉動整個網頁 */
+        }
+        * {
+    -webkit-tap-highlight-color: transparent !important;
+        }
         .bg-theme { background-color: var(--app-color) !important; }
         .text-theme { color: var(--app-color) !important; }
         .border-theme { border-color: var(--app-color) !important; }
@@ -56,13 +210,25 @@
             height: 100vh;
             width: 100vw;
             overflow: hidden;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none; /* 禁止長按跳出選單 */
             /* ... */
+        }
+        /* 但要記得把輸入框「還原」，不然會無法打字！ */
+        input, textarea {
+            -webkit-user-select: text !important;
+            user-select: text !important;
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .card-press:active { transform: scale(0.98); transition: transform 0.1s; }
         .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-        
+        /* === 請把這段補進去 === */
+        .safe-top {
+        padding-top: env(safe-area-inset-top) !important;
+        height: auto !important; /* 讓高度自動長高，容納動態島 */
+        }
         #main-container { position: relative; width: 100%; height: 100%; overflow: hidden; }
         
         /* 1. 修正頁面頂部距離，避免被標題列擋住 (裁切問題) */
@@ -70,7 +236,7 @@
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
             overflow-y: auto;
-            padding-top: 85px; /* 原本 70px -> 改為 85px */
+            padding-top: calc(70px + env(safe-area-inset-top));
             padding-bottom: 90px;
             background-color: #f9fafb;
             display: none; 
@@ -82,7 +248,7 @@
             
             overflow-y: auto !important; 
             /* height: auto; <--- 這一行是兇手，一定要刪掉或註解掉！ */
-            
+            -webkit-overflow-scrolling: touch;
             /* === 加入這兩行，確保它乖乖填滿中間區域 === */
             flex: 1;
             min-height: 0; 
@@ -102,14 +268,14 @@
             display: none !important;
         }
 
-        /* 確保有這段：讓聊天分頁在 active 時才變成 Flex 垂直排版 */
         #page-chat.active {
-            display: flex;
-            flex-direction: column;
-            padding: 0;
-            overflow: hidden;
-            padding-top: 70px;
-            padding-bottom: 90px;
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+        overflow: hidden;
+        /* 修改這一行：加上 env(safe-area-inset-top) */
+        padding-top: calc(70px + env(safe-area-inset-top)); 
+        padding-bottom: 90px;
         }
         
         /* 3. 聊天氣泡樣式優化 (支援顯示名字) */
@@ -172,14 +338,14 @@
         }
         .page-content.active { display: block; }
         
-        /* 讓行事曆跟待辦頁面都使用 Flex 佈局，解決標題穿透問題 */
         #page-calendar.active, #page-todo.active {
-            display: flex;
-            flex-direction: column;
-            padding: 0;
-            overflow: hidden; /* 隱藏整頁捲軸，改用內部捲軸 */
-            padding-top: 70px; /* 避開最上面的 App Header */
-            padding-bottom: 90px; /* 避開底部的導航列 */
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+        overflow: hidden; 
+        /* 修改這一行：加上 env(safe-area-inset-top) */
+        padding-top: calc(70px + env(safe-area-inset-top)); 
+        padding-bottom: 90px; 
         }
         
         .nav-item.active { color: #2cc998; } 
@@ -189,9 +355,34 @@
         .tt-input-row:active { background-color: #f9fafb; }
         .tt-icon { color: #9ca3af; margin-right: 12px; width: 20px; height: 20px; flex-shrink: 0; }
         
-        .modal { transition: opacity 0.2s ease, transform 0.2s ease; }
-        .modal.hidden { opacity: 0; pointer-events: none; transform: scale(0.95); }
-        .modal.visible { opacity: 1; pointer-events: auto; transform: scale(1); }
+        /* === 優化：彈跳視窗動畫 (Spring Pop) === */
+        /* 1. 外層容器 (負責背景變黑) - 只做淡入淡出 */
+        .modal {
+            transition: opacity 0.25s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .modal.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* 2. 內層卡片 (負責跳出來) - 加入貝茲曲線讓它有 Q 度 */
+        .modal .relative {
+            /* cubic-bezier 數值：讓動畫有一點點「衝過頭再拉回來」的彈性感 */
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease;
+            
+            /* 初始狀態：稍微縮小 (0.9) 且往下沉一點點 (10px) */
+            transform: scale(0.9) translateY(10px);
+            opacity: 0;
+        }
+
+        /* 顯示狀態：還原大小與位置 */
+        .modal.visible .relative {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+        }
 
         .bg-theme-light { background-color: var(--app-color-light) !important; }
         .custom-checkbox { appearance: none; background-color: #fff; margin: 0; font: inherit; color: currentColor; width: 20px; height: 20px; border: 2px solid #d1d5db; border-radius: 6px; display: grid; place-content: center; cursor: pointer; transition: all 0.2s; }
@@ -727,12 +918,194 @@
             /* 背景設定已移除，PNG 透明部分就會正常顯示了 */
         }
 
+        /* === 滑動刪除專用樣式 === */
+        .swipe-item {
+            position: relative;
+            overflow: hidden; /* 隱藏超出範圍的紅色按鈕 */
+        }
+
+        /* 紅色刪除底層 */
+        .swipe-action-bg {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            width: 80px; /* 刪除按鈕寬度 */
+            background-color: #ef4444; /* 紅色 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 0;
+        }
+
+        /* 前景內容層 (我們要滑動這層) */
+        .swipe-content {
+            position: relative;
+            z-index: 10;
+            background-color: white;
+            transition: transform 0.2s ease-out;
+            width: 100%;
+            
+            /* 👇 加入這一行 👇 */
+            /* 意思：瀏覽器只負責處理 Y 軸(上下)捲動，X 軸(左右)動作留給我的程式碼處理 */
+            touch-action: pan-y; 
+        }
+
+        #calendar-scroll-area {
+    /* ...原本的設定... */
+    
+    /* 👇 加入這一行，意思是：這個區域主要負責上下捲動，左右滑動交給 JS 處理 */
+    touch-action: pan-y; 
+}
+
+    /* === 鍵盤優化：當鍵盤開啟時 === */
+    body.keyboard-open nav {
+        display: none !important; /* 隱藏底部導航列 */
+    }
+
+    body.keyboard-open .page-content {
+        padding-bottom: 0 !important; /* 移除原本留給導航列的 90px 空間 */
+    }
+
+    /* 確保輸入框貼在鍵盤上方 */
+    body.keyboard-open #page-chat {
+        padding-bottom: 0 !important;
+    }
+
+    /* === 優化：拖曳時隱藏紅色刪除底層 (防止穿幫) === */
+    .sortable-ghost .swipe-action-bg,
+    .sortable-drag .swipe-action-bg,
+    .sortable-chosen .swipe-action-bg {
+        display: none !important;
+        visibility: hidden !important;
+    }
+
+    /* === 拖曳排序樣式 === */
+    .sortable-ghost {
+        opacity: 0.4;
+        background-color: #f3f4f6;
+        border: 2px dashed #d1d5db;
+    }
+    .sortable-drag {
+        cursor: grabbing;
+        opacity: 1;
+        background: white;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        transform: scale(1.02); /* 稍微放大一點點 */
+    }
+
+    /* === 批次選取模式樣式 (強制修正版) === */
+    .batch-checkbox-col {
+        width: 0;
+        min-width: 0; /* 預設最小寬度為 0 */
+        overflow: hidden;
+        opacity: 0;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0 !important; /* 🚫 禁止被壓縮 */
+    }
+
+    /* 當 .swipe-item 有 selection-mode 時，強制展開 */
+    .swipe-item.selection-mode .batch-checkbox-col {
+        width: 40px !important;      /* 強制寬度 */
+        min-width: 40px !important;  /* 強制最小寬度 (關鍵!) */
+        opacity: 1 !important;       /* 強制顯示 */
+        margin-right: 8px !important;
+    }
+
+    /* 模擬 iOS 的圓形勾選框 */
+    .batch-check-circle {
+        width: 22px;
+        height: 22px;
+        border: 2px solid #d1d5db;
+        border-radius: 50%;
+        transition: all 0.2s;
+        position: relative;
+    }
+
+    /* 選中狀態 */
+    .batch-check-circle.checked {
+        background-color: #2cc998; /* 主題色 */
+        border-color: #2cc998;
+    }
+
+    /* 打勾符號 (用 CSS 畫) */
+    .batch-check-circle.checked::after {
+        content: '';
+        position: absolute;
+        left: 7px;
+        top: 3px;
+        width: 6px;
+        height: 10px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+
+    /* 底部批次操作列 */
+    #batch-action-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 1px solid #e5e7eb;
+        padding: 16px; /* 加大一點方便點擊 */
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transform: translateY(100%); /* 預設藏在下面 */
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 100; /* 要蓋過原本的導航列 */
+        box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    #batch-action-bar.visible {
+        transform: translateY(0);
+    }
+
+    /* === 全色系主題樣式 === */
+
+    /* 1. 當底部導航列變色時，調整按鈕樣式 */
+    nav.colored-nav .nav-item {
+        color: rgba(255, 255, 255, 0.6) !important; /* 未選中：半透明白色 */
+    }
+
+    nav.colored-nav .nav-btn.active .nav-icon-pill {
+        background-color: white !important; /* 選中：背景變白 */
+        color: var(--app-color) !important; /* 選中：圖示變回主題色 */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    nav.colored-nav .nav-btn.active span {
+        color: white !important; /* 選中：文字變白 */
+        font-weight: bold;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    /* 2. 調整 Header 內的文字顏色 */
+    header.colored-header h1, 
+    header.colored-header span,
+    header.colored-header i {
+        color: white !important;
+    }
+
+    /* 調整 Header 內的 User Badge (原本有背景色，現在改成白色半透明) */
+    header.colored-header #header-role-badge {
+        background-color: rgba(255, 255, 255, 0.2) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
     </style>
 </head>
 <body class="text-gray-700 h-screen flex flex-col overflow-hidden bg-white">
 
     <!-- Header -->
-    <header class="bg-white border-b border-gray-100 p-4 fixed top-0 w-full z-40 safe-top flex justify-between items-center shadow-sm">
+    <header id="app-header" class="bg-white border-b border-gray-100 p-4 fixed top-0 w-full z-40 safe-top flex justify-between items-center shadow-sm transition-colors duration-300">
         <div class="flex items-center gap-3">
             <img src="icon.png" alt="Logo" class="w-9 h-9 rounded-xl shadow-sm">
             <h1 class="text-lg font-bold text-gray-800 tracking-wide">
@@ -824,16 +1197,20 @@
 
         <!-- Page 2: Calendar -->
         <div id="page-calendar" class="page-content">
-            <div class="flex-none bg-white z-10 border-b border-gray-200 px-4 flex items-center justify-center h-[60px] relative">
-                 <div class="flex bg-gray-100 p-1 rounded-lg">
-                    <button onclick="window.switchCalendarView('list')" id="btn-view-list" class="w-16 py-1.5 text-xs font-bold rounded-md bg-white shadow-sm text-theme transition-all">列表</button>
-                    <button onclick="window.switchCalendarView('month')" id="btn-view-month" class="w-16 py-1.5 text-xs font-medium rounded-md text-gray-500 transition-all">月曆</button>
-                </div>
-                
-                <button onclick="window.openAddModal()" class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-theme text-white w-9 h-9 flex items-center justify-center rounded-lg shadow-sm active:scale-95 transition hover:bg-green-500">
-                    <i data-lucide="plus" class="w-5 h-5"></i>
-                </button>
-            </div>
+            <div class="flex-none bg-white z-10 border-b border-gray-200 px-4 flex items-center justify-between h-[60px] relative">
+    
+    <button id="btn-batch-event" onclick="window.toggleBatchMode('event')" class="text-sm font-medium text-gray-500 hidden">
+        選擇
+    </button>
+    <div id="calendar-header-spacer" class="w-8 hidden"></div> <div class="flex bg-gray-100 p-1 rounded-lg absolute left-1/2 transform -translate-x-1/2">
+        <button onclick="window.switchCalendarView('list')" id="btn-view-list" class="w-16 py-1.5 text-xs font-bold rounded-md bg-white shadow-sm text-theme transition-all">列表</button>
+        <button onclick="window.switchCalendarView('month')" id="btn-view-month" class="w-16 py-1.5 text-xs font-medium rounded-md text-gray-500 transition-all">月曆</button>
+    </div>
+    
+    <button id="btn-add-event-main" onclick="window.openAddModal()" class="bg-theme text-white w-9 h-9 flex items-center justify-center rounded-lg shadow-sm active:scale-95 transition hover:bg-green-500">
+        <i data-lucide="plus" class="w-5 h-5"></i>
+    </button>
+</div>
             <div class="flex-1 overflow-y-auto bg-gray-50 relative w-full" id="calendar-view-month">
                 <div id="calendar-view-list" class="absolute inset-0 overflow-y-auto">
                     <div id="event-list" class="divide-y divide-gray-100 bg-white">
@@ -883,13 +1260,18 @@
                     </div>
                 </div> </div>     </div>         <div id="page-todo" class="page-content">
             
-            <div class="flex-none bg-white z-20 border-b border-gray-200 px-4 flex items-center h-[60px] relative shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
-                <h2 class="text-xl font-bold text-gray-800">待辦清單</h2>
-                
-                <button onclick="window.openAddTodoModal()" class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-theme text-white w-9 h-9 flex items-center justify-center rounded-lg shadow-sm active:scale-95 transition hover:bg-green-500">
-                    <i data-lucide="plus" class="w-5 h-5"></i>
-                </button>
-            </div>
+            <div class="flex-none bg-white z-20 border-b border-gray-200 px-4 flex items-center justify-between h-[60px] relative shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+    
+    <button id="btn-batch-todo" onclick="window.toggleBatchMode('todo')" class="text-sm font-medium text-gray-500">
+        選擇
+    </button>
+
+    <h2 class="text-xl font-bold text-gray-800 absolute left-1/2 transform -translate-x-1/2">待辦清單</h2>
+    
+    <button id="btn-add-todo-main" onclick="window.openAddTodoModal()" class="bg-theme text-white w-9 h-9 flex items-center justify-center rounded-lg shadow-sm active:scale-95 transition hover:bg-green-500">
+        <i data-lucide="plus" class="w-5 h-5"></i>
+    </button>
+</div>
             
             <div id="todo-scroll-area" class="flex-1 overflow-y-auto bg-white w-full relative">
                 <div id="todo-category-container" class="p-4 space-y-4 pb-24">
@@ -909,7 +1291,7 @@
                 </div>
             </div>
 
-            <div id="chat-container" class="flex-1 overflow-y-auto p-3 flex flex-col gap-3 bg-[#9bbbd4] shadow-inner no-scrollbar">
+            <div id="chat-container" onclick="window.dismissKeyboard()" class="flex-1 overflow-y-auto p-3 flex flex-col gap-3 bg-[#9bbbd4] shadow-inner no-scrollbar">
                 <div class="text-center text-xs text-gray-500 mt-4 bg-white/50 py-1 rounded-full mx-auto px-4 w-fit">
                     載入對話中...
                 </div>
@@ -989,27 +1371,24 @@
                         </div>
                     </div>
                 </div>
+
                 <div class="space-y-3">
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">應用程式設定</p>
-                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <div class="bg-blue-100 p-1.5 rounded-lg text-blue-500">
-                                <i data-lucide="bell" class="w-4 h-4"></i>
+                    
+                    <div class="space-y-3">
+                    
+                    <button onclick="window.openCategorySettingsModal()" class="w-full bg-gray-50 p-4 rounded-xl border border-gray-100 flex items-center justify-between group active:scale-98 transition cursor-pointer">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-white p-2 rounded-lg text-theme shadow-sm border border-gray-100">
+                                <i data-lucide="list-filter" class="w-5 h-5"></i>
                             </div>
-                            <span class="text-sm font-medium text-gray-700">聊天通知</span>
+                            <div class="text-left">
+                                <span class="text-sm font-bold text-gray-700 block">管理分類排序 & 顯示</span>
+                                <span class="text-[10px] text-gray-400 block mt-0.5">點擊進入調整</span>
+                            </div>
                         </div>
-                        <button onclick="window.requestNotifyPermission()" id="btn-notify-perm" class="text-xs bg-white border border-gray-200 px-3 py-1.5 rounded-lg font-bold text-gray-500 hover:bg-gray-100 transition">
-                            開啟
-                        </button>
-                    </div>
-                    <p class="text-[10px] text-gray-400 px-1">iPhone 用戶請先「加入主畫面」才能啟用通知。</p>
+                        <i data-lucide="chevron-right" class="w-5 h-5 text-gray-300 group-hover:text-gray-500 transition"></i>
+                    </button>
                 </div>
-                <div class="space-y-3">
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">首頁摘要顯示設定</p>
-                    <p class="text-[10px] text-gray-400 -mt-2 mb-1">關閉的分類將不會出現在首頁，但仍可在待辦清單查看。</p>
-                    <div id="settings-category-list" class="bg-gray-50 p-3 rounded-xl border border-gray-100 max-h-[150px] overflow-y-auto space-y-1">
-                        <div class="text-center text-xs text-gray-400 py-2">載入中...</div>
-                    </div>
                 </div>
 
             </div>
@@ -1043,7 +1422,8 @@
       <div class="relative bg-white w-full h-full md:h-auto md:w-[380px] md:rounded-2xl flex flex-col md:max-h-[85vh]">
         
         <!-- NEW HEADER: Standard App Style -->
-        <div class="flex justify-between items-center px-4 py-3 border-b border-gray-100">
+        <div class="flex justify-between items-center px-4 py-3 border-b border-gray-100" 
+     style="padding-top: calc(12px + env(safe-area-inset-top));">
             <button onclick="window.closeAddModal()" class="text-gray-500 text-sm font-medium px-2 py-1 hover:bg-gray-50 rounded-lg transition cursor-pointer">取消</button>
             <span class="text-sm font-bold text-gray-800">行程詳情</span>
             <button onclick="window.saveEvent()" class="text-theme text-sm font-bold px-2 py-1 hover:hover:bg-gray-50 rounded-lg transition">保存</button>
@@ -1236,7 +1616,8 @@
         <div class="relative bg-white w-full h-full md:h-auto md:w-[350px] md:rounded-2xl flex flex-col md:max-h-[85vh]">
             
             <!-- HEADER: Standard App Style (Unified with Add Event) -->
-            <div class="flex justify-between items-center px-4 py-3 border-b border-gray-100">
+            <div class="flex justify-between items-center px-4 py-3 border-b border-gray-100" 
+     style="padding-top: calc(12px + env(safe-area-inset-top));">
                 <button onclick="window.closeAddTodoModal()" class="text-gray-500 text-sm font-medium px-2 py-1 hover:bg-gray-50 rounded-lg transition cursor-pointer">取消</button>
                 <span id="todo-modal-title" class="text-sm font-bold text-gray-800">新增待辦事項</span>
                 <button onclick="window.saveTodoItem()" id="todo-modal-btn" class="text-theme text-sm font-bold px-2 py-1 hover:hover:bg-gray-50 rounded-lg transition">新增</button>
@@ -1526,6 +1907,7 @@
 
             db.collection('messages').add(data)
                 .then(() => {
+                    triggerHaptic('MEDIUM'); // <--- 🌟 加入這行 (中等震動，確認感強一點)
                     window.showToast('已傳送貼圖');
                     window.scrollToBottom();
                 })
@@ -1534,6 +1916,23 @@
                     window.showToast('傳送失敗');
                 });
         };
+
+        // === 震動回饋小工具 ===
+    const triggerHaptic = async (style = 'LIGHT') => {
+    try {
+        // 嘗試呼叫 Capacitor 的 Haptics
+        const { Haptics, ImpactStyle } = Capacitor.Plugins; 
+        
+        if (style === 'LIGHT') await Haptics.impact({ style: ImpactStyle.Light });
+        else if (style === 'MEDIUM') await Haptics.impact({ style: ImpactStyle.Medium });
+        else if (style === 'HEAVY') await Haptics.impact({ style: ImpactStyle.Heavy });
+        else if (style === 'SUCCESS') await Haptics.notification({ type: 'SUCCESS' });
+        else if (style === 'ERROR') await Haptics.notification({ type: 'ERROR' });
+    } catch (e) {
+        // 電腦版不支援震動，忽略錯誤
+        // console.log('Haptics not available');
+    }
+};
 
        /* ===== STABLE PATCH: SafeRun Helper ===== */
         window.safeRun = function (fn, label = 'unknown') {
@@ -1566,17 +1965,21 @@
         const firebaseConfig = { apiKey: "AIzaSyDLrPr4X6r3e2V_vqFaCICgKVwLmiykxpc", authDomain: "kyle-mao.firebaseapp.com", projectId: "kyle-mao", storageBucket: "kyle-mao.firebasestorage.app", messagingSenderId: "290564848532", appId: "1:290564848532:web:006c4e9df4b1330895ad81" };
         let db; try { if(typeof firebase!=='undefined'){if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);db=firebase.firestore();}}catch(e){}
 
-        // 修改：移除預設值，若沒存過就是 null
+        // === 變數宣告區 (修正版) ===
         let currentUserRole = localStorage.getItem('user_role'); 
         let currentSelectedColor = '#2cc998'; 
         let currentCategory = 'default';
         let editingEventId = null;
         let editingTodoId = null;
-        let allEventsCache = [];
+        
+        // 👇👇👇 修改這裡：改成 window. 開頭，確保全域讀取得到 👇👇👇
+        window.allEventsCache = [];
         let isSavingEvent = false;
         let __lastSaveAt = 0;
-        let allTodosCache = [];
-        // 修改：優先從 localStorage 讀取顏色，若沒有才使用預設值
+        window.allTodosCache = [];
+        // 👆👆👆 修改結束 👆👆👆
+
+        // 優先從 localStorage 讀取顏色
         let roleColors = { 
             haohao: localStorage.getItem('color_haohao') || '#2cc998', 
             maomao: localStorage.getItem('color_maomao') || '#e6688d', 
@@ -1753,32 +2156,65 @@
         // --- Core Action Functions Moved Up ---
         
         window.openAddModal = function () {
-          if (!window.checkRoleEnforcement()) return;
-          editingEventId = null;
-          document.getElementById('input-title').value = '';
-          document.getElementById('input-note').value = '';
-          document.getElementById('input-date-start').value = '';
-          const dD = document.getElementById('display-date-start'); dD.textContent = '請選擇'; dD.classList.add('dt-text-placeholder'); dD.classList.remove('dt-text-value');
-          const t = document.getElementById('input-time-start'); if (t) t.value = '';
-          const td = document.getElementById('display-time-start'); if (td) { td.textContent = '請選擇'; td.classList.add('dt-text-placeholder'); td.classList.remove('dt-text-value'); }
-          const de = document.getElementById('input-date-end'); if (de) de.value = '';
-          const dde = document.getElementById('display-date-end'); if (dde) { dde.textContent = '請選擇'; dde.classList.add('dt-text-placeholder'); dde.classList.remove('dt-text-value'); }
-          const te = document.getElementById('input-time-end'); if (te) te.value = '';
-          const tde = document.getElementById('display-time-end'); if (tde) { tde.textContent = '請選擇'; tde.classList.add('dt-text-placeholder'); tde.classList.remove('dt-text-value'); }
-          const loc = document.getElementById('input-location'); if (loc) loc.value = '';
-          // 重置提醒
-          document.getElementById('input-remind').value = '0';
-          document.getElementById('display-remind').textContent = '不通知'; // 新增這行
-          const partner = document.getElementById('check-partner'); partner.checked = false;
+            triggerHaptic('LIGHT');
+            if (!window.checkRoleEnforcement()) return;
+            
+            editingEventId = null;
+            document.getElementById('input-title').value = '';
+            document.getElementById('input-note').value = '';
+            
+            // === ✨ 優化：自動帶入月曆選取的日期 ===
+            let defaultDate = '';
+            // 如果現在是在月曆視圖 (month)，且有選中某一天
+            if (currentViewMode === 'month' && currentSelectedDate) {
+                 const { y, m, d } = currentSelectedDate;
+                 // 格式化為 YYYY-MM-DD
+                 defaultDate = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            }
+            
+            document.getElementById('input-date-start').value = defaultDate;
+            
+            // 更新顯示文字
+            const dD = document.getElementById('display-date-start'); 
+            if (defaultDate) {
+                window.updateDateDisplay('start', defaultDate);
+            } else {
+                dD.textContent = '請選擇'; 
+                dD.classList.add('dt-text-placeholder'); 
+                dD.classList.remove('dt-text-value');
+            }
+            // ======================================
+
+            const t = document.getElementById('input-time-start'); if (t) t.value = '';
+            const td = document.getElementById('display-time-start'); if (td) { td.textContent = '請選擇'; td.classList.add('dt-text-placeholder'); td.classList.remove('dt-text-value'); }
+            
+            // 結束日期預設跟開始日期一樣
+            const de = document.getElementById('input-date-end'); 
+            if (de) de.value = defaultDate;
+            const dde = document.getElementById('display-date-end'); 
+            if (dde) { 
+                if(defaultDate) window.updateDateDisplay('end', defaultDate);
+                else { dde.textContent = '請選擇'; dde.classList.add('dt-text-placeholder'); dde.classList.remove('dt-text-value'); }
+            }
+
+            const te = document.getElementById('input-time-end'); if (te) te.value = '';
+            const tde = document.getElementById('display-time-end'); if (tde) { tde.textContent = '請選擇'; tde.classList.add('dt-text-placeholder'); tde.classList.remove('dt-text-value'); }
+            const loc = document.getElementById('input-location'); if (loc) loc.value = '';
+            
+            document.getElementById('input-remind').value = '0';
+            document.getElementById('display-remind').textContent = '不通知'; 
+            const partner = document.getElementById('check-partner'); partner.checked = false;
           
-          document.getElementById('check-recur-event').checked = false; window.toggleRecurOptions('event');
-          window.selectRecurFreq('event', 'daily'); document.querySelectorAll('.day-circle').forEach(b => b.classList.remove('active'));
-          window.setStatus('confirmed');
-          currentSelectedColor = roleColors[currentUserRole]; colorPickerTarget = 'event';
-          const delBtn = document.getElementById('btn-delete-event'); if(delBtn) delBtn.classList.add('hidden');
-          const m = document.getElementById('add-modal'); m.classList.remove('hidden'); setTimeout(() => m.classList.add('visible'), 10);
-          
-          window.updateParticipantsPreview();
+            document.getElementById('check-recur-event').checked = false; window.toggleRecurOptions('event');
+            window.selectRecurFreq('event', 'daily'); document.querySelectorAll('.day-circle.active').forEach(b => b.classList.remove('active'));
+            window.setStatus('confirmed');
+            currentSelectedColor = roleColors[currentUserRole]; colorPickerTarget = 'event';
+            const delBtn = document.getElementById('btn-delete-event'); if(delBtn) delBtn.classList.add('hidden');
+            
+            // 更新參與者預覽
+            window.updateParticipantsPreview();
+
+            const m = document.getElementById('add-modal'); m.classList.remove('hidden'); setTimeout(() => m.classList.add('visible'), 10);
         };
 
         window.openEditModal = function (id) {
@@ -2141,6 +2577,7 @@
             // 改用 .add() 新增到 messages 集合
             db.collection('messages').add(data)
                 .then(() => {
+                    triggerHaptic('MEDIUM'); // <--- 🌟 加入這行 (中等震動，確認感強一點)
                     input.value = '';
                     window.showToast('已傳送');
                     window.scrollToBottom();
@@ -2439,7 +2876,6 @@
         window.openSettingsModal = function() {
             const m = document.getElementById('settings-modal');
             
-            window.renderCategorySettings(); 
             window.updateNotifyBtnState(); // <--- 加入這行：打開設定時檢查按鈕狀態
             
             m.classList.remove('hidden');
@@ -2458,6 +2894,24 @@
             setTimeout(() => m.classList.add('hidden'), 200);
         };
         
+                // === 新增：開啟分類管理視窗 ===
+        window.openCategorySettingsModal = function() {
+            const m = document.getElementById('category-settings-modal');
+
+            // 🌟 這裡才開始渲染列表，確保有效能且 ID 存在
+            window.renderCategorySettings();
+
+            m.classList.remove('hidden');
+            setTimeout(() => m.classList.add('visible'), 10);
+        };
+
+        // === 新增：關閉分類管理視窗 ===
+        window.closeCategorySettingsModal = function() {
+            const m = document.getElementById('category-settings-modal');
+            m.classList.remove('visible');
+            setTimeout(() => m.classList.add('hidden'), 200);
+        };
+
         window.updateDateDisplay = function(type, dateStr) {
             let targetEl = (type === 'recur') ? document.getElementById('display-recur-until') : (type === 'todo' ? document.getElementById('display-date-todo') : document.getElementById(`display-date-${type}`));
             if (!targetEl) {
@@ -2554,13 +3008,14 @@
                 btn.className = "text-xs bg-red-100 border border-red-200 px-3 py-1.5 rounded-lg font-bold text-red-500";
             }
         };
+        
         window.updateRoleUI = function() {
-            // === 修改：更新全域主題色與淺色版變數 ===
+            // === 1. 設定顏色變數 ===
             if (currentUserRole) {
                 const color = roleColors[currentUserRole] || '#2cc998';
                 document.documentElement.style.setProperty('--app-color', color);
                 
-                // 計算淺色版 (Hex -> RGBA 0.1)
+                // 計算淺色版
                 let r = 0, g = 0, b = 0;
                 if (color.length === 4) {
                     r = parseInt(color[1] + color[1], 16);
@@ -2571,22 +3026,45 @@
                     g = parseInt(color.slice(3, 5), 16);
                     b = parseInt(color.slice(5, 7), 16);
                 }
-                const lightColor = `rgba(${r}, ${g}, ${b}, 0.1)`; // 10% 透明度
+                const lightColor = `rgba(${r}, ${g}, ${b}, 0.1)`;
                 document.documentElement.style.setProperty('--app-color-light', lightColor);
+
+                // === ✨ 新增：上下欄位變色邏輯 ✨ ===
+                const header = document.getElementById('app-header');
+                const nav = document.querySelector('nav');
+                const logoText = header.querySelector('h1');
+                
+                // 設定 Header 背景
+                header.style.backgroundColor = color;
+                header.classList.remove('bg-white', 'border-b', 'border-gray-100'); // 移除原本的白底與線條
+                header.classList.add('colored-header', 'shadow-md'); // 加入自訂樣式與陰影
+                
+                // 設定 Nav 背景
+                nav.style.backgroundColor = color;
+                nav.classList.remove('bg-white/95', 'border-t', 'border-gray-200');
+                nav.classList.add('colored-nav', 'shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]');
+
+                // 設定 Meta Theme Color (讓瀏覽器網址列也變色！)
+                let metaThemeColor = document.querySelector("meta[name=theme-color]");
+                if (!metaThemeColor) {
+                    metaThemeColor = document.createElement("meta");
+                    metaThemeColor.name = "theme-color";
+                    document.head.appendChild(metaThemeColor);
+                }
+                metaThemeColor.content = color;
             }
+
+            // === 2. 身分切換按鈕樣式 (維持不變) ===
             const btnHaohao = document.getElementById('role-haohao');
             const btnMaomao = document.getElementById('role-maomao');
             if (btnHaohao) {
                 const activeClass = "flex-1 py-3 rounded-xl text-sm font-bold border-2 border-transparent bg-theme text-white shadow-md transition transform scale-105";
-                
                 const inactiveClass = "flex-1 py-3 rounded-xl text-sm font-medium border border-gray-200 text-gray-400 bg-white transition hover:bg-gray-50";
 
                 if (currentUserRole === 'haohao') { 
                     btnHaohao.className = activeClass; 
-                    // 強制覆寫背景色，確保皓皓按鈕一定是皓皓綠 (即使還沒切換完成)
                     btnHaohao.style.backgroundColor = roleColors.haohao;
                     btnHaohao.style.borderColor = roleColors.haohao;
-                    
                     btnMaomao.className = inactiveClass; 
                     btnMaomao.style.backgroundColor = '';
                     btnMaomao.style.borderColor = '';
@@ -2595,9 +3073,7 @@
                     btnHaohao.className = inactiveClass;
                     btnHaohao.style.backgroundColor = '';
                     btnHaohao.style.borderColor = '';
-
                     btnMaomao.className = activeClass; 
-                    // 強制覆寫背景色，確保毛毛按鈕一定是毛毛粉
                     btnMaomao.style.backgroundColor = roleColors.maomao;
                     btnMaomao.style.borderColor = roleColors.maomao;
                 } 
@@ -2606,22 +3082,23 @@
                     btnMaomao.className = inactiveClass; 
                 }
             }
+
+            // === 3. Header Badge 更新 (維持不變) ===
             const badge = document.getElementById('header-role-badge');
             const badgeName = document.getElementById('header-role-name');
             if (badge && badgeName) {
                 if (currentUserRole) {
                     const name = currentUserRole === 'haohao' ? '皓皓' : '毛毛';
-                    const color = roleColors[currentUserRole];
                     badgeName.textContent = name;
-                    badge.style.backgroundColor = color;
                     badge.classList.remove('opacity-0');
                 } else {
                     badgeName.textContent = '請選擇';
-                    badge.style.backgroundColor = '#9ca3af';
                     badge.classList.remove('opacity-0');
                     badge.classList.add('animate-pulse');
                 }
             }
+
+            // === 4. 聊天室輸入框更新 (維持不變) ===
             const noteInput = document.getElementById('note-input');
             const noteSendBtn = document.getElementById('note-send-btn');
             if (noteInput) {
@@ -2691,17 +3168,35 @@
                 const newHex = c.hex;
                 const targetRole = colorPickerTarget; 
                 const oldHex = roleColors[targetRole]; 
+                
+                // 檢查是否有顏色衝突 (例如把皓皓改成跟毛毛一樣的顏色)
                 let conflictRole = null;
-                for (let key in roleColors) { if (key !== targetRole && roleColors[key] === newHex) { conflictRole = key; break; } }
+                for (let key in roleColors) { 
+                    if (key !== targetRole && roleColors[key] === newHex) { 
+                        conflictRole = key; 
+                        break; 
+                    } 
+                }
+                
+                // 更新顏色並存檔
                 roleColors[targetRole] = newHex;
                 localStorage.setItem(`color_${targetRole}`, newHex);
+                
+                // 如果有衝突，交換顏色
                 if (conflictRole) {
                     roleColors[conflictRole] = oldHex;
                     localStorage.setItem(`color_${conflictRole}`, oldHex);
                     window.showToast(`顏色重複，已與「${conflictRole==='haohao'?'皓皓':(conflictRole==='maomao'?'毛毛':'共同行程')}」交換顏色！`);
                 }
+                
+                // 更新設定頁面裡面的小圓點
                 window.updateSettingsColorUI();
-                if (targetRole === currentUserRole || conflictRole === currentUserRole) { if (currentUserRole) { document.documentElement.style.setProperty('--active-tab-color', roleColors[currentUserRole]); } }
+                
+                // === 👇👇👇 關鍵修正：如果有動到當前使用者的顏色，立即刷新全App主題 👇👇👇 ===
+                if (targetRole === currentUserRole || conflictRole === currentUserRole) { 
+                    window.updateRoleUI(); 
+                }
+                // =====================================================================
             }
             window.toggleGlobalColorPicker(false);
         };
@@ -2876,18 +3371,35 @@
     
         window.renderCalendarListView = function() { const items = window.getCalendarItems(); const listEl = document.getElementById('event-list'); if(!listEl) return; if (items.length === 0) { listEl.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">無行程</div>`; } else { window.renderEventListItems(items, listEl); } };
 
-// === 優化版：列表渲染 (修正反灰邏輯) ===
+        // === 優化版：列表渲染 (支援批次選取) ===
         window.renderEventListItems = function(items, container, forceExpand = false, hideMonthHeader = false) {
             const now = new Date(); 
+            const isBatch = window.batchState.active && window.batchState.target === 'event';
+
+            // 顯示/隱藏標題列的「選擇」按鈕
+            const batchBtn = document.getElementById('btn-batch-event');
+            const spacer = document.getElementById('calendar-header-spacer');
+            const viewListBtn = document.getElementById('btn-view-list');
             
-            // 2. 定義 HTML 生成器
+            // 只有在「列表模式」且「不在月曆容器內」時才顯示按鈕
+            // (我們判斷 container id 是否為 month-event-list 來決定是不是月曆下方的清單)
+            if (batchBtn && spacer) {
+                if (container.id === 'month-event-list' || currentViewMode === 'month') {
+                    batchBtn.classList.add('hidden');
+                    spacer.classList.add('hidden');
+                } else {
+                    batchBtn.classList.remove('hidden');
+                    spacer.classList.remove('hidden');
+                }
+            }
+
+            // 2. 定義 HTML 生成器 (修正版：加入勾選框 + 移除頭像)
             const generateItemHtml = (listItems) => {
                 let htmlBuffer = '';
                 let lastMonthLabel = '';
 
                 listItems.forEach(e => {
                     const date = new Date(e.timestamp);
-                    // 月份標題
                     const currentMonthLabel = `${date.getFullYear()}年 ${date.getMonth() + 1}月`;
                     
                     if (!hideMonthHeader && currentMonthLabel !== lastMonthLabel) {
@@ -2899,45 +3411,28 @@
                         lastMonthLabel = currentMonthLabel;
                     }
 
-                    // === 修改重點：判斷是否反灰 (過期變灰) ===
+                    // === 判斷是否反灰 ===
                     let opacityClass = '';
-                    
                     if (e.isTodo) {
-                        // 待辦：維持原本邏輯 (完成才灰)
                         if (e.done) opacityClass = 'opacity-40 grayscale';
                     } else {
-                        // 行程：精確判斷時間
                         let cutoffDate;
-                        // 取得這筆行程的「有效結束日期」 (優先取 endDate, 沒有則取 startDate)
                         const sDateStr = e.endDate || e.dueDateEnd || e.startDate || e.dueDate;
-                        
                         if (sDateStr) {
                             if (e.allDay) {
-                                // 規則 1：全天行程 -> 截止時間為該日期的「當天結束 (23:59:59)」
-                                // 使用 replace 將 - 換成 / 以確保跨瀏覽器解析為當地時間 (Local Time)
                                 const localDateStr = sDateStr.replace(/-/g, '/'); 
                                 cutoffDate = new Date(localDateStr);
                                 cutoffDate.setHours(23, 59, 59, 999);
                             } else {
-                                // 規則 2：非全天 -> 看有沒有結束時間
                                 const eTime = e.endTime || e.dueTimeEnd;
-                                if (eTime) {
-                                    // 有結束時間 -> 截止時間為 該日期 + 結束時間
-                                    cutoffDate = new Date(`${sDateStr}T${eTime}`);
-                                } else {
-                                    // 沒結束時間 -> 以「開始時間」當作截止 (時間過了就灰)
-                                    cutoffDate = new Date(e.timestamp);
-                                }
+                                if (eTime) cutoffDate = new Date(`${sDateStr}T${eTime}`);
+                                else cutoffDate = new Date(e.timestamp);
                             }
                         }
-
-                        // 比對：如果現在時間 > 截止時間，就變灰
-                        if (cutoffDate && now > cutoffDate) {
-                            opacityClass = 'opacity-50 grayscale';
-                        }
+                        if (cutoffDate && now > cutoffDate) opacityClass = 'opacity-50 grayscale';
                     }
-                    // ==========================================
 
+                    // === 時間字串處理 ===
                     let timeStr = "";
                     const startDateStr = e.startDate || e.dueDate;
                     const endDateStr = e.endDate || e.dueDateEnd;
@@ -2973,64 +3468,100 @@
                     if (e.isJoint) displayColor = roleColors.joint; 
                     else displayColor = (e.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
 
+                    // === 動作與狀態設定 ===
+                    const deleteAction = e.isTodo ? `window.deleteTodo('${e.id}');` : `window.quickDeleteEvent('${e.id}');`;
+                    const clickAction = isBatch ? `window.toggleBatchItem('${e.id}')` : (e.isTodo ? `window.openEditTodoModal('${e.id}')` : `window.openEditModal('${e.id}')`);
+                    const isSelected = isBatch && window.batchState.selectedIds.has(e.id);
+                    const checkClass = isSelected ? 'checked' : '';
+                    
+                    // 勾選框 HTML
+                    const checkboxHtml = `
+                    <div class="batch-checkbox-col">
+                        <div id="batch-check-${e.id}" class="batch-check-circle ${checkClass}"></div>
+                    </div>`;
+
                     if (e.isTodo) {
+                        // === 待辦事項樣式 ===
                         const statusClass = e.done ? "line-through text-gray-400" : "text-gray-800";
                         const checkIcon = e.done ? '<i data-lucide="check-square" class="w-5 h-5 text-green-500"></i>' : '<i data-lucide="square" class="w-5 h-5 text-gray-400"></i>';
+                        
                         htmlBuffer += `
-                        <div id="list-item-${e.id}" class="flex p-4 items-center gap-4 hover:bg-gray-50 transition cursor-pointer border-b border-gray-50 last:border-0 ${opacityClass}">
-                            <div class="flex flex-col items-center w-10">
-                                <span class="text-xs text-gray-400 font-medium uppercase">${dayName}</span>
-                                <span class="text-xl font-bold text-gray-800 leading-none">${dayNum}</span>
-                            </div>
-                            <div class="w-1 self-stretch rounded-full" style="background-color: ${displayColor}"></div>
-                            <div class="flex-1 min-w-0 flex items-center justify-between" onclick="window.openEditTodoModal('${e.id}')">
-                                <div>
-                                    <div class="flex items-center ${statusClass}">
-                                        <span class="font-bold truncate block">${displayIcon}${e.title}</span>
-                                        <span class="ml-2 text-[10px] border border-gray-200 px-1 rounded text-gray-400 flex-shrink-0">待辦</span>
+                        <div class="swipe-item border-b border-gray-50 last:border-0 ${opacityClass} ${isBatch ? 'selection-mode' : ''}" data-swipe-id="${e.id}">
+                            ${!isBatch ? `<div class="swipe-action-bg" onclick="${deleteAction}"><i data-lucide="trash-2" class="w-5 h-5"></i></div>` : ''}
+                            
+                            <div class="swipe-content flex p-4 items-center bg-white" onclick="${clickAction}">
+                                ${checkboxHtml} <div class="flex-1 flex items-center gap-4 min-w-0">
+                                    <div class="flex flex-col items-center w-10">
+                                        <span class="text-xs text-gray-400 font-medium uppercase">${dayName}</span>
+                                        <span class="text-xl font-bold text-gray-800 leading-none">${dayNum}</span>
                                     </div>
-                                    <div class="text-xs text-gray-500">${timeStr}</div>
+                                    <div class="w-1 self-stretch rounded-full" style="background-color: ${displayColor}"></div>
+                                    <div class="flex-1 min-w-0 flex items-center justify-between">
+                                        <div>
+                                            <div class="flex items-center ${statusClass}">
+                                                <span class="font-bold truncate block">${displayIcon||''}${e.title}</span>
+                                                <span class="ml-2 text-[10px] border border-gray-200 px-1 rounded text-gray-400 flex-shrink-0">待辦</span>
+                                            </div>
+                                            <div class="text-xs text-gray-500">${timeStr}</div>
+                                        </div>
+                                    </div>
+                                    ${!isBatch ? `<div class="flex-none p-2 cursor-pointer" onclick="window.toggleTodo('${e.id}', ${!e.done}); event.stopPropagation();">${checkIcon}</div>` : ''}
                                 </div>
-                            </div>
-                            <div class="flex-none p-2 cursor-pointer" onclick="window.toggleTodo('${e.id}', ${!e.done}); event.stopPropagation();">
-                                ${checkIcon}
                             </div>
                         </div>`;
                     } else {
-                        let ic = '';
-                        if (e.category === 'travel') ic = 'plane';
-                        else if (e.category === 'appointment') ic = 'scissors';
-                        else if (e.category === 'gathering') ic = 'users';
-                        else if (e.category === 'vacation') ic = 'palmtree';
-                        let ico = ic ? `<i data-lucide="${ic}" class="w-3 h-3 text-gray-400 mr-1"></i>` : '';
-                        let st = '';
-                        if (e.status === 'tbc') st = `<span class="ml-2 status-tag tbc">TBC</span>`;
-                        else if (e.status === 'tbd') st = `<span class="ml-2 status-tag tbd">TBD</span>`;
-                        let av = `<div class="avatar-sm z-20" style="background-color:${roleColors[e.creator]||'#2cc998'}">${e.creator==='haohao'?'皓':'毛'}</div>`;
-                        if (e.isJoint) {
-                            const partner = e.creator === 'haohao' ? 'maomao' : 'haohao';
-                            av += `<div class="avatar-sm z-10 -ml-2" style="background-color:${roleColors[partner]}">${partner==='haohao'?'皓':'毛'}</div>`;
+                        // === 一般行程樣式 (三行高度 + 日期變色版) ===
+                        let ic = ''; if (e.category === 'travel') ic = 'plane'; else if (e.category === 'appointment') ic = 'scissors'; else if (e.category === 'gathering') ic = 'users'; else if (e.category === 'vacation') ic = 'palmtree';
+                        let ico = ic ? `<i data-lucide="${ic}" class="w-3 h-3 text-gray-400 mr-1 flex-shrink-0"></i>` : '';
+                        let st = ''; if (e.status === 'tbc') st = `<span class="ml-2 status-tag tbc">TBC</span>`; else if (e.status === 'tbd') st = `<span class="ml-2 status-tag tbd">TBD</span>`;
+                        
+                        // 備註處理：獨立成第三行顯示
+                        let noteDisplay = ''; 
+                        if (e.note && e.note.trim()) {
+                            noteDisplay = `<div class="text-xs text-gray-400 truncate flex items-center gap-1 min-h-[16px]"><i data-lucide="sticky-note" class="w-3 h-3"></i>${e.note}</div>`;
+                        } else {
+                            // 即使沒有備註，也保留一個空的佔位，確保視覺高度一致 (可選，這裡我讓它自動垂直置中)
+                            // 如果你希望沒備註時是一片空白但高度不變，這裡留空即可
                         }
-                        let noteDisplay = '';
-                        if (e.note && e.note.trim()) noteDisplay = `<div class="text-xs text-gray-400 mt-1 flex items-start gap-1"><i data-lucide="sticky-note" class="w-3 h-3 mt-0.5 flex-shrink-0"></i><span class="truncate">${e.note}</span></div>`;
+
+                        // 時間與地點合併在第二行
+                        let locationDisplay = e.location ? `<span class="mx-1">·</span><span>${e.location}</span>` : '';
 
                         htmlBuffer += `
-                        <div id="list-item-${e.id}" class="flex p-4 items-start gap-4 hover:bg-gray-50 transition cursor-pointer card-press border-b border-gray-50 last:border-0 ${opacityClass}" onclick="window.openEditModal('${e.id}')">
-                            <div class="flex flex-col items-center w-10 pt-1">
-                                <span class="text-xs text-gray-400 font-medium uppercase">${dayName}</span>
-                                <span class="text-xl font-bold leading-none" style="color:${displayColor}">${dayNum}</span>
-                            </div>
-                            <div class="w-1 self-stretch rounded-full" style="background-color:${displayColor}"></div>
-                            <div class="flex-1 min-w-0 pt-1">
-                                <div class="flex items-center">
-                                    ${ico}
-                                    <h4 class="font-bold text-gray-800 truncate">${displayIcon}${e.title}</h4>
-                                    ${st}
+                        <div class="swipe-item border-b border-gray-50 last:border-0 ${opacityClass} ${isBatch ? 'selection-mode' : ''}" data-swipe-id="${e.id}">
+                            ${!isBatch ? `<div class="swipe-action-bg" onclick="${deleteAction}"><i data-lucide="trash-2" class="w-5 h-5"></i></div>` : ''}
+
+                            <div class="swipe-content h-[88px] flex items-center bg-white card-press" onclick="${clickAction}">
+                                
+                                ${checkboxHtml} 
+                                
+                                <div class="flex-1 flex items-center h-full min-w-0 pr-4"> 
+                                    
+                                    <div class="w-[60px] flex flex-col items-center justify-center flex-shrink-0 h-full">
+                                        <span class="text-[10px] text-gray-400 font-medium uppercase tracking-wider">${dayName}</span>
+                                        <span class="text-xl font-bold leading-none mt-0.5" style="color:${displayColor}">${dayNum}</span>
+                                    </div>
+                                    
+                                    <div class="w-[4px] h-[48px] rounded-full mx-1 flex-shrink-0" style="background-color:${displayColor}"></div>
+                                    
+                                    <div class="flex-1 min-w-0 flex flex-col justify-center ml-3 gap-0.5">
+                                        
+                                        <div class="flex items-center">
+                                            ${ico}
+                                            <h4 class="font-bold text-gray-800 text-sm truncate leading-tight">${displayIcon||''}${e.title}</h4>
+                                            ${st}
+                                        </div>
+
+                                        <div class="flex items-center text-xs text-gray-500 truncate leading-tight font-medium h-[16px]">
+                                            <span>${timeStr}</span>
+                                            ${locationDisplay}
+                                        </div>
+
+                                        ${noteDisplay}
+                                    </div>
+                                    
                                 </div>
-                                <div class="text-xs text-gray-500">${timeStr} ${e.location?'· '+e.location:''}</div>
-                                ${noteDisplay}
                             </div>
-                            <div class="flex items-center self-center -space-x-1 pl-2">${av}</div>
                         </div>`;
                     }
                 });
@@ -3043,9 +3574,16 @@
                 return;
             }
 
-            // ... (後面的歷史行程分流邏輯保持不變) ...
-            const pastItems = [];
-            const futureItems = [];
+            // ... (歷史行程分流) ...
+            const pastItems = []; const futureItems = [];
+            items.forEach(e => { /* ...原樣保留... */ });
+            // ...
+            
+            // 最後別忘了啟動滑動監聽 (只有在非批次模式時才有效)
+            if (!isBatch) {
+                setTimeout(() => window.initSwipeListeners(container), 100);
+            }
+    
 
             // 這裡也需要用相同的 cutoff 邏輯來分類「歷史」與「未來」
             items.forEach(e => {
@@ -3095,6 +3633,7 @@
             }
 
             container.innerHTML = finalHtml;
+            setTimeout(() => window.initSwipeListeners(container), 100);
             if (typeof lucide !== 'undefined') lucide.createIcons({ root: container });
         };
 
@@ -3126,7 +3665,10 @@
         window.toggleTravelFields = function() { const type = document.getElementById('input-transport-type').value; const isPlane = type === 'plane'; document.getElementById('travel-region-intl').classList.toggle('hidden', !isPlane); document.getElementById('travel-region-tw').classList.toggle('hidden', isPlane); };
         window.toggleBooked = function() { const isChecked = document.getElementById('check-booked').checked; const txt = document.getElementById('appoint-status-text'); txt.textContent = isChecked ? "已預約" : "未完成"; txt.className = isChecked ? "text-xs font-bold text-purple-600" : "text-xs text-gray-500"; };
 
-        window.toggleTodo = function(id,s) { db.collection('todos').doc(id).update({done:s}); };
+        window.toggleTodo = function(id,s) {
+            if(s) triggerHaptic('SUCCESS'); // <--- 🌟 加入這行 (如果是打勾，給一個成功的震動)
+            else triggerHaptic('LIGHT');    // <--- 🌟 (如果是取消，給一個輕震動)
+            db.collection('todos').doc(id).update({done:s}); };
 
         // === 補上缺失的刪除觸發函式 ===
 
@@ -3167,149 +3709,198 @@
         // === 全域變數：用來記錄哪些分類是被「收起來」的 ===
         window.collapsedCategories = JSON.parse(localStorage.getItem('collapsed_categories') || '{}');
 
-        window.renderTodos = function(todos) {
+        // === 優化與防呆版：待辦清單渲染 (最終修正) ===
+        // 加入預設值 (todos = []) 防止傳入 undefined 導致當機
+        window.renderTodos = function(todos = []) {
             const container = document.getElementById('todo-category-container');
             const dashboardList = document.getElementById('dashboard-todo-list');
             
             if(!container) return;
-            container.innerHTML = '';
             
-            // 1. 資料分組 (Grouping)
-            const groups = {};
-            const noCategoryKey = '未分類';
-            
-            // === 修改：取得使用者自訂的順序 ===
-            const categoryOrder = window.getCategoryOrder(); 
-            // ==============================
-
-            let pendingCount = 0;
-
-            todos.forEach(t => {
-                if(!t.done) pendingCount++;
-                const cat = t.category || noCategoryKey;
-                if (!groups[cat]) { groups[cat] = []; }
-                groups[cat].push(t);
-            });
-
-            // 2. 決定顯示順序
-            const sortedKeys = Object.keys(groups).sort((a, b) => {
-                const idxA = categoryOrder.indexOf(a);
-                const idxB = categoryOrder.indexOf(b);
-                // 如果都有在清單裡，照清單排
-                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-                // 如果只有 A 有，A 排前面
-                if (idxA !== -1) return -1;
-                // 如果只有 B 有，B 排前面
-                if (idxB !== -1) return 1;
-                // 都沒有，照筆畫排
-                return a.localeCompare(b);
-            });
-
-            // ... (後面的程式碼保持不變，直接複製原本的即可) ...
-            
-            // 3. 渲染每個分類區塊
-            if (sortedKeys.length === 0) {
-                 container.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">目前沒有待辦事項 🎉</div>`;
-            } else {
-                sortedKeys.forEach(cat => {
-                    const items = groups[cat];
-                    const isCollapsed = !!window.collapsedCategories[cat];
-                    const count = items.filter(i => !i.done).length; 
-                    
-                    const sectionId = `cat-section-${cat}`;
-                    const listId = `cat-list-${cat}`;
-                    const chevronClass = isCollapsed ? '' : 'rotate-180';
-                    const listClass = isCollapsed ? 'hidden' : 'block';
-                    
-                    let html = `
-                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-3"> <div class="flex items-center justify-between p-3 bg-gray-50/50 cursor-pointer select-none active:bg-gray-100 transition" onclick="window.toggleTodoCategory('${cat}')">
-                            <div class="flex items-center gap-2">
-                                <i data-lucide="chevron-down" id="chevron-${cat}" class="w-4 h-4 text-gray-400 transition-transform duration-300 ${chevronClass}"></i>
-                                <h3 class="font-bold text-gray-700">${cat}</h3>
-                                ${count > 0 ? `<span class="bg-theme text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">${count}</span>` : ''}
-                            </div>
-                        </div>
-                        
-                        <div id="${listId}" class="${listClass} divide-y divide-gray-100 bg-white">
-                    `;
-                    
-                    items.forEach(t => {
-                        let barColor = roleColors.haohao;
-                        if (t.isJoint) barColor = roleColors.joint;
-                        else if (t.creator === 'maomao') barColor = roleColors.maomao;
-                        
-                        const titleClass = t.done ? "text-gray-400 line-through" : "text-gray-800";
-                        const checkStyle = t.done ? `background-color: #d1d5db; border-color: #d1d5db;` : `border-color: ${barColor};`;
-                        
-                        let calInfo = '';
-                        if (t.dueDate) {
-                            calInfo = `<span class="text-[10px] ${t.done?'text-gray-300':'text-gray-400'} ml-auto flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${t.dueDate}</span>`;
-                        }
-
-                        html += `
-                        <div class="flex items-center p-3 hover:bg-gray-50 transition cursor-pointer group" onclick="window.openEditTodoModal('${t.id}')">
-                            <div class="flex-none mr-3" onclick="window.toggleTodo('${t.id}', ${!t.done}); event.stopPropagation();">
-                                <div class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors text-white" style="${checkStyle}">
-                                    ${t.done ? '<i data-lucide="check" class="w-3 h-3"></i>' : ''}
-                                </div>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center justify-between">
-                                    <span class="${titleClass} font-medium truncate">${t.title}</span>
-                                    ${calInfo}
-                                </div>
-                                <div class="flex items-center mt-1">
-                                    <div class="w-1.5 h-1.5 rounded-full mr-1.5" style="background-color: ${barColor}"></div>
-                                    <span class="text-[10px] text-gray-400">
-                                        ${t.isJoint ? '共同' : (t.creator === 'haohao' ? '皓皓' : '毛毛')}
-                                    </span>
-                                </div>
-                            </div>
-                            <button onclick="window.deleteTodo('${t.id}'); event.stopPropagation();" class="flex-none p-2 text-gray-200 hover:text-red-400 transition ml-1">
-                                <i data-lucide="x" class="w-4 h-4"></i>
-                            </button>
-                        </div>`;
-                    });
-                    
-                    if(items.length === 0) { html += `<div class="p-4 text-center text-xs text-gray-300">此分類無項目</div>`; }
-                    html += `</div></div>`;
-                    container.innerHTML += html;
-                });
+            // 🔥 安全網：如果傳進來的是 null/undefined，強制轉為空陣列或讀取全域變數
+            if (!todos || !Array.isArray(todos)) {
+                console.warn('renderTodos received invalid data, falling back to cache.');
+                todos = window.allTodosCache || [];
             }
 
-            // 更新 Dashboard 摘要 (這部分保持不變)
-            if(dashboardList) {
-                if (pendingCount === 0) {
-                    dashboardList.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">沒有未完成的待辦事項 🎉</p>`;
-                } else {
-                    dashboardList.innerHTML = '';
-                    const pendings = todos.filter(t => {
-                        if (t.done) return false;
-                        const cat = t.category; 
-                        if (cat && window.todoCategoryVisibility[cat] === false) return false;
-                        return true;
-                    }).slice(0, 3);
+            try {
+                container.innerHTML = '';
+                
+                // 1. 資料分組與排序
+                const groups = {};
+                const noCategoryKey = '未分類';
+                const categoryOrder = window.getCategoryOrder(); 
+                let pendingCount = 0;
 
-                    if (pendings.length === 0 && pendingCount > 0) {
-                        dashboardList.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">待辦事項已隱藏 (請至清單查看)</p>`;
-                    } else {
-                        pendings.forEach(t => {
-                            let dotColor = t.isJoint ? roleColors.joint : (t.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
-                            dashboardList.innerHTML += `
-                            <div class="flex items-center gap-2 text-sm bg-gray-50 p-2 rounded-lg border border-gray-100 mb-1">
-                                <div class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: ${dotColor}"></div>
-                                <span class="truncate text-gray-700 flex-1">${t.title}</span>
-                                ${t.category ? `<span class="text-[9px] px-1 rounded bg-gray-200 text-gray-500">${t.category}</span>` : ''}
-                            </div>`;
+                // 這裡現在安全了，因為 todos 一定是陣列
+                const safeTodos = [...todos].sort((a, b) => {
+                    const oA = a.order !== undefined ? a.order : 999999;
+                    const oB = b.order !== undefined ? b.order : 999999;
+                    return oA - oB;
+                });
+
+                safeTodos.forEach(t => {
+                    if(!t.done) pendingCount++;
+                    const cat = t.category || noCategoryKey;
+                    if (!groups[cat]) { groups[cat] = []; }
+                    groups[cat].push(t);
+                });
+
+                const sortedKeys = Object.keys(groups).sort((a, b) => {
+                    const idxA = categoryOrder.indexOf(a);
+                    const idxB = categoryOrder.indexOf(b);
+                    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                    if (idxA !== -1) return -1;
+                    if (idxB !== -1) return 1;
+                    return a.localeCompare(b);
+                });
+
+                // 判斷是否為批次選取模式
+                const isBatch = window.batchState && window.batchState.active && window.batchState.target === 'todo';
+
+                // 2. 開始渲染
+                if (sortedKeys.length === 0) {
+                     container.innerHTML = `<div class="text-center py-20 text-gray-300 text-sm">目前沒有待辦事項 🎉</div>`;
+                } else {
+                    sortedKeys.forEach(cat => {
+                        const items = groups[cat];
+                        const isCollapsed = !!window.collapsedCategories[cat];
+                        const count = items.filter(i => !i.done).length; 
+                        
+                        const listId = `cat-list-${cat}`;
+                        const chevronClass = isCollapsed ? '' : 'rotate-180';
+                        const listClass = isCollapsed ? 'hidden' : 'block';
+                        
+                        let sectionHtml = `
+                        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-3">
+                            <div class="flex items-center justify-between p-3 bg-gray-50/50 cursor-pointer select-none active:bg-gray-100 transition" onclick="window.toggleTodoCategory('${cat}')">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="chevron-down" id="chevron-${cat}" class="w-4 h-4 text-gray-400 transition-transform duration-300 ${chevronClass}"></i>
+                                    <h3 class="font-bold text-gray-700">${cat}</h3>
+                                    ${count > 0 ? `<span class="bg-theme text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">${count}</span>` : ''}
+                                </div>
+                            </div>
+                            
+                            <div id="${listId}" class="${listClass} divide-y divide-gray-100 bg-white" data-category="${cat}">`;
+                        
+                        items.forEach(t => {
+                            try {
+                                let barColor = roleColors.haohao;
+                                if (t.isJoint) barColor = roleColors.joint;
+                                else if (t.creator === 'maomao') barColor = roleColors.maomao;
+                                
+                                const titleClass = t.done ? "text-gray-400 line-through" : "text-gray-800";
+                                const checkStyle = t.done ? `background-color: #d1d5db; border-color: #d1d5db;` : `border-color: ${barColor};`;
+                                
+                                let calInfo = '';
+                                if (t.dueDate) {
+                                    calInfo = `<span class="text-[10px] ${t.done?'text-gray-300':'text-gray-400'} ml-auto flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${t.dueDate}</span>`;
+                                }
+
+                                const isSelected = isBatch && window.batchState.selectedIds.has(t.id);
+                                const checkClass = isSelected ? 'checked' : '';
+                                
+                                let clickAction = `window.openEditTodoModal('${t.id}')`;
+                                if (isBatch) clickAction = `window.toggleBatchItem('${t.id}')`;
+
+                                const batchCheckboxHtml = `
+                                    <div class="batch-checkbox-col">
+                                        <div id="batch-check-${t.id}" class="batch-check-circle ${checkClass}"></div>
+                                    </div>`;
+
+                                const deleteBtnHtml = !isBatch ? 
+                                    `<div class="swipe-action-bg" onclick="window.deleteTodo('${t.id}')"><i data-lucide="trash-2" class="w-5 h-5"></i></div>` : '';
+
+                                const toggleBtnHtml = !isBatch ? `
+                                    <div class="flex-none mr-3" onclick="window.toggleTodo('${t.id}', ${!t.done}); event.stopPropagation();">
+                                        <div class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors text-white" style="${checkStyle}">
+                                            ${t.done ? '<i data-lucide="check" class="w-3 h-3"></i>' : ''}
+                                        </div>
+                                    </div>` : '';
+
+                                sectionHtml += `
+                                <div class="swipe-item border-b border-gray-50 last:border-0 ${isBatch ? 'selection-mode' : ''}" data-swipe-id="${t.id}" data-id="${t.id}">
+                                    ${deleteBtnHtml}
+
+                                    <div class="swipe-content flex items-center p-3 bg-white hover:bg-gray-50 transition cursor-pointer group" onclick="${clickAction}">
+                                        ${batchCheckboxHtml}
+                                        <div class="flex-1 flex items-center min-w-0">
+                                            ${toggleBtnHtml}
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center justify-between">
+                                                    <span class="${titleClass} font-medium truncate">${t.title}</span>
+                                                    ${calInfo}
+                                                </div>
+                                                <div class="flex items-center mt-1">
+                                                    <div class="w-1.5 h-1.5 rounded-full mr-1.5" style="background-color: ${barColor}"></div>
+                                                    <span class="text-[10px] text-gray-400">
+                                                        ${t.isJoint ? '共同' : (t.creator === 'haohao' ? '皓皓' : '毛毛')}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>`;
+                            } catch (itemErr) { console.error(itemErr); }
                         });
-                        const remaining = todos.filter(t => !t.done).length - pendings.length;
-                        if (remaining > 0) {
-                            dashboardList.innerHTML += `<div class="text-center text-xs text-gray-400 mt-1">還有 ${remaining} 個項目...</div>`;
+                        
+                        if(items.length === 0) { sectionHtml += `<div class="p-4 text-center text-xs text-gray-300">此分類無項目</div>`; }
+                        sectionHtml += `</div></div>`;
+                        
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = sectionHtml;
+                        container.appendChild(tempDiv.firstElementChild);
+
+                        setTimeout(() => {
+                            const listEl = document.getElementById(listId);
+                            if (listEl && items.length > 0 && typeof Sortable !== 'undefined' && !isBatch) {
+                                try {
+                                    new Sortable(listEl, {
+                                        group: `cat-${cat}`, animation: 150, delay: 300, delayOnTouchOnly: true, touchStartThreshold: 5, ghostClass: 'sortable-ghost', chosenClass: 'sortable-drag',
+                                        onChoose: function() { triggerHaptic('MEDIUM'); },
+                                        onEnd: function (evt) { window.updateTodoOrder(cat, listEl); }
+                                    });
+                                } catch(e) {}
+                            }
+                        }, 50);
+                    });
+                }
+
+                // 4. 更新 Dashboard (保持不變)
+                if(dashboardList) {
+                    if (pendingCount === 0) {
+                        dashboardList.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">沒有未完成的待辦事項 🎉</p>`;
+                    } else {
+                        dashboardList.innerHTML = '';
+                        const pendings = todos.filter(t => !t.done && (!t.category || window.todoCategoryVisibility[t.category] !== false)).slice(0, 3);
+                        
+                        if (pendings.length === 0 && pendingCount > 0) {
+                            dashboardList.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">待辦事項已隱藏</p>`;
+                        } else {
+                            pendings.forEach(t => {
+                                let dotColor = t.isJoint ? roleColors.joint : (t.creator === 'haohao' ? roleColors.haohao : roleColors.maomao);
+                                dashboardList.innerHTML += `
+                                <div class="flex items-center gap-2 text-sm bg-gray-50 p-2 rounded-lg border border-gray-100 mb-1">
+                                    <div class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: ${dotColor}"></div>
+                                    <span class="truncate text-gray-700 flex-1">${t.title}</span>
+                                    ${t.category ? `<span class="text-[9px] px-1 rounded bg-gray-200 text-gray-500">${t.category}</span>` : ''}
+                                </div>`;
+                            });
+                            const remaining = todos.filter(t => !t.done).length - pendings.length;
+                            if (remaining > 0) dashboardList.innerHTML += `<div class="text-center text-xs text-gray-400 mt-1">還有 ${remaining} 個項目...</div>`;
                         }
                     }
                 }
+                
+                if (!isBatch) {
+                    setTimeout(() => window.initSwipeListeners(container), 100);
+                }
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            } catch (err) {
+                console.error("Critical render error:", err);
+                container.innerHTML = `<div class="p-4 text-center text-red-400 text-sm">列表載入錯誤</div>`;
             }
-            if (typeof lucide !== 'undefined') lucide.createIcons();
         };
 
         // === 新增：分類收合切換功能 ===
@@ -3357,6 +3948,7 @@
 
         // === 修改後的 switchTab：加入聊天室自動捲動修正 ===
         window.switchTab = function(tabId) {
+            triggerHaptic('LIGHT');
             // 1. 隱藏所有頁面
             document.querySelectorAll('.page-content').forEach(page => {
                 page.classList.remove('active');
@@ -3502,44 +4094,66 @@
             }
         };
         
+        // === 確保此函式存在 ===
         window.handleBigCalDbClick = function(y, m, d) {
             const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            
+            // 先選中該日期 (視覺回饋)
+            window.selectBigCalendarDate(y, m, d);
+            
+            // 打開新增視窗 (因為我們改過了 openAddModal，它會自動讀取我們剛剛選中的日期)
             window.openAddModal();
-            const dateInput = document.getElementById('input-date-start');
-            if (dateInput) { dateInput.value = dateStr; }
-            window.updateDateDisplay('start', dateStr);
-            if(window.autoUpdateEnd) window.autoUpdateEnd();
         };
 
         let touchStartX = 0; let touchStartY = 0;
-        window.initSwipe = function() {
-            // 修改：改為監聽新的捲動區域，這樣手指在格子上滑動時才觸發
-            const el = document.getElementById('calendar-scroll-area') || document.getElementById('calendar-view-month');
-            
-            if(!el) return;
-            
-            el.addEventListener('touchstart', e => { 
-                touchStartX = e.changedTouches[0].screenX; 
-                touchStartY = e.changedTouches[0].screenY; 
-            }, {passive: true});
-            
-            el.addEventListener('touchend', e => {
-                if (currentViewMode !== 'month') return;
-                
-                const touchEndX = e.changedTouches[0].screenX; 
-                const touchEndY = e.changedTouches[0].screenY;
-                
-                const diffX = touchStartX - touchEndX; 
-                const diffY = touchStartY - touchEndY;
-                
-                // 邏輯：水平滑動距離 > 垂直滑動距離 (代表使用者想橫滑，不是想捲動)
-                // 且滑動距離 > 50px 才觸發
-                if(Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
-                    if(diffX > 0) window.changeBigCalMonth(1); // 左滑 -> 下個月
-                    else window.changeBigCalMonth(-1);         // 右滑 -> 上個月
-                }
-            }, {passive: true});
-        };
+        // === 優化版：月曆滑動切換 (防手震鎖定) ===
+window.initSwipe = function() {
+    const el = document.getElementById('calendar-scroll-area');
+    if(!el) return;
+    
+    let startX = 0;
+    let startY = 0;
+
+    // 1. 手指按下
+    el.addEventListener('touchstart', e => { 
+        startX = e.touches[0].clientX; 
+        startY = e.touches[0].clientY; 
+    }, {passive: true});
+
+    // 2. 手指移動 (關鍵新增！)
+    el.addEventListener('touchmove', e => {
+        if (currentViewMode !== 'month') return;
+        
+        const currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
+        const diffX = currentX - startX;
+        const diffY = currentY - startY;
+
+        // 判斷：如果是明顯的水平滑動 (X軸位移 > Y軸位移)
+        if(Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
+            // 🛑 鎖定垂直捲動！讓畫面不會上下亂跑
+            if (e.cancelable) e.preventDefault();
+        }
+    }, {passive: false}); // <--- 注意：這裡必須是 false
+
+    // 3. 手指放開 (觸發切換)
+    el.addEventListener('touchend', e => {
+        if (currentViewMode !== 'month') return;
+        
+        const endX = e.changedTouches[0].clientX; 
+        const endY = e.changedTouches[0].clientY;
+        
+        // 計算位移：起點 - 終點
+        const diffX = startX - endX; 
+        const diffY = startY - endY;
+        
+        // 觸發條件：水平滑動大於 50px 且 水平 > 垂直
+        if(Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+            if(diffX > 0) window.changeBigCalMonth(1); // 往左滑 -> 下個月
+            else window.changeBigCalMonth(-1);         // 往右滑 -> 上個月
+        }
+    }, {passive: true});
+};
 
             // === 新增：一鍵回到今天 ===
         window.jumpToToday = function() {
@@ -3757,6 +4371,7 @@
                 }
 
                 // 組合 HTML
+                // 你的程式碼應該長這樣 (檢查 ondblclick 有沒有在裡面)
                 html += `<div class="big-cal-cell ${isToday?'today':''}" id="big-cal-day-${d}" onclick="window.selectBigCalendarDate(${y},${m},${d})" ondblclick="window.handleBigCalDbClick(${y},${m},${d})">
                     <div class="big-cal-day-header">
                         <span class="big-cal-day-num" ${dayNumStyle}>${d}</span>
@@ -3848,6 +4463,31 @@ function initApp(db) {
             const conn = document.getElementById('connection-status'); 
             if (conn) { conn.className = "w-2 h-2 rounded-full bg-ttgreen shadow-[0_0_8px_#2cc998]"; }
             
+            // === 鍵盤行為監聽 ===
+            if (window.Capacitor && Capacitor.Plugins.Keyboard) {
+                const { Keyboard } = Capacitor.Plugins;
+
+                // 1. 鍵盤「即將」彈出
+                Keyboard.addListener('keyboardWillShow', info => {
+                    document.body.classList.add('keyboard-open');
+                    // 強制捲動到底部，避免訊息被遮住
+                    setTimeout(window.scrollToBottom, 100); 
+                });
+
+                // 2. 鍵盤「即將」收起
+                Keyboard.addListener('keyboardWillHide', () => {
+                    document.body.classList.remove('keyboard-open');
+                });
+            }
+
+            // === 新增：點擊空白處收起鍵盤 (LINE 體驗) ===
+            window.dismissKeyboard = async function() {
+                // 如果是在電腦瀏覽器測試，不需要這行
+                if (window.Capacitor) {
+                    await Capacitor.Plugins.Keyboard.hide();
+                }
+            };
+
             // 1. 行程 (Events) 監聽
             bindSnapshot(db.collection('events').orderBy('timestamp', 'asc'), (snapshot) => {
               const events = []; snapshot.forEach(doc => events.push({ id: doc.id, ...doc.data() }));
@@ -4244,29 +4884,25 @@ function initApp(db) {
             return finalOrder;
         };
 
-        // === 修改：渲染設定頁面的分類 (加入編輯/刪除功能) ===
+        // === 優化版：設定頁面分類渲染 (支援拖曳排序) ===
         window.renderCategorySettings = function() {
             const container = document.getElementById('settings-category-list');
             if (!container) return;
             
             container.innerHTML = '';
             
-            // 1. 取得排序後的列表
+            // 1. 取得目前的排序順序
             const sortedCats = window.getCategoryOrder();
 
-            // 2. 產生 UI
-            sortedCats.forEach((cat, index) => {
+            // 2. 產生 UI (加入 data-cat 屬性以便識別)
+            sortedCats.forEach((cat) => {
                 const isVisible = window.todoCategoryVisibility[cat] !== false;
                 
                 // 判斷是否為預設分類
                 const defCat = defaultCategories.find(c => c.name === cat);
                 const isDefault = !!defCat;
-                const color = defCat ? defCat.color : '#f3f4f6'; // 自訂分類預設灰色
+                const color = defCat ? defCat.color : '#f3f4f6'; 
                 
-                // 排序按鈕狀態
-                const isFirst = index === 0;
-                const isLast = index === sortedCats.length - 1;
-
                 // 產生 編輯/刪除 按鈕 (只有自訂分類才顯示)
                 let actionBtns = '';
                 if (!isDefault) {
@@ -4281,16 +4917,13 @@ function initApp(db) {
                     </div>`;
                 }
 
+                // 🌟 修改重點：移除上下箭頭，改為拖曳把手 (.sort-handle)
                 const html = `
-                <div class="flex items-center justify-between py-2 border-b border-gray-50 last:border-0 group">
+                <div class="flex items-center justify-between py-2 border-b border-gray-50 last:border-0 group category-sort-item" data-cat="${cat}">
                     <div class="flex items-center gap-2 flex-1 min-w-0">
-                        <div class="flex flex-col gap-0.5">
-                            <button onclick="window.moveCategory('${cat}', -1)" class="sort-btn ${isFirst ? 'disabled' : ''}">
-                                <i data-lucide="chevron-up" class="w-3 h-3"></i>
-                            </button>
-                            <button onclick="window.moveCategory('${cat}', 1)" class="sort-btn ${isLast ? 'disabled' : ''}">
-                                <i data-lucide="chevron-down" class="w-3 h-3"></i>
-                            </button>
+                        
+                        <div class="sort-handle cursor-grab active:cursor-grabbing p-1.5 text-gray-300 hover:text-gray-500 hover:bg-gray-100 rounded touch-none">
+                            <i data-lucide="grip-vertical" class="w-4 h-4"></i>
                         </div>
                         
                         <div class="flex items-center gap-2 flex-1 min-w-0">
@@ -4311,6 +4944,35 @@ function initApp(db) {
             });
             
             if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            // === 🌟 啟用 SortableJS (針對分類列表) ===
+            // 先銷毀舊的實例 (避免重複綁定)
+            if (window.categorySortable) {
+                window.categorySortable.destroy();
+                window.categorySortable = null;
+            }
+
+            window.categorySortable = new Sortable(container, {
+                handle: '.sort-handle', // 指定只有按住把手才能拖曳
+                animation: 150,
+                ghostClass: 'bg-gray-50', // 拖曳時留下的空位樣式
+                onEnd: function () {
+                    // 1. 從 DOM 讀取新的順序
+                    const newOrder = Array.from(container.querySelectorAll('.category-sort-item'))
+                                          .map(el => el.getAttribute('data-cat'));
+                    
+                    // 2. 存入 LocalStorage
+                    localStorage.setItem('todo_category_order', JSON.stringify(newOrder));
+                    
+                    // 3. 立即刷新外部的待辦清單 (讓變更即時生效)
+                    if (typeof window.renderTodos === 'function' && window.allTodosCache) {
+                        window.renderTodos(window.allTodosCache);
+                    }
+                    
+                    // 4. 給個震動回饋
+                    triggerHaptic('LIGHT');
+                }
+            });
         };
 
         // === 新增：重新命名自訂分類 ===
@@ -4763,6 +5425,166 @@ function initApp(db) {
             window.closeReminderPicker();
         };
 
+        // === 優化版：滑動刪除功能核心邏輯 (解決捲動與排序衝突) ===
+window.initSwipeListeners = function(container) {
+    let startX = 0;
+    let startY = 0;
+    let currentItem = null;
+    let currentTranslate = 0;
+    
+    // 取得所有可滑動的項目
+    const items = container.querySelectorAll('.swipe-item');
+
+    items.forEach(item => {
+        const content = item.querySelector('.swipe-content');
+        if (!content) return;
+
+        // 1. 手指按下
+        content.addEventListener('touchstart', (e) => {
+            // 如果有其他已打開的項目，先把它關起來
+            document.querySelectorAll('.swipe-content').forEach(el => {
+                if (el !== content) el.style.transform = 'translateX(0px)';
+            });
+
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            currentItem = content;
+            
+            // 移除動畫效果，讓拖曳更跟手
+            content.style.transition = 'none';
+        }, { passive: true });
+
+        // 2. 手指移動
+        content.addEventListener('touchmove', (e) => {
+            if (!currentItem) return;
+
+            // 🛑 關鍵修正：如果這個項目正在被拖曳排序 (SortableJS)，就禁止滑動刪除
+            if (item.classList.contains('sortable-drag') || item.classList.contains('sortable-chosen')) {
+                return;
+            }
+
+            const currentX = e.touches[0].clientX;
+            const currentY = e.touches[0].clientY;
+            const diffX = currentX - startX;
+            const diffY = currentY - startY;
+
+            // 判斷是否為「明顯的」水平滑動
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 5) {
+                
+                // 禁止瀏覽器預設捲動
+                if (e.cancelable) e.preventDefault();
+                
+                // 只允許向左滑 (diffX < 0)
+                if (diffX < 0) {
+                    currentTranslate = Math.max(diffX, -80); 
+                    content.style.transform = `translateX(${currentTranslate}px)`;
+                }
+            }
+        }, { passive: false });
+
+        // 3. 手指放開
+        content.addEventListener('touchend', (e) => {
+            if (!currentItem) return;
+
+            // 恢復動畫效果
+            content.style.transition = 'transform 0.2s ease-out';
+
+            // 判斷是否滑動超過一半 (-40px)
+            if (currentTranslate < -40) {
+                content.style.transform = 'translateX(-80px)';
+            } else {
+                content.style.transform = 'translateX(0px)';
+            }
+
+            // 重置
+            currentItem = null;
+            currentTranslate = 0;
+        });
+    });
+};
+
+// === 新增：行程快速刪除函式 ===
+window.quickDeleteEvent = function(id) {
+    // 設定 ID，為了讓 executeDelete 知道要刪誰
+    editingEventId = id;
+    // 設定全域刪除目標
+    deleteTarget = 'event'; 
+
+    // 呼叫確認視窗
+    const m = document.getElementById('confirm-modal');
+    const title = m.querySelector('h3');
+    const desc = m.querySelector('p');
+    if(title) title.textContent = '刪除行程？';
+    if(desc) desc.textContent = '確定要刪除這個行程嗎？';
+    
+    // 顯示確認視窗
+    window.confirmDelete();
+    
+    // 關閉滑動狀態 (把那一行彈回去)
+    const item = document.querySelector(`.swipe-item[data-swipe-id="${id}"] .swipe-content`);
+    if (item) item.style.transform = 'translateX(0px)';
+};
+
+    // === 新增：更新待辦事項順序 ===
+        window.updateTodoOrder = function(category, listElement) {
+            // 1. 取得目前 DOM 上面的排列順序 (ID 列表)
+            const newOrderIds = Array.from(listElement.querySelectorAll('.swipe-item'))
+                                     .map(el => el.getAttribute('data-id'))
+                                     .filter(id => id); // 過濾掉 null
+
+            if (newOrderIds.length === 0) return;
+
+            // 2. 批次更新 Firebase
+            const batch = db.batch();
+            
+            // 為了效能，我們只更新這個分類底下的 items
+            // 使用目前的 timestamp 加上 index 作為排序依據，確保順序正確
+            newOrderIds.forEach((id, index) => {
+                const ref = db.collection('todos').doc(id);
+                // order 欄位：數字越小排越前面
+                batch.update(ref, { order: index });
+            });
+
+            batch.commit()
+                .then(() => console.log(`Category [${category}] order updated`))
+                .catch(err => console.error("Order update failed", err));
+        };
+
     </script>
+
+    <div id="category-settings-modal" class="fixed inset-0 z-[70] flex items-center justify-center hidden modal">
+        <div class="absolute inset-0 bg-black/20 backdrop-blur-[1px]" onclick="window.closeCategorySettingsModal()"></div>
+        <div class="relative bg-white w-[320px] h-[500px] rounded-2xl shadow-xl overflow-hidden transform scale-100 transition-transform flex flex-col">
+            
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 flex-none">
+                <button onclick="window.closeCategorySettingsModal()" class="flex items-center text-gray-500 hover:text-gray-800 transition">
+                    <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                    <span class="text-sm font-bold ml-1">返回</span>
+                </button>
+                <h3 class="text-base font-bold text-gray-800">分類管理</h3>
+                <div class="w-10"></div> </div>
+            
+            <div class="flex-1 overflow-y-auto p-2 bg-white">
+                <p class="text-xs text-gray-400 text-center py-2 mb-2">長按 <i data-lucide="grip-vertical" class="w-3 h-3 inline"></i> 可拖曳排序，開關可切換首頁顯示。</p>
+                
+                <div id="settings-category-list" class="space-y-1 pb-10">
+                    </div>
+            </div>
+
+            <div class="p-3 border-t border-gray-100 bg-gray-50 text-center flex-none">
+                <button onclick="window.closeCategorySettingsModal()" class="w-full py-2 bg-theme text-white rounded-xl text-sm font-bold shadow-sm active:scale-95 transition">
+                    完成
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="batch-action-bar">
+    <div class="text-sm font-bold text-gray-500">已選擇 <span id="batch-count">0</span> 項</div>
+    <button onclick="window.executeBatchDelete()" id="btn-batch-delete" class="px-6 py-2 bg-red-50 text-red-500 font-bold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition hover:bg-red-100">
+        刪除
+    </button>
+</div>
+
 </body>
 </html>
