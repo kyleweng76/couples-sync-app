@@ -194,6 +194,25 @@ window.updateBatchUI = function() {
                 });
         };
 
+        // === 🌟 新增：完成歡迎畫面設定 ===
+        window.completeOnboarding = function(role) {
+            // 1. 設定身分 (這會自動更新 localStorage 和 UI)
+            window.setRole(role);
+            
+            // 2. 觸發震動回饋
+            if (window.triggerHaptic) window.triggerHaptic('SUCCESS');
+
+            // 3. 淡出動畫
+            const screen = document.getElementById('onboarding-screen');
+            screen.style.opacity = '0';
+            
+            // 4. 動畫結束後移除元素，並顯示提示
+            setTimeout(() => {
+                screen.style.display = 'none'; // 或 screen.remove();
+                window.showToast(`歡迎回來，${role === 'haohao' ? '皓皓' : '毛毛'}！ ❤️`);
+            }, 500);
+        };
+
     </script>
 
     <style>
@@ -648,22 +667,22 @@ window.updateBatchUI = function() {
         }
         .big-cal-cell.today .big-cal-day-num { color: white !important; } /* 今天強制白字 */
         
-        /* 修改：內容區塊容器 (微調間距) */
+        /* 格子內容區塊：減少上方留白 */
         .big-cal-content-wrapper {
             flex: 1;
             width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 1px;
-            padding-top: 6px; /* <--- 改成 6px，剛剛好的距離 */
+            gap: 0px;           /* 移除額外間距 */
+            padding-top: 1px;   /* 減少頂部 padding */
         }
 
-        /* 行程條樣式：更扁、文字更小 */
+        /* === 修改：更緊湊的行程條樣式 === */
         .event-bar { 
-            height: 20px; /*稍微加高一點點，視覺比較飽滿 (原本18) */
-            line-height: 20px;
-            font-size: 11px; /* 字體微調大一點點 (原本10) */
-            padding: 0 6px; 
+            height: 17px;       /* 📏 高度從 20px 縮小到 17px (關鍵!) */
+            line-height: 17px;  /* 文字垂直置中 */
+            font-size: 10px;    /* 字體縮小到 10px (清楚且不佔位) */
+            padding: 0 4px;     /* 左右留白縮小 */
             color: white; 
             white-space: nowrap; 
             overflow: hidden; 
@@ -672,9 +691,9 @@ window.updateBatchUI = function() {
             position: relative;
             box-sizing: border-box;
             z-index: 10;
-            margin-bottom: 1px; /* 條與條之間留一點縫隙 */
+            margin-bottom: 1px; /* 條與條之間的縫隙維持 1px */
             font-weight: 500;
-            text-shadow: 0 1px 1px rgba(0,0,0,0.1); /* 增加一點文字立體感 */
+            border-radius: 2px; /* 📐 改成極小圓角 (2px)，看起來像直角但不會太銳利 */
         }
 
         /* 休假樣式優化 */
@@ -709,13 +728,53 @@ window.updateBatchUI = function() {
         #calendar-picker-modal .cal-day-header { font-size: 11px; font-weight: 500; color: #8e8e93; }
         #calendar-picker-modal .relative { padding-bottom: 12px; }
         
-        /* iOS Bottom Nav */
-        nav .nav-item { padding-bottom: 6px; transition: transform 0.12s ease-out, background-color 0.12s ease-out; border-radius: 12px; -webkit-tap-highlight-color: transparent; position: relative; }
-        nav .nav-item i { transition: transform 0.12s ease-out; will-change: transform; }
-        nav .nav-item:active i { transform: scale(0.85); }
-        nav .nav-item.active i { transform: scale(1.1); }
-        nav .nav-item span { transform: none !important; }
-        nav .nav-item.active::after { content: ""; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 20px; height: 3px; border-radius: 999px; background-color: var(--active-tab-color, #2cc998); }
+        /* === 優化：iOS 風格底部導覽列 === */
+        nav {
+            /* 1. 背景改為更通透的 iOS 霧面大白 */
+            background-color: rgba(255, 255, 255, 0.85) !important;
+            backdrop-filter: saturate(180%) blur(20px) !important; /* 關鍵：高斯模糊 */
+            -webkit-backdrop-filter: saturate(180%) blur(20px) !important;
+            
+            /* 2. 邊框改為極細的 iOS 分隔線 */
+            border-top: 0.5px solid rgba(0, 0, 0, 0.15) !important;
+            padding-bottom: max(20px, env(safe-area-inset-bottom)) !important; /* 確保底部留白 */
+        }
+
+        /* === 修正 1：一般模式下 (白底) 的未選中顏色 === */
+        /* 強制將未選中的圖示與文字改成深灰色 (#999999 是 iOS 標準色) */
+        .nav-btn:not(.active) .nav-icon-pill,
+        .nav-btn:not(.active) span {
+            color: #8E8E93 !important; /* iOS System Gray */
+            font-weight: 500;
+        }
+        
+        /* 選中時的文字加粗一點 */
+        .nav-btn.active span {
+            font-weight: 600 !important;
+        }
+
+        /* === 修正 2：全色系模式下 (Colored Nav) 的未選中顏色 === */
+        /* 當導覽列變色時 (例如變綠色)，未選中的項目要更白一點才看得到 */
+        nav.colored-nav {
+            background-color: var(--app-color) !important; /* 使用主題色 */
+            border-top: none !important; /* 全色系時不需要頂部線條，比較好看 */
+        }
+
+        nav.colored-nav .nav-btn:not(.active) .nav-icon-pill,
+        nav.colored-nav .nav-btn:not(.active) span {
+            /* 原本是 0.6，改成 0.8 讓它更清楚 */
+            color: rgba(255, 255, 255, 0.8) !important; 
+        }
+        
+        /* 全色系模式下，選中的項目 (變成白色膠囊) */
+        nav.colored-nav .nav-btn.active .nav-icon-pill {
+            background-color: white !important;
+            color: var(--app-color) !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* 加一點浮起來的陰影 */
+        }
+        nav.colored-nav .nav-btn.active span {
+            color: white !important;
+        }
     
         /* === 分類標籤樣式 === */
         .category-chip {
@@ -776,26 +835,27 @@ window.updateBatchUI = function() {
             min-width: 30px; /* 確保有足夠寬度 */
         }
 
+        /* 休假標籤優化 */
         .leave-row {
             display: flex;
-            justify-content: center; /* <--- 加入這行，讓標籤水平置中 */
+            justify-content: center;
             gap: 2px;
-            margin-bottom: 2px;
+            margin-bottom: 1px; /* 縮小與下方行程的距離 */
             min-height: 0;
+            height: 16px;       /* 固定高度，避免撐開 */
         }
 
         .leave-chip {
-            font-size: 10px;
+            font-size: 9px;     /* 字體縮小 */
             color: white;
             font-weight: bold;
-            padding: 0 4px; /* 稍微寬一點，讓字舒服 */
-            border-radius: 4px;
-            height: 16px;   /* 固定高度，跟一般的行程條差不多或略小 */
-            line-height: 16px;
+            padding: 0 4px;
+            border-radius: 2px; /* 統一風格，改用小圓角 */
+            height: 14px;       /* 高度縮小 */
+            line-height: 14px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
         }
 
         /* 日期 Header 微調 (改回靠左或置中，這裡維持置中比較好看) */
@@ -1055,10 +1115,11 @@ window.updateBatchUI = function() {
 
     /* 當 .swipe-item 有 selection-mode 時，強制展開 */
     .swipe-item.selection-mode .batch-checkbox-col {
-        width: 40px !important;      /* 強制寬度 */
-        min-width: 40px !important;  /* 強制最小寬度 (關鍵!) */
-        opacity: 1 !important;       /* 強制顯示 */
-        margin-right: 8px !important;
+        width: 52px !important;      /* 📏 從 40px 加寬到 52px */
+        min-width: 52px !important;
+        opacity: 1 !important;
+        margin-right: 4px !important;
+        padding-left: 12px;          /* 👈 新增：增加左側留白，讓圈圈往右移 */
     }
 
     /* 模擬 iOS 的圓形勾選框 */
@@ -1196,6 +1257,14 @@ window.updateBatchUI = function() {
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* 貝茲曲線：Q彈效果 */
         }
 
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
     </style>
 </head>
 <body class="text-gray-700 h-screen flex flex-col overflow-hidden bg-white">
@@ -1213,8 +1282,7 @@ window.updateBatchUI = function() {
                 <span id="header-role-name">載入中</span>
                 <i data-lucide="user" class="w-3.5 h-3.5"></i>
             </div>
-            <div id="connection-status" class="w-2.5 h-2.5 rounded-full bg-red-400 ring-2 ring-white shadow-sm"></div>
-        </div>
+            </div>
     </header>
 
     <!-- Main Content -->
@@ -1222,7 +1290,7 @@ window.updateBatchUI = function() {
 
 <div id="page-dashboard" class="page-content active">
             
-            <div class="px-4 mb-3">
+            <div class="px-4 mb-4">
                 <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex justify-between items-center relative overflow-hidden">
                     <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-green-100/50 to-transparent rounded-full -mr-8 -mt-8 pointer-events-none"></div>
                     
@@ -1243,6 +1311,11 @@ window.updateBatchUI = function() {
                     </div>
 
                     <div class="text-right z-10 flex flex-col items-end">
+                        <div id="brief-location-row" class="hidden flex items-center gap-1 mb-1 opacity-80">
+                            <i data-lucide="map-pin" class="w-3 h-3 text-theme"></i>
+                            <span id="brief-location" class="text-xs font-bold text-gray-600 tracking-wide">定位中...</span>
+                        </div>
+
                         <div class="flex items-center gap-2">
                             <i id="brief-weather-icon" data-lucide="cloud" class="w-6 h-6 text-gray-400"></i>
                             <span id="brief-temp-current" class="text-2xl font-bold text-gray-800">--°</span>
@@ -1256,7 +1329,7 @@ window.updateBatchUI = function() {
                 </div>
             </div>
 
-            <div class="px-4 flex gap-3 mb-6">
+            <div class="px-4 flex gap-3 mb-4">
                 <button onclick="window.openAddModal()" class="flex-1 bg-theme p-4 rounded-xl shadow-md text-white flex items-center justify-center gap-2 active:scale-95 transition">
                     <i data-lucide="calendar-plus" class="w-5 h-5 text-white"></i>
                     <span class="text-sm font-bold">新增行程</span>
@@ -1386,24 +1459,26 @@ window.updateBatchUI = function() {
             </div>
 
             <div class="flex-none bg-white border-t border-gray-200 z-20">
-                <div class="p-3 bg-gray-50 flex items-center gap-2">
-                    
-                    <button onclick="window.toggleStickerPicker()" class="p-2 text-gray-400 hover:text-gray-600 active:scale-95 transition rounded-full hover:bg-gray-200 flex-shrink-0">
-                        <i data-lucide="smile" class="w-6 h-6"></i>
-                    </button>
+                <div class="px-3 pt-3 pb-5 bg-gray-50 flex items-center gap-2">
+                
+                <button onclick="window.toggleStickerPicker()" class="p-2 text-gray-400 hover:text-gray-600 active:scale-95 transition rounded-full hover:bg-gray-200 flex-shrink-0">
+                    <i data-lucide="smile" class="w-6 h-6"></i>
+                </button>
 
-                    <div class="flex-1 flex flex-nowrap items-center bg-white rounded-full px-2 py-2 shadow-sm border border-gray-200 focus-within:ring-2 focus-within:ring-ttgreen focus-within:ring-opacity-50">
-                        
-                        <div class="w-8 h-8 flex items-center justify-center text-gray-400 flex-shrink-0 cursor-pointer hover:text-gray-600 active:scale-95 transition" onclick="window.scrollToBottom()">
-                            <i data-lucide="arrow-down-circle" class="w-6 h-6"></i>
-                        </div>
-
-                        <input type="text" id="note-input" placeholder="傳送訊息..." class="flex-1 min-w-0 bg-transparent border-none text-base text-gray-700 placeholder-gray-400 focus:ring-0 px-2 outline-none text-left h-full py-1" onfocus="window.closeStickerPicker()">
+                <div class="flex-1 flex flex-nowrap items-center bg-white rounded-full px-3 py-3 shadow-sm border border-gray-200 focus-within:ring-2 focus-within:ring-ttgreen focus-within:ring-opacity-50">
                     
-                    </div> <button id="note-send-btn" onclick="window.sendNote()" class="w-9 h-9 flex items-center justify-center rounded-full bg-ttgreen text-white shadow-md active:scale-90 transition ml-1 flex-shrink-0 hover:bg-green-500">
-                        <i data-lucide="send" class="w-4 h-4 ml-0.5"></i>
-                    </button>
-                </div>
+                    <div class="w-8 h-8 flex items-center justify-center text-gray-400 flex-shrink-0 cursor-pointer hover:text-gray-600 active:scale-95 transition" onclick="window.scrollToBottom()">
+                        <i data-lucide="arrow-down-circle" class="w-6 h-6"></i>
+                    </div>
+
+                    <input type="text" id="note-input" placeholder="傳送訊息..." class="flex-1 min-w-0 bg-transparent border-none text-base text-gray-700 placeholder-gray-400 focus:ring-0 px-2 outline-none text-left h-full py-2" onfocus="window.closeStickerPicker()">
+                
+                </div> 
+                
+                <button id="note-send-btn" onclick="window.sendNote()" class="w-10 h-10 flex items-center justify-center rounded-full bg-ttgreen text-white shadow-md active:scale-90 transition ml-1 flex-shrink-0 hover:bg-green-500">
+                    <i data-lucide="send" class="w-5 h-5 ml-0.5"></i>
+                </button>
+            </div>
 
                 <div id="sticker-picker-container">
                     <div id="sticker-grid" class="sticker-grid">
@@ -1907,7 +1982,7 @@ window.updateBatchUI = function() {
     </div>
 
     <!-- Bottom Nav (4 Items only) -->
-            <nav class="fixed bottom-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-200 px-2 pt-2 pb-6 flex justify-around items-center z-50 pb-safe">
+            <nav class="fixed bottom-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-200 px-2 pt-4 pb-6 flex justify-around items-center z-50 pb-safe">
             
             <button onclick="window.switchTab('dashboard')" class="nav-btn active group flex flex-col items-center justify-center w-16 h-full transition-all" data-tab="dashboard">
                 <div class="nav-icon-pill p-1.5 rounded-full transition-all duration-300 group-[.active]:text-white text-gray-400">
@@ -1920,7 +1995,7 @@ window.updateBatchUI = function() {
                 <div class="nav-icon-pill p-1.5 rounded-full transition-all duration-300 group-[.active]:text-white text-gray-400">
                     <i data-lucide="calendar" class="w-6 h-6 transition-transform duration-300 group-active:scale-95"></i>
                 </div>
-                <span class="text-[10px] font-medium mt-1 transition-all duration-300 group-[.active]:font-bold text-gray-400">行事曆</span>
+                <span class="text-[10px] font-medium mt-1 transition-all duration-300 group-[.active]:font-bold text-gray-400">行程</span>
             </button>
             
             <button onclick="window.switchTab('todo')" class="nav-btn group flex flex-col items-center justify-center w-16 h-full transition-all" data-tab="todo">
@@ -3319,6 +3394,12 @@ window.updateBatchUI = function() {
                 // 刷新待辦清單 (會重新觸發 renderTodos 的過濾)
                 window.renderTodos(window.allTodosCache);
             }
+            // 👇👇👇 新增這一段：如果有聊天快取，依照新身分重新排列左右側 👇👇👇
+            if (window.allMessagesCache) {
+                window.renderChat(window.allMessagesCache);
+            }
+            // 👆👆👆 新增結束 👆👆👆
+
         };
         
         window.updateMyStatus = function(status) {
@@ -4582,7 +4663,10 @@ window.initSwipe = function() {
                 // 如果有休假，顯示空間會被壓縮一點，但我們讓它自然往下擠
                 const renderLimit = Math.min(maxTrackUsed, MAX_VISIBLE_TRACKS - 1);
                 
-                // === 修正後的渲染迴圈：實現無縫連接效果 ===
+                // === 優化後的渲染迴圈 (直角整齊版) ===
+                // 我們嘗試顯示最多 4 行 (包含休假佔用掉的空間)
+                // 如果有休假標籤，它是獨立的一層，不佔用 track，但會壓縮高度
+                
                 for (let t = 0; t <= renderLimit; t++) {
                     const evt = dayBarEvents.find(e => eventTrack[e.id] === t);
                     if (evt) {
@@ -4597,36 +4681,37 @@ window.initSwipe = function() {
                         const isStart = current.getTime() === s.getTime();
                         const isEnd = current.getTime() === end.getTime();
                         const isSingle = isStart && isEnd;
-                        const showLabel = isStart || isSingle || (d === 1) || (current.getDay() === 1); // 週一也顯示文字
+                        const showLabel = isStart || isSingle || (d === 1) || (current.getDay() === 1); // 週一或每月1號顯示文字
 
                         let styleAttr = `background-color:${bg};`;
                         let content = evt.title;
                         
-                        // 🌟 核心修改：移除 overflow 後，加大負邊距 (-2px) 來確保完全覆蓋白線
-                        let shapeClass = ''; 
+                        // 🌟 樣式核心修改：統一使用直角/微圓角，視覺更整齊 🌟
+                        // 為了讓跨日行程看起來是連續的，我們調整左右邊距
+                        let shapeClass = 'relative z-10'; 
 
                         if (isSingle) {
-                            // A. 單日行程：維持可愛圓角
-                            shapeClass = 'rounded-[4px] mx-[3px]';
+                            // 單日：左右留一點點白邊 (mx-[1px])
+                            shapeClass += ' mx-[1px]';
                         } else {
-                            // B. 連續行程
+                            // 跨日行程
                             if (isStart) {
-                                // 頭：右邊伸出去 2px
-                                shapeClass = 'rounded-l-[4px] rounded-r-none ml-[3px] mr-[-2px] pr-2 z-10 relative'; 
+                                // 起點：左邊留白，右邊貼齊 (-1px margin 確保無縫)
+                                shapeClass += ' ml-[1px] mr-[-1px] pr-1'; 
                             } else if (isEnd) {
-                                // 尾：左邊伸出去 2px
-                                shapeClass = 'rounded-l-none rounded-r-[4px] ml-[-2px] mr-[3px] pl-2 z-10 relative';
+                                // 終點：右邊留白，左邊貼齊
+                                shapeClass += ' mr-[1px] ml-[-1px] pl-1';
                                 if (!showLabel) content = '&nbsp;'; 
                             } else {
-                                // 中間：左右都伸出去 2px
-                                shapeClass = 'rounded-none mx-[-2px] z-10 relative';
+                                // 中間：左右都貼齊 (負 margin)
+                                shapeClass += ' mx-[-1px]';
                                 if (!showLabel) content = '&nbsp;'; 
                             }
                         }
                         
-                        // 如果是週六(最右邊)，右邊不要伸出去，不然會凸出螢幕
+                        // 週六(最右邊)強制縮回來，不然會凸出去
                         if (current.getDay() === 6 && !isSingle && !isEnd) {
-                             shapeClass = shapeClass.replace('mr-[-2px]', 'mr-0');
+                             shapeClass = shapeClass.replace('mr-[-1px]', 'mr-[1px]');
                         }
                         
                         bars += `<div class="event-bar ${evt.isTodo&&evt.done?'done':''} ${shapeClass}" style="${styleAttr}" onclick="event.stopPropagation(); window.selectBigCalendarDate(${y},${m},${d}, '${evt.id}')">${content}</div>`;
@@ -4643,14 +4728,17 @@ window.initSwipe = function() {
                 }
 
                 // 農曆與假日
-                const { lunar, holiday } = window.getLunarAndHoliday(current);
+                // 👇 修改：多解構出 lunarShort
+                const { lunar, lunarShort, holiday } = window.getLunarAndHoliday(current);
+                
                 let extraInfoHtml = '';
                 let dayNumStyle = '';
                 if (holiday) {
                     extraInfoHtml = `<span class="big-cal-holiday">${holiday}</span>`;
                     dayNumStyle = 'style="color: #ef4444;"';
                 } else {
-                    extraInfoHtml = `<span class="big-cal-lunar">${lunar}</span>`;
+                    // 👇 修改：這裡改用 lunarShort (簡短版)
+                    extraInfoHtml = `<span class="big-cal-lunar">${lunarShort}</span>`;
                 }
 
                 // 組合 HTML
@@ -4746,48 +4834,64 @@ function initApp(db) {
             const conn = document.getElementById('connection-status'); 
             if (conn) { conn.className = "w-2 h-2 rounded-full bg-ttgreen shadow-[0_0_8px_#2cc998]"; }
             
-            // === 🚀 新增：推播通知註冊邏輯 ===
-            if (window.Capacitor && Capacitor.Plugins.PushNotifications) {
-                const { PushNotifications } = Capacitor.Plugins;
+            // === 🚀 修正：推播通知註冊邏輯 (改用 FirebaseMessaging 確保拿到 FCM Token) ===
+            // 只有在手機版 (Capacitor) 且有安裝 FirebaseMessaging 外掛時才執行
+            if (window.Capacitor && Capacitor.Plugins.FirebaseMessaging) {
+                const { FirebaseMessaging } = Capacitor.Plugins;
 
                 // 1. 請求權限
-                PushNotifications.requestPermissions().then(result => {
+                FirebaseMessaging.requestPermissions().then(result => {
                     if (result.receive === 'granted') {
-                        PushNotifications.register();
+                        // 2. 取得 FCM Token (這是關鍵！這才是 Firebase 能用的 Token)
+                        FirebaseMessaging.getToken().then(tokenResult => {
+                            console.log('FCM Token:', tokenResult.token);
+                            
+                            // 存入 Firestore
+                            if (currentUserRole) {
+                                db.collection('user_tokens').doc(currentUserRole).set({
+                                    token: tokenResult.token, // 存入正確的 FCM Token
+                                    platform: 'ios',
+                                    updatedAt: new Date().toISOString()
+                                }, { merge: true });
+                            }
+                        }).catch(err => {
+                            console.error("FCM GetToken Error:", err);
+                        });
+                        
+                        // 3. 註冊監聽器 (當 Token 更新時)
+                        FirebaseMessaging.removeAllListeners(); // 避免重複綁定
+                        
+                        FirebaseMessaging.addListener('tokenReceived', (event) => {
+                            console.log('New FCM Token:', event.token);
+                            if (currentUserRole) {
+                                db.collection('user_tokens').doc(currentUserRole).set({
+                                    token: event.token,
+                                    platform: 'ios',
+                                    updatedAt: new Date().toISOString()
+                                }, { merge: true });
+                            }
+                        });
+
+                        // 4. 收到通知 (前景)
+                        FirebaseMessaging.addListener('notificationReceived', (event) => {
+                            const notification = event.notification;
+                            window.showToast(`🔔 ${notification.title || '新訊息'}: ${notification.body || ''}`);
+                            if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                        });
+
+                        // 5. 點擊通知 (背景/關閉狀態打開 App)
+                        FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
+                            console.log('Notification clicked:', event);
+                            // 如果是聊天通知，切換到聊天頁面
+                            // 這裡可以根據 notification.data 裡的 tag 或其他欄位判斷
+                            window.switchTab('chat');
+                        });
+
+                        // 確保 Capacitor 載入後，再次嘗試更新天氣與定位
+            setTimeout(() => {
+                if (window.renderDailyBrief) window.renderDailyBrief();
+            }, 1000);
                     }
-                });
-
-                // 2. 註冊成功，拿到 Token (這是手機的地址)
-                PushNotifications.addListener('registration', (token) => {
-                    console.log('Push Token:', token.value);
-                    
-                    // 把 Token 存到 Firestore 的 user_tokens 集合
-                    // 我們用 currentUserRole (haohao/maomao) 當作文件 ID
-                    if (currentUserRole) {
-                        db.collection('user_tokens').doc(currentUserRole).set({
-                            token: token.value,
-                            platform: 'ios',
-                            updatedAt: new Date().toISOString()
-                        }, { merge: true });
-                    }
-                });
-
-                // 3. 註冊失敗
-                PushNotifications.addListener('registrationError', (error) => {
-                    console.error('Error on registration: ' + JSON.stringify(error));
-                });
-
-                // 4. 收到通知 (App 在前景時)
-                PushNotifications.addListener('pushNotificationReceived', (notification) => {
-                    window.showToast(`🔔 ${notification.title}: ${notification.body}`);
-                    // 這裡可以加入震動
-                    if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
-                });
-
-                // 5. 點擊通知 (App 被點開時)
-                PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
-                    // 如果是聊天通知，切換到聊天頁面
-                    window.switchTab('chat');
                 });
             }
 
@@ -4944,7 +5048,11 @@ function initApp(db) {
                 }
                 
                 isFirstChatLoad = false;
-                window.renderChat(msgs.reverse());
+                
+                // 👇👇👇 修改：先存入全域變數 Cache，再渲染 👇👇👇
+                window.allMessagesCache = msgs.reverse(); 
+                window.renderChat(window.allMessagesCache);
+                
             }, 'chat');
 
             // 4. 狀態 (Status) 監聽
@@ -4966,8 +5074,19 @@ function initApp(db) {
             window.renderDailyBrief(); 
             // ===============
 
-            if (!currentUserRole) { window.switchTab('settings'); setTimeout(() => window.showToast('歡迎！請先選擇您的身分 👋'), 500); } 
-            else { document.documentElement.style.setProperty('--active-tab-color', roleColors[currentUserRole]); }
+            // === 修改：如果有身分就正常進入，沒有就顯示歡迎頁 ===
+            if (!currentUserRole) {
+                // 顯示歡迎畫面
+                const onboarding = document.getElementById('onboarding-screen');
+                if (onboarding) onboarding.classList.remove('hidden');
+            } 
+            else { 
+                // 正常進入 App
+                document.documentElement.style.setProperty('--active-tab-color', roleColors[currentUserRole]); 
+                // 如果已經有身分，可以把歡迎頁從 DOM 移除以節省資源
+                const onboarding = document.getElementById('onboarding-screen');
+                if (onboarding) onboarding.remove();
+            }
             if (db) initApp(db);
             window.initSwipe();
           }, 'bootstrap');
@@ -5618,92 +5737,47 @@ function initApp(db) {
             }
         };
 
-        // === 每日資訊卡片功能 (含紀念日祝賀) ===
-        window.renderDailyBrief = function() {
+        // === 每日資訊卡片 (含原生定位 + 反查地名) ===
+        window.renderDailyBrief = async function() {
             const now = new Date();
             const weekDays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
             
-            // 1. 更新西元日期
+            // 1. 更新日期
             document.getElementById('brief-day-num').textContent = now.getDate();
             document.getElementById('brief-day-word').textContent = weekDays[now.getDay()];
             document.getElementById('brief-month-year').textContent = `${now.getMonth() + 1}月 / ${now.getFullYear()}`;
 
-            // 2. 農曆與節日邏輯
+            // 2. 農曆與節日 (維持原本邏輯)
             let lunarText = '';
-            let specialMsg = ''; // 儲存祝賀語
-            
+            let specialMsg = ''; 
             try {
-                // 取得今天農曆
-                const parts = new Intl.DateTimeFormat('zh-TW-u-ca-chinese', { 
-                    day: 'numeric', month: 'long' 
-                }).formatToParts(now);
-                
-                const lunarMonth = parts.find(p => p.type === 'month')?.value; // ex: 正月, 十二月
-                let lunarDay = parts.find(p => p.type === 'day')?.value;       // ex: 初一, 15
+                const { lunar, holiday } = window.getLunarAndHoliday(now);
+                lunarText = `農曆 ${lunar}`;
 
-                // 修正純數字的農曆日期
-                const dayMap = {
-                    '1': '初一', '2': '初二', '3': '初三', '4': '初四', '5': '初五',
-                    '6': '初六', '7': '初七', '8': '初八', '9': '初九', '10': '初十',
-                    '11': '十一', '12': '十二', '13': '十三', '14': '十四', '15': '十五',
-                    '16': '十六', '17': '十七', '18': '十八', '19': '十九', '20': '二十',
-                    '21': '廿一', '22': '廿二', '23': '廿三', '24': '廿四', '25': '廿五',
-                    '26': '廿六', '27': '廿七', '28': '廿八', '29': '廿九', '30': '三十'
-                };
-                const dayNum = parseInt(lunarDay.replace(/[^\d]/g, ''));
-                if (!isNaN(dayNum) && dayMap[dayNum]) { lunarDay = dayMap[dayNum]; }
-                
-                lunarText = `農曆 ${lunarMonth}${lunarDay}`;
-
-                // === ✨ 紀念日判斷邏輯 ✨ ===
-                const m = now.getMonth() + 1; // 西元月
-                const d = now.getDate();      // 西元日
-
-                // 1. 固定國曆節日
+                // 紀念日檢查 (你可以保留你原本的紀念日邏輯)
+                const m = now.getMonth() + 1; const d = now.getDate();
                 if (m === 3 && d === 17) specialMsg = "🎂 毛毛生日快樂！";
                 else if (m === 8 && d === 1) specialMsg = "🎂 皓皓生日快樂！";
                 else if (m === 6 && d === 20) specialMsg = "❤️ 交往紀念日快樂！";
                 else if (m === 1 && d === 1) specialMsg = "🎉 新年快樂！";
                 else if (m === 12 && d === 25) specialMsg = "🎄 聖誕快樂！";
-
-                // 2. 農曆節日 (初一)
-                if (lunarMonth === '正月' && lunarDay === '初一') {
-                    specialMsg = "🧧 農曆新年快樂！";
-                }
-
-                // 3. 農曆除夕 (判斷邏輯：如果明天是初一，今天就是除夕)
-                // 這樣不管是 29 日還是 30 日除夕都抓得到
-                const tmr = new Date(now);
-                tmr.setDate(tmr.getDate() + 1);
-                const tmrParts = new Intl.DateTimeFormat('zh-TW-u-ca-chinese', { day: 'numeric', month: 'long' }).formatToParts(tmr);
-                const tmrMonth = tmrParts.find(p => p.type === 'month')?.value;
-                let tmrDay = tmrParts.find(p => p.type === 'day')?.value;
-                // 簡單正規化
-                if (tmrDay === '1') tmrDay = '初一';
-
-                if (tmrMonth === '正月' && tmrDay === '初一') {
-                    specialMsg = "🧨 除舊佈新！除夕快樂";
-                }
+                else if (holiday) specialMsg = `🎉 ${holiday}快樂！`;
                 
-                // ==========================
+                // 農曆除夕判斷
+                const tmr = new Date(now); tmr.setDate(tmr.getDate() + 1);
+                const { lunar: lTmr } = window.getLunarAndHoliday(tmr);
+                if (lTmr.includes('正月') && lTmr.includes('初一')) specialMsg = "🧨 除舊佈新！除夕快樂";
 
-            } catch (e) {
-                console.error(e);
-                lunarText = '';
-            }
+            } catch (e) { console.error(e); }
 
             document.getElementById('brief-lunar').textContent = lunarText;
-
-            // === 更新 UI：顯示或隱藏祝福語 ===
             const specialEl = document.getElementById('brief-special');
-            if (specialMsg) {
-                specialEl.textContent = specialMsg;
-                specialEl.classList.remove('hidden');
-            } else {
-                specialEl.classList.add('hidden');
-            }
+            if (specialMsg) { specialEl.textContent = specialMsg; specialEl.classList.remove('hidden'); } 
+            else { specialEl.classList.add('hidden'); }
 
-            // === 3. 天氣邏輯 (維持不變) ===
+            // === 3. 天氣與定位核心邏輯 (新版) ===
+            
+            // 抓天氣
             const fetchWeather = (lat, lon) => {
                 const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
 
@@ -5716,54 +5790,92 @@ function initApp(db) {
                         document.getElementById('brief-temp-current').textContent = `${Math.round(current.temperature_2m)}°`;
                         document.getElementById('brief-temp-range').textContent = `H:${Math.round(daily.temperature_2m_max[0])}° L:${Math.round(daily.temperature_2m_min[0])}°`;
                         
+                        // 天氣圖示對照 (維持不變)
                         const code = current.weather_code;
                         const isDay = current.is_day;
-                        let iconName = 'cloud';
-                        let desc = '多雲';
-                        let iconColor = 'text-gray-400';
+                        let iconName = 'cloud'; let desc = '多雲'; let iconColor = 'text-gray-400';
 
-                        if (code === 0) { 
-                            iconName = isDay ? 'sun' : 'moon'; 
-                            desc = '晴朗'; 
-                            iconColor = isDay ? 'text-orange-400' : 'text-indigo-400';
-                        } else if (code >= 1 && code <= 3) {
-                            iconName = isDay ? 'cloud-sun' : 'cloud-moon'; 
-                            desc = '多雲'; iconColor = 'text-gray-400';
-                        } else if (code >= 45 && code <= 48) {
-                            iconName = 'cloud-fog'; desc = '有霧';
-                        } else if (code >= 51 && code <= 67) {
-                            iconName = 'cloud-drizzle'; desc = '細雨'; iconColor = 'text-blue-400';
-                        } else if (code >= 80 && code <= 99) {
-                            iconName = 'cloud-rain'; desc = '陣雨'; iconColor = 'text-blue-500';
-                        } else if (code >= 71) {
-                            iconName = 'snowflake'; desc = '下雪';
-                        }
+                        if (code === 0) { iconName = isDay ? 'sun' : 'moon'; desc = '晴朗'; iconColor = isDay ? 'text-orange-400' : 'text-indigo-400'; } 
+                        else if (code >= 1 && code <= 3) { iconName = isDay ? 'cloud-sun' : 'cloud-moon'; desc = '多雲'; iconColor = 'text-gray-400'; } 
+                        else if (code >= 45 && code <= 48) { iconName = 'cloud-fog'; desc = '有霧'; } 
+                        else if (code >= 51 && code <= 67) { iconName = 'cloud-drizzle'; desc = '細雨'; iconColor = 'text-blue-400'; } 
+                        else if (code >= 80 && code <= 99) { iconName = 'cloud-rain'; desc = '陣雨'; iconColor = 'text-blue-500'; } 
+                        else if (code >= 71) { iconName = 'snowflake'; desc = '下雪'; }
 
                         const iconEl = document.getElementById('brief-weather-icon');
                         iconEl.setAttribute('data-lucide', iconName);
                         iconEl.className = `w-6 h-6 ${iconColor}`; 
                         document.getElementById('brief-weather-desc').textContent = desc;
-
                         if (typeof lucide !== 'undefined') lucide.createIcons();
                     })
-                    .catch(err => {
-                        console.error("Weather fetch failed", err);
-                        document.getElementById('brief-weather-desc').textContent = "載入失敗";
-                    });
+                    .catch(err => { console.error("Weather failed", err); });
             };
 
-            // === 4. 開始定位 (維持不變) ===
-            const defaultLat = 25.00;
+            // 抓地名 (使用 BigDataCloud 免費 API)
+            const fetchCityName = async (lat, lon) => {
+                try {
+                    // localityLanguage=zh 確保回傳中文
+                    const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=zh`);
+                    const data = await res.json();
+                    
+                    // 優先順序：鄉鎮區 (locality) -> 城市 (city) -> 行政區 (principalSubdivision)
+                    const locationName = data.locality || data.city || data.principalSubdivision || '未知地點';
+                    
+                    const locRow = document.getElementById('brief-location-row');
+                    const locText = document.getElementById('brief-location');
+                    if (locRow && locText) {
+                        locText.textContent = locationName;
+                        locRow.classList.remove('hidden'); // 顯示出來
+                    }
+                } catch(e) {
+                    console.error("Reverse geo failed", e);
+                }
+            };
+
+            // === 4. 啟動定位 (Native 優先) ===
+            const defaultLat = 25.00; // 預設中和
             const defaultLon = 121.48;
 
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => { fetchWeather(position.coords.latitude, position.coords.longitude); },
-                    (error) => { fetchWeather(defaultLat, defaultLon); },
-                    { timeout: 5000 }
-                );
+            if (window.Capacitor && Capacitor.Plugins.Geolocation) {
+                try {
+                    const { Geolocation } = Capacitor.Plugins;
+                    
+                    // 1. 檢查並請求權限
+                    const perm = await Geolocation.checkPermissions();
+                    if (perm.location !== 'granted') {
+                        const req = await Geolocation.requestPermissions();
+                        if (req.location !== 'granted') throw new Error('Permission denied');
+                    }
+                    
+                    // 2. 取得位置
+                    const pos = await Geolocation.getCurrentPosition({ 
+                        enableHighAccuracy: false, // 不需要太精準，省電且快
+                        timeout: 10000 
+                    });
+                    
+                    const { latitude, longitude } = pos.coords;
+                    console.log("Native Location:", latitude, longitude);
+                    
+                    // 3. 更新資料
+                    fetchWeather(latitude, longitude);
+                    fetchCityName(latitude, longitude);
+                    
+                } catch (e) {
+                    console.warn("Native Geo failed, using default", e);
+                    fetchWeather(defaultLat, defaultLon);
+                    // 失敗時也可以顯示預設地點
+                    const locRow = document.getElementById('brief-location-row');
+                    const locText = document.getElementById('brief-location');
+                    if (locRow && locText) {
+                        locText.textContent = "新北市";
+                        locRow.classList.remove('hidden');
+                    }
+                }
             } else {
+                // 電腦版開發 Fallback
                 fetchWeather(defaultLat, defaultLon);
+                const locRow = document.getElementById('brief-location-row');
+                if (locRow) locRow.classList.add('hidden'); // 電腦版不顯示假地點，避免誤會
             }
         };
 
@@ -5838,8 +5950,10 @@ function initApp(db) {
 
             let holiday = holidays[dateStr] || '';
             
-            // 農曆轉換 (維持自動計算)
-            let lunar = '';
+            // 農曆轉換 (修正版：分開輸出 長版 與 短版)
+            let lunar = '';      // 給摘要用 (顯示：冬月十五)
+            let lunarShort = ''; // 給月曆用 (顯示：十五)
+
             try {
                 const parts = new Intl.DateTimeFormat('zh-TW-u-ca-chinese', { 
                     day: 'numeric', month: 'long' 
@@ -5862,14 +5976,22 @@ function initApp(db) {
                     lunarDay = dayMap[dayNum];
                 }
 
+                // 1. 完整版 (給首頁摘要)：顯示「冬月十五」
+                lunar = `${lunarMonth}${lunarDay}`;
+
+                // 2. 簡短版 (給月曆格子)：
+                // 一般農曆寫法規則：如果是「初一」，通常會顯示月份 (例如：正月、冬月)
+                // 其他日子則只顯示日期 (例如：初二、十五)
                 if (lunarDay === '初一') {
-                    lunar = lunarMonth;
+                    lunarShort = lunarMonth; // 初一顯示月份
                 } else {
-                    lunar = lunarDay;
+                    lunarShort = lunarDay;   // 其他顯示日期
                 }
+
             } catch(e) { console.error(e); }
 
-            return { lunar, holiday };
+            // 回傳多一個 lunarShort
+            return { lunar, lunarShort, holiday };
         };
 
         // === 新增：提醒選擇器邏輯 ===
@@ -6153,10 +6275,47 @@ window.quickDeleteEvent = function(id) {
 
     <div id="batch-action-bar">
     <div class="text-sm font-bold text-gray-500">已選擇 <span id="batch-count">0</span> 項</div>
-    <button onclick="window.executeBatchDelete()" id="btn-batch-delete" class="px-6 py-2 bg-red-50 text-red-500 font-bold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition hover:bg-red-100">
+    <button onclick="window.executeBatchDelete()" id="btn-batch-delete" disabled class="px-6 py-2 font-bold rounded-xl transition duration-200 
+        bg-red-50 text-red-500 hover:bg-red-100 shadow-sm
+        disabled:bg-gray-100 disabled:text-gray-300 disabled:shadow-none disabled:cursor-not-allowed">
         刪除
     </button>
 </div>
+    <div id="onboarding-screen" class="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center p-8 transition-opacity duration-500 hidden">
+        <div class="flex-1 flex flex-col items-center justify-center w-full">
+            <div class="relative mb-10">
+                <div class="absolute inset-0 bg-green-200 blur-2xl opacity-40 rounded-full animate-pulse"></div>
+                <img src="icon.png" class="w-32 h-32 rounded-[2.5rem] shadow-2xl relative z-10 rotate-3 hover:rotate-0 transition duration-500 ease-out transform">
+            </div>
+            
+            <h1 class="text-3xl font-bold text-gray-800 mb-3 tracking-tight text-center">
+                小時光 <span class="text-xl font-normal text-[#2cc998] font-handwriting">for us</span>
+            </h1>
+            <p class="text-gray-400 text-sm mb-16 text-center leading-relaxed font-medium">
+                紀錄我們的每一個日常<br>與值得紀念的瞬間 ✨
+            </p>
+
+            <div class="w-full space-y-4 max-w-[280px] animate-fade-in-up">
+                <p class="text-xs font-bold text-gray-300 text-center uppercase tracking-[0.2em] mb-6">請選擇您的身分</p>
+                
+                <button onclick="window.completeOnboarding('haohao')" class="w-full py-4 bg-[#2cc998] text-white rounded-2xl font-bold text-lg shadow-lg shadow-green-100 active:scale-95 transition-all duration-200 flex items-center justify-center gap-3 relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                    <span class="bg-white/20 p-1.5 rounded-full"><i data-lucide="user" class="w-4 h-4"></i></span>
+                    <span>我是皓皓</span>
+                </button>
+                
+                <button onclick="window.completeOnboarding('maomao')" class="w-full py-4 bg-white border-2 border-[#e6688d] text-[#e6688d] rounded-2xl font-bold text-lg shadow-lg shadow-pink-50 active:scale-95 transition-all duration-200 flex items-center justify-center gap-3 hover:bg-pink-50">
+                    <span class="bg-pink-100 p-1.5 rounded-full"><i data-lucide="heart" class="w-4 h-4"></i></span>
+                    <span>我是毛毛</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="text-[10px] text-gray-300 py-6 font-medium tracking-wide">
+            Designed for Kyle & Mao
+        </div>
+    </div>
+
 
 </body>
 </html>
