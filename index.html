@@ -1311,15 +1311,23 @@ window.updateBatchUI = function() {
             transition: none !important; 
         }
 
-        /* 4. 當鍵盤開啟時 (JS 會加上這個 class) */
+        /* 4. 當鍵盤開啟時 (加入 :has 語法，偵測到聚焦瞬間直接反應，無需等待 JS) */
+        body:has(#note-input:focus) #chat-input-bar,
         body.keyboard-open #chat-input-bar {
             /* 👇 瞬間移除底部 Margin，讓它直接坐在鍵盤頭頂 */
             margin-bottom: 0 !important;
         }
 
-        /* 5. 隱藏導覽列 (維持不變) */
+        /* 5. 隱藏導覽列 (同樣加入 :has 語法，瞬間隱藏) */
+        body:has(#note-input:focus) nav,
         body.keyboard-open nav {
             display: none !important;
+        }
+        
+        /* 6. 確保聊天頁面底部也沒有多餘留白 */
+        body:has(#note-input:focus) #page-chat,
+        body.keyboard-open #page-chat {
+            padding-bottom: 0 !important;
         }
 
     </style>
