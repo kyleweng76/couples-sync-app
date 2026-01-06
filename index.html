@@ -4335,7 +4335,17 @@ window.updateBatchUI = function() {
             if(targetPage) {
                 targetPage.classList.add('active');
                 if(tabId === 'calendar' && typeof window.renderBigCalendar === 'function') window.renderBigCalendar();
-                if (tabId === 'chat' && typeof window.scrollToBottom === 'function') window.scrollToBottom();
+                
+                // 👇 修改：切換到聊天時，強制重新渲染畫面 + 捲到底部
+                if (tabId === 'chat') {
+                    if (window.allMessagesCache && window.renderChat) {
+                        window.renderChat(window.allMessagesCache);
+                    }
+                    if (typeof window.scrollToBottom === 'function') {
+                        // 給一點延遲確保畫面渲染完才捲動
+                        setTimeout(() => window.scrollToBottom('auto'), 100);
+                    }
+                }
             }
             
             document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -4956,9 +4966,16 @@ function initApp(db) {
                         // 5. 點擊通知 (背景/關閉狀態打開 App)
                         FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
                             console.log('Notification clicked:', event);
-                            // 如果是聊天通知，切換到聊天頁面
-                            // 這裡可以根據 notification.data 裡的 tag 或其他欄位判斷
-                            window.switchTab('chat');
+                            
+                            // 👇 修改：使用 setTimeout 延遲執行，確保 App 畫面已經準備好
+                            setTimeout(() => {
+                                window.switchTab('chat');
+                                
+                                // 再加一個保險：強制捲到底部，確保看到最新訊息
+                                setTimeout(() => {
+                                    if(window.scrollToBottom) window.scrollToBottom('auto');
+                                }, 300);
+                            }, 500); // 延遲 0.5 秒切換
                         });
 
                         // 確保 Capacitor 載入後，再次嘗試更新天氣與定位
@@ -5182,8 +5199,30 @@ function initApp(db) {
         if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.protocol === 'http:')) {
           window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').then(reg => console.log('SW registered', reg)).catch(err => console.error('SW failed', err)); });
         }
-        document.addEventListener('visibilitychange', () => { if (!document.hidden) { safeRun(() => { if (typeof lucide !== 'undefined') lucide.createIcons(); if (currentViewMode === 'month') { window.renderBigCalendar(); } }, 'resume'); } });
-    
+        
+        document.addEventListener('visibilitychange', () => { 
+            if (!document.hidden) { 
+                safeRun(() => { 
+                    if (typeof lucide !== 'undefined') lucide.createIcons(); 
+                    
+                    // 1. 如果在月曆模式，刷新月曆
+                    if (currentViewMode === 'month') { window.renderBigCalendar(); }
+                    
+                    // 2. 👇 新增：如果在聊天模式，強制刷新聊天室並捲到底部
+                    if (window.currentTab === 'chat') {
+                        if (window.allMessagesCache) window.renderChat(window.allMessagesCache);
+                        setTimeout(() => window.scrollToBottom(), 200);
+                    }
+                    
+                    // 3. 👇 新增：嘗試恢復網路連線 (針對 Firebase 睡著的問題)
+                    if (db && db.enableNetwork) {
+                        db.enableNetwork().catch(e => console.log('Network enable error:', e));
+                    }
+
+                }, 'resume'); 
+            } 
+        });
+
         // === 待辦分類功能核心邏輯 ===
 
         // 1. 定義預設分類
