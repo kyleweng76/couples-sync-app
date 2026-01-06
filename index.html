@@ -1265,74 +1265,59 @@ window.updateBatchUI = function() {
             animation: fadeInUp 0.8s ease-out forwards;
         }
 
-        /* === 🚀 鍵盤黏著優化核心 (透明穿透版 - 解決延遲與遮擋) === */
+       /* === 🚀 鍵盤黏著終極版 (Flexbox 流動佈局) === */
         
-        /* 1. 聊天頁面容器：恢復標準設定 */
+        /* 1. 聊天頁面：改成 Flex 直列排版，高度強制 100% */
         #page-chat.active {
             display: flex !important;
             flex-direction: column !important;
-            height: 100% !important;
-            padding-bottom: 0 !important;
-            overflow: hidden !important;
+            height: 100% !important; /* 佔滿視窗 */
+            padding-top: calc(70px + env(safe-area-inset-top)) !important; /* 避開頂部 */
+            padding-bottom: 0 !important; /* 底部歸零，由內部元件控制 */
+            overflow: hidden !important;  /* 禁止整頁捲動 */
+            background-color: #ffffff;
         }
 
-        /* 2. 訊息捲動區 */
+        /* 2. 訊息捲動區：自動填滿中間剩餘空間 */
         #chat-container {
-            flex: 1 !important;
+            flex: 1 !important; /* 吃掉所有剩餘空間 */
             height: auto !important;
-            /* 讓訊息區底部多留一點白，以免最後一則訊息被輸入框擋住 */
-            /* 100px = 輸入框本體 + 導覽列高度 */
-            padding-bottom: 100px !important; 
+            min-height: 0 !important;
+            
+            /* 恢復捲動行為 */
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
             
             background-color: #ffffff; 
             background-image: radial-gradient(#e5e7eb 2px, transparent 2px);
             background-size: 24px 24px; 
         }
 
-        /* 3. 輸入框容器：固定在底部，但背景透明 */
+        /* 3. 輸入框容器：不再漂浮，變成頁面的一部分 */
         #chat-input-bar {
-            position: fixed !important;
-            bottom: 0 !important;
-            left: 0; 
-            right: 0;
+            position: relative !important; /* 👈 關鍵！改回 relative */
+            z-index: 50;
             width: 100%;
-            z-index: 60;
+            flex-shrink: 0; /* 禁止被壓縮 */
+            background-color: white;
+            border-top: 1px solid #e5e7eb;
             
-            /* 👇 關鍵：背景設為透明！這樣才看得到底下的選單 */
-            background-color: transparent !important;
-            border-top: none !important; /* 平常不要有線條，比較好看 */
-
-            /* 👇 關鍵：用 Padding 把輸入框「頂」上去，留位子給選單 */
-            /* 84px 是導覽列的大約高度 */
-            padding-bottom: calc(84px + env(safe-area-inset-bottom)) !important;
+            /* 👇 關鍵技巧：平常給一個底部 Margin 來避開導覽列 */
+            /* 導覽列高度約 90px */
+            margin-bottom: calc(90px + env(safe-area-inset-bottom)) !important;
             
-            /* 👇 關鍵：讓點擊「穿透」透明區域，這樣你才按得到底下的選單！ */
-            pointer-events: none !important;
-            
-            /* 禁止動畫，追求極速響應 */
-            transition: padding-bottom 0s !important; 
+            /* 🚫 禁止 transition！任何動畫都會導致不同步 */
+            transition: none !important; 
         }
 
-        /* 4. 輸入框的「實體內容」 (白色那條) */
-        #chat-input-bar > div {
-            /* 恢復點擊感應，不然輸入框會點不到 */
-            pointer-events: auto !important; 
-            background-color: white !important;
-            border-top: 1px solid #e5e7eb; /* 線條加在這裡 */
-        }
-
-        /* 5. 當鍵盤開啟時 (由 JS 觸發) */
+        /* 4. 當鍵盤開啟時 (JS 會加上這個 class) */
         body.keyboard-open #chat-input-bar {
-            /* 瞬間移除底部墊高，讓它直接貼在鍵盤上方 */
-            padding-bottom: 0 !important;
-        }
-        
-        /* 鍵盤開啟時，調整訊息區的留白，讓訊息能捲到底 */
-        body.keyboard-open #chat-container {
-            padding-bottom: 60px !important; 
+            /* 👇 瞬間移除底部 Margin，讓它直接坐在鍵盤頭頂 */
+            margin-bottom: 0 !important;
         }
 
-        /* 6. 隱藏導覽列 (避免干擾) */
+        /* 5. 隱藏導覽列 (維持不變) */
         body.keyboard-open nav {
             display: none !important;
         }
@@ -5000,22 +4985,20 @@ function initApp(db) {
                     Keyboard.setResizeMode({ mode: 'native' }); 
                 } catch(e) { console.log(e); }
 
-                // ✅ 關鍵 2：禁止捲動 (避免跳動)
+                // ✅ 關鍵 2：禁止捲動 (避免畫面亂跳)
                 try { 
                     Keyboard.setScroll({ isDisabled: true }); 
                 } catch(e) { console.log(e); }
 
-                // 3. 隱藏鍵盤輔助列 (維持原本設定)
                 try { 
                     Keyboard.setAccessoryBarVisible({ isVisible: false }); 
                 } catch(e) { console.log(e); }
 
-                // 4. 監聽鍵盤彈出
+                // 4. 監聽鍵盤彈出 (加上 class 觸發 CSS 變化)
                 Keyboard.addListener('keyboardWillShow', info => {
                     document.body.classList.add('keyboard-open');
                     
-                    // 因為高度變矮了，為了確保你看得見最新的訊息，強制捲到底部
-                    // 使用 'auto' 讓它是瞬間跳轉，不要有動畫延遲
+                    // 強制捲到底部 (確保最新訊息可見)
                     setTimeout(() => {
                         if (window.scrollToBottom) window.scrollToBottom('auto');
                     }, 50);
