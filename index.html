@@ -1265,6 +1265,78 @@ window.updateBatchUI = function() {
             animation: fadeInUp 0.8s ease-out forwards;
         }
 
+        /* === 🚀 鍵盤黏著優化核心 (透明穿透版 - 解決延遲與遮擋) === */
+        
+        /* 1. 聊天頁面容器：恢復標準設定 */
+        #page-chat.active {
+            display: flex !important;
+            flex-direction: column !important;
+            height: 100% !important;
+            padding-bottom: 0 !important;
+            overflow: hidden !important;
+        }
+
+        /* 2. 訊息捲動區 */
+        #chat-container {
+            flex: 1 !important;
+            height: auto !important;
+            /* 讓訊息區底部多留一點白，以免最後一則訊息被輸入框擋住 */
+            /* 100px = 輸入框本體 + 導覽列高度 */
+            padding-bottom: 100px !important; 
+            
+            background-color: #ffffff; 
+            background-image: radial-gradient(#e5e7eb 2px, transparent 2px);
+            background-size: 24px 24px; 
+        }
+
+        /* 3. 輸入框容器：固定在底部，但背景透明 */
+        #chat-input-bar {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0; 
+            right: 0;
+            width: 100%;
+            z-index: 60;
+            
+            /* 👇 關鍵：背景設為透明！這樣才看得到底下的選單 */
+            background-color: transparent !important;
+            border-top: none !important; /* 平常不要有線條，比較好看 */
+
+            /* 👇 關鍵：用 Padding 把輸入框「頂」上去，留位子給選單 */
+            /* 84px 是導覽列的大約高度 */
+            padding-bottom: calc(84px + env(safe-area-inset-bottom)) !important;
+            
+            /* 👇 關鍵：讓點擊「穿透」透明區域，這樣你才按得到底下的選單！ */
+            pointer-events: none !important;
+            
+            /* 禁止動畫，追求極速響應 */
+            transition: padding-bottom 0s !important; 
+        }
+
+        /* 4. 輸入框的「實體內容」 (白色那條) */
+        #chat-input-bar > div {
+            /* 恢復點擊感應，不然輸入框會點不到 */
+            pointer-events: auto !important; 
+            background-color: white !important;
+            border-top: 1px solid #e5e7eb; /* 線條加在這裡 */
+        }
+
+        /* 5. 當鍵盤開啟時 (由 JS 觸發) */
+        body.keyboard-open #chat-input-bar {
+            /* 瞬間移除底部墊高，讓它直接貼在鍵盤上方 */
+            padding-bottom: 0 !important;
+        }
+        
+        /* 鍵盤開啟時，調整訊息區的留白，讓訊息能捲到底 */
+        body.keyboard-open #chat-container {
+            padding-bottom: 60px !important; 
+        }
+
+        /* 6. 隱藏導覽列 (避免干擾) */
+        body.keyboard-open nav {
+            display: none !important;
+        }
+
     </style>
 </head>
 <body class="text-gray-700 h-screen flex flex-col overflow-hidden bg-white">
@@ -1458,27 +1530,28 @@ window.updateBatchUI = function() {
                 </div>
             </div>
 
-            <div class="flex-none bg-white border-t border-gray-200 z-20">
-                <div class="px-3 pt-3 pb-5 bg-gray-50 flex items-center gap-2">
+            <div id="chat-input-bar" class="flex-none bg-white border-t border-gray-200">
                 
-                <button onclick="window.toggleStickerPicker()" class="p-2 text-gray-400 hover:text-gray-600 active:scale-95 transition rounded-full hover:bg-gray-200 flex-shrink-0">
-                    <i data-lucide="smile" class="w-6 h-6"></i>
-                </button>
+                <div class="px-3 py-2 bg-white flex items-center gap-2">
+                
+                    <button onclick="window.toggleStickerPicker()" class="p-1.5 text-gray-400 hover:text-gray-600 active:scale-95 transition rounded-full hover:bg-gray-100 flex-shrink-0">
+                        <i data-lucide="smile" class="w-6 h-6"></i>
+                    </button>
 
-                <div class="flex-1 flex flex-nowrap items-center bg-white rounded-full px-3 py-3 shadow-sm border border-gray-200 focus-within:ring-2 focus-within:ring-ttgreen focus-within:ring-opacity-50">
+                    <div class="flex-1 flex flex-nowrap items-center bg-gray-100 rounded-full px-3 py-1.5 border border-transparent focus-within:bg-white focus-within:border-ttgreen focus-within:ring-1 focus-within:ring-ttgreen transition-all">
+                        
+                        <div class="w-6 h-6 flex items-center justify-center text-gray-400 flex-shrink-0 cursor-pointer hover:text-gray-600 active:scale-95 transition" onclick="window.scrollToBottom()">
+                            <i data-lucide="arrow-down-circle" class="w-5 h-5"></i>
+                        </div>
+
+                        <input type="text" id="note-input" placeholder="傳送訊息..." class="flex-1 min-w-0 bg-transparent border-none text-base text-gray-700 placeholder-gray-400 focus:ring-0 px-2 outline-none text-left h-full" onfocus="window.closeStickerPicker()">
                     
-                    <div class="w-8 h-8 flex items-center justify-center text-gray-400 flex-shrink-0 cursor-pointer hover:text-gray-600 active:scale-95 transition" onclick="window.scrollToBottom()">
-                        <i data-lucide="arrow-down-circle" class="w-6 h-6"></i>
-                    </div>
-
-                    <input type="text" id="note-input" placeholder="傳送訊息..." class="flex-1 min-w-0 bg-transparent border-none text-base text-gray-700 placeholder-gray-400 focus:ring-0 px-2 outline-none text-left h-full py-2" onfocus="window.closeStickerPicker()">
-                
-                </div> 
-                
-                <button id="note-send-btn" onclick="window.sendNote()" class="w-10 h-10 flex items-center justify-center rounded-full bg-ttgreen text-white shadow-md active:scale-90 transition ml-1 flex-shrink-0 hover:bg-green-500">
-                    <i data-lucide="send" class="w-5 h-5 ml-0.5"></i>
-                </button>
-            </div>
+                    </div> 
+                    
+                    <button id="note-send-btn" onclick="window.sendNote()" class="w-8 h-8 flex items-center justify-center rounded-full bg-ttgreen text-white shadow-sm active:scale-90 transition ml-1 flex-shrink-0 hover:bg-green-500">
+                        <i data-lucide="send" class="w-4 h-4 ml-0.5"></i>
+                    </button>
+                </div>
 
                 <div id="sticker-picker-container">
                     <div id="sticker-grid" class="sticker-grid">
@@ -1572,20 +1645,21 @@ window.updateBatchUI = function() {
     <div id="confirm-modal" class="fixed inset-0 z-[80] flex items-center justify-center hidden modal transition-all duration-300">
         <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onclick="window.closeConfirmModal()"></div>
         
-        <div class="relative bg-white w-[310px] rounded-[32px] shadow-2xl p-6 transform scale-90 opacity-0 transition-all duration-300 cubic-bezier(0.34, 1.56, 0.64, 1)" id="confirm-modal-content">
+        <div class="relative bg-white w-[270px] rounded-2xl shadow-2xl p-5 mb-24 transform scale-90 opacity-0 transition-all duration-300 cubic-bezier(0.34, 1.56, 0.64, 1)" id="confirm-modal-content">
             
-            <div id="confirm-icon-bg" class="mx-auto w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4 transition-colors duration-300">
-                <i id="confirm-icon" data-lucide="trash-2" class="w-8 h-8 text-red-500 transition-colors duration-300"></i>
+            <div id="confirm-icon-bg" class="mx-auto w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-3 transition-colors duration-300">
+                <i id="confirm-icon" data-lucide="trash-2" class="w-6 h-6 text-red-500 transition-colors duration-300"></i>
             </div>
 
-            <h3 id="confirm-title" class="text-xl font-bold text-center text-gray-800 mb-2 tracking-tight">確認刪除？</h3>
-            <p id="confirm-desc" class="text-sm text-center text-gray-500 mb-8 leading-relaxed px-2">此動作無法復原，您確定要執行嗎？</p>
+            <h3 id="confirm-title" class="text-lg font-bold text-center text-gray-800 mb-2 tracking-tight">確認刪除？</h3>
+            
+            <p id="confirm-desc" class="text-xs text-center text-gray-500 mb-5 leading-relaxed px-1">此動作無法復原，您確定要執行嗎？</p>
             
             <div class="grid grid-cols-2 gap-3">
-                <button onclick="window.closeConfirmModal()" class="py-3.5 rounded-2xl bg-gray-100 text-gray-600 font-bold text-sm hover:bg-gray-200 active:scale-95 transition duration-200">
+                <button onclick="window.closeConfirmModal()" class="py-2.5 rounded-xl bg-gray-100 text-gray-600 font-bold text-xs hover:bg-gray-200 active:scale-95 transition duration-200">
                     取消
                 </button>
-                <button id="confirm-delete-btn" onclick="window.executeDelete()" class="py-3.5 rounded-2xl bg-red-500 text-white font-bold text-sm shadow-lg shadow-red-200 hover:bg-red-600 active:scale-95 transition duration-200 flex items-center justify-center gap-2">
+                <button id="confirm-delete-btn" onclick="window.executeDelete()" class="py-2.5 rounded-xl bg-red-500 text-white font-bold text-xs shadow-lg shadow-red-200 hover:bg-red-600 active:scale-95 transition duration-200 flex items-center justify-center gap-2">
                     確認刪除
                 </button>            
             </div>
@@ -4899,13 +4973,12 @@ function initApp(db) {
             if (window.Capacitor && Capacitor.Plugins.Keyboard) {
                 const { Keyboard } = Capacitor.Plugins;
 
-                // 1. 設定 Resize 模式為 Native (關鍵！讓 App 高度直接變矮，而不是被推上去)
-                // 這樣底部的輸入框會自動貼在鍵盤上方，不需要等 JS 計算
+                // ✅ 關鍵 1：模式一定要是 'native' (這樣鍵盤彈出時，整個視窗高度會物理縮小)
                 try { 
                     Keyboard.setResizeMode({ mode: 'native' }); 
                 } catch(e) { console.log(e); }
 
-                // 2. 禁止 WebView 自動捲動 (關鍵！這是造成「頓一下」的主因)
+                // ✅ 關鍵 2：禁止捲動 (避免跳動)
                 try { 
                     Keyboard.setScroll({ isDisabled: true }); 
                 } catch(e) { console.log(e); }
@@ -5063,6 +5136,20 @@ function initApp(db) {
                 window.checkEventReminders();
             }, 30000);
         }
+
+        // === 🚀 新增：輸入框 Focus 極速響應 ===
+            const noteInput = document.getElementById('note-input');
+            if (noteInput) {
+                noteInput.addEventListener('focus', () => {
+                    // 1. 馬上加上 keyboard-open 樣式
+                    document.body.classList.add('keyboard-open');
+                    
+                    // 2. 強制捲到底部
+                    setTimeout(() => {
+                        if (window.scrollToBottom) window.scrollToBottom('auto');
+                    }, 50);
+                });
+            }
 
         document.addEventListener('DOMContentLoaded', () => {
           safeRun(() => {
