@@ -4919,21 +4919,62 @@ function initApp(db) {
             if (conn) { conn.className = "w-2 h-2 rounded-full bg-ttgreen shadow-[0_0_8px_#2cc998]"; }
             
             // === 🚀 修正：推播通知註冊邏輯 (改用 FirebaseMessaging 確保拿到 FCM Token) ===
-            // 只有在手機版 (Capacitor) 且有安裝 FirebaseMessaging 外掛時才執行
             if (window.Capacitor && Capacitor.Plugins.FirebaseMessaging) {
                 const { FirebaseMessaging } = Capacitor.Plugins;
 
-                // 1. 請求權限
+                // ============================================================
+                // 👇 修改重點 1：監聽器必須「立刻」註冊，不能等 requestPermissions
+                // ============================================================
+                
+                // 先移除舊的監聽器 (避免重複)
+                FirebaseMessaging.removeAllListeners().then(() => {
+                    
+                    // 1. 監聽 Token 更新
+                    FirebaseMessaging.addListener('tokenReceived', (event) => {
+                        console.log('New FCM Token:', event.token);
+                        if (currentUserRole) {
+                            db.collection('user_tokens').doc(currentUserRole).set({
+                                token: event.token,
+                                platform: 'ios',
+                                updatedAt: new Date().toISOString()
+                            }, { merge: true });
+                        }
+                    });
+
+                    // 2. 收到通知 (前景使用時)
+                    FirebaseMessaging.addListener('notificationReceived', (event) => {
+                        const notification = event.notification;
+                        window.showToast(`🔔 ${notification.title || '新訊息'}: ${notification.body || ''}`);
+                        if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                    });
+
+                    // 3. 點擊通知 (這是最關鍵的！)
+                    FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
+                        console.log('Notification clicked:', event);
+                        
+                        // 使用 setTimeout 確保 App 畫面載入完成後再跳轉
+                        setTimeout(() => {
+                            window.switchTab('chat');
+                            
+                            // 強制捲到底部
+                            setTimeout(() => {
+                                if(window.scrollToBottom) window.scrollToBottom('auto');
+                            }, 300);
+                        }, 500); 
+                    });
+                });
+
+                // ============================================================
+                // 👇 修改重點 2：監聽器掛好之後，才去處理權限跟 Token
+                // ============================================================
                 FirebaseMessaging.requestPermissions().then(result => {
                     if (result.receive === 'granted') {
-                        // 2. 取得 FCM Token (這是關鍵！這才是 Firebase 能用的 Token)
+                        // 取得 FCM Token
                         FirebaseMessaging.getToken().then(tokenResult => {
                             console.log('FCM Token:', tokenResult.token);
-                            
-                            // 存入 Firestore
                             if (currentUserRole) {
                                 db.collection('user_tokens').doc(currentUserRole).set({
-                                    token: tokenResult.token, // 存入正確的 FCM Token
+                                    token: tokenResult.token,
                                     platform: 'ios',
                                     updatedAt: new Date().toISOString()
                                 }, { merge: true });
@@ -4942,46 +4983,10 @@ function initApp(db) {
                             console.error("FCM GetToken Error:", err);
                         });
                         
-                        // 3. 註冊監聽器 (當 Token 更新時)
-                        FirebaseMessaging.removeAllListeners(); // 避免重複綁定
-                        
-                        FirebaseMessaging.addListener('tokenReceived', (event) => {
-                            console.log('New FCM Token:', event.token);
-                            if (currentUserRole) {
-                                db.collection('user_tokens').doc(currentUserRole).set({
-                                    token: event.token,
-                                    platform: 'ios',
-                                    updatedAt: new Date().toISOString()
-                                }, { merge: true });
-                            }
-                        });
-
-                        // 4. 收到通知 (前景)
-                        FirebaseMessaging.addListener('notificationReceived', (event) => {
-                            const notification = event.notification;
-                            window.showToast(`🔔 ${notification.title || '新訊息'}: ${notification.body || ''}`);
-                            if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
-                        });
-
-                        // 5. 點擊通知 (背景/關閉狀態打開 App)
-                        FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
-                            console.log('Notification clicked:', event);
-                            
-                            // 👇 修改：使用 setTimeout 延遲執行，確保 App 畫面已經準備好
-                            setTimeout(() => {
-                                window.switchTab('chat');
-                                
-                                // 再加一個保險：強制捲到底部，確保看到最新訊息
-                                setTimeout(() => {
-                                    if(window.scrollToBottom) window.scrollToBottom('auto');
-                                }, 300);
-                            }, 500); // 延遲 0.5 秒切換
-                        });
-
                         // 確保 Capacitor 載入後，再次嘗試更新天氣與定位
-            setTimeout(() => {
-                if (window.renderDailyBrief) window.renderDailyBrief();
-            }, 1000);
+                        setTimeout(() => {
+                            if (window.renderDailyBrief) window.renderDailyBrief();
+                        }, 1000);
                     }
                 });
             }
